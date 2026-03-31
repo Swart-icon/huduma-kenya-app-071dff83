@@ -219,7 +219,7 @@ const AdminSection = () => {
 };
 
 const Dashboard = () => {
-  const { user, role, loading, isSuspended, signOut } = useAuth();
+  const { user, role, loading, isAdmin, isSuspended, signOut } = useAuth();
   const navigate = useNavigate();
   const { unreadMessages, unreadNotifications } = useUnreadCount();
 
@@ -388,7 +388,7 @@ const Dashboard = () => {
         )}
 
         {/* Admin Panel - inline */}
-        {role === "admin" && <AdminSection />}
+        {isAdmin && <AdminSection />}
 
         {/* Browse categories - visible to all */}
         <div className="space-y-3 mb-6">
