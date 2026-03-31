@@ -30,6 +30,11 @@ import NotFound from "./pages/NotFound";
 import PaymentScreen from "./pages/PaymentScreen";
 import ReviewForm from "./pages/ReviewForm";
 import ProviderReviews from "./pages/ProviderReviews";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
+import ReportUser from "./pages/ReportUser";
+import AdminPanel from "./pages/AdminPanel";
+import SessionManagement from "./pages/SessionManagement";
 
 const queryClient = new QueryClient();
 
