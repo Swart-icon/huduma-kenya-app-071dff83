@@ -48,6 +48,12 @@ const App = () => (
             <Route path="/services/:id" element={<ServiceDetailPage />} />
             <Route path="/my-services" element={<MyServices />} />
             <Route path="/services/new" element={<CreateService />} />
+            <Route path="/jobs/new" element={<PostJob />} />
+            <Route path="/my-jobs" element={<MyJobs />} />
+            <Route path="/jobs/:id" element={<JobDetail />} />
+            <Route path="/job-board" element={<JobBoard />} />
+            <Route path="/book/:serviceId" element={<BookService />} />
+            <Route path="/my-bookings" element={<MyBookings />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
