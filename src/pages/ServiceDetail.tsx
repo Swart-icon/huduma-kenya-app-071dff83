@@ -189,6 +189,13 @@ const ServiceDetailPage = () => {
                   <span className={`text-xs font-medium ${provider.availability_status === 'available' ? 'text-primary' : 'text-muted-foreground'}`}>
                     {provider.availability_status === 'available' ? '🟢 Available' : provider.availability_status === 'busy' ? '🟡 Busy' : '🔴 Offline'}
                   </span>
+                  {avgRating !== null && (
+                    <button onClick={() => navigate(`/provider/${service.provider_id}/reviews`)} className="flex items-center gap-1 mt-1">
+                      <Star className="w-3.5 h-3.5 text-accent fill-accent" />
+                      <span className="text-xs font-semibold text-foreground">{avgRating.toFixed(1)}</span>
+                      <span className="text-xs text-muted-foreground">({reviewCount})</span>
+                    </button>
+                  )}
                 </div>
               </div>
 

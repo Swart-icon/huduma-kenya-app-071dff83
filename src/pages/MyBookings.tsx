@@ -163,6 +163,16 @@ const MyBookings = () => {
                         <XCircle className="w-3 h-3 mr-1" /> Cancel
                       </Button>
                     )}
+                    {role === "client" && b.status === "accepted" && !b.has_payment && (
+                      <Button size="sm" className="rounded-xl mt-3 w-full" onClick={() => navigate(`/payment/${b.id}`)}>
+                        <CreditCard className="w-3 h-3 mr-1" /> Pay Now
+                      </Button>
+                    )}
+                    {role === "client" && b.status === "completed" && !b.has_review && (
+                      <Button size="sm" variant="outline" className="rounded-xl mt-3 w-full" onClick={() => navigate(`/review/${b.id}`)}>
+                        <Star className="w-3 h-3 mr-1" /> Leave Review
+                      </Button>
+                    )}
                   </CardContent>
                 </Card>
               );
