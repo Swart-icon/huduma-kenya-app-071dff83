@@ -197,6 +197,18 @@ const ProviderProfilePreview = () => {
             </CardContent>
           </Card>
 
+          {/* Report button - only show if viewing own profile (for demo) or another user's */}
+          {user && (
+            <Button
+              variant="ghost"
+              className="w-full text-muted-foreground mt-4"
+              onClick={() => navigate(`/report/${user.id}`)}
+            >
+              <Flag className="w-4 h-4 mr-2" />
+              Report this provider
+            </Button>
+          )}
+
           <div className="h-8" />
         </div>
       </div>
