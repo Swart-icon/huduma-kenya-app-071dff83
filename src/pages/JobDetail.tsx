@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, MapPin, DollarSign, Clock, Send, CheckCircle, XCircle } from "lucide-react";
+import { ArrowLeft, MapPin, DollarSign, Clock, Send, CheckCircle, XCircle, Bookmark, BookmarkCheck } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 type JobPost = {
@@ -54,6 +54,13 @@ const JobDetail = () => {
   const [submitting, setSubmitting] = useState(false);
   const [hasResponded, setHasResponded] = useState(false);
 
+  // Job seeker application
+  const [coverMessage, setCoverMessage] = useState("");
+  const [applySubmitting, setApplySubmitting] = useState(false);
+  const [hasApplied, setHasApplied] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
+  const [savedId, setSavedId] = useState<string | null>(null);
+
   useEffect(() => {
     if (id) fetchJob();
   }, [id]);
@@ -71,6 +78,20 @@ const JobDetail = () => {
       const { data: existingResponse } = await supabase
         .from("job_responses").select("*").eq("job_post_id", id!).eq("provider_id", user.id).maybeSingle();
       if (existingResponse) setHasResponded(true);
+    }
+
+    // Check if job seeker already applied
+    if (user && role === "job_seeker") {
+      const { data: existingApp } = await supabase
+        .from("job_applications").select("*").eq("job_post_id", id!).eq("applicant_id", user.id).maybeSingle();
+      if (existingApp) setHasApplied(true);
+    }
+
+    // Check if saved
+    if (user) {
+      const { data: saved } = await supabase
+        .from("saved_jobs").select("id").eq("user_id", user.id).eq("job_post_id", id!).maybeSingle();
+      if (saved) { setIsSaved(true); setSavedId(saved.id); }
     }
 
     // If client owns this job, fetch responses
@@ -112,6 +133,41 @@ const JobDetail = () => {
     }
   };
 
+  const handleApply = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user || role !== "job_seeker") return;
+    setApplySubmitting(true);
+    const { error } = await supabase.from("job_applications").insert({
+      job_post_id: id!,
+      applicant_id: user.id,
+      cover_message: coverMessage.trim() || null,
+    });
+    setApplySubmitting(false);
+    if (error) {
+      toast({ title: "Failed to apply", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Application sent! ✅" });
+      setHasApplied(true);
+    }
+  };
+
+  const handleToggleSave = async () => {
+    if (!user) return;
+    if (isSaved && savedId) {
+      await supabase.from("saved_jobs").delete().eq("id", savedId);
+      setIsSaved(false);
+      setSavedId(null);
+      toast({ title: "Removed from saved" });
+    } else {
+      const { data, error } = await supabase.from("saved_jobs").insert({ user_id: user.id, job_post_id: id! }).select("id").single();
+      if (!error && data) {
+        setIsSaved(true);
+        setSavedId(data.id);
+        toast({ title: "Job saved! 🔖" });
+      }
+    }
+  };
+
   const handleAcceptResponse = async (responseId: string, providerId: string) => {
     // Accept the response and close the job
     await supabase.from("job_responses").update({ status: "accepted" }).eq("id", responseId);
@@ -142,11 +198,18 @@ const JobDetail = () => {
 
         {/* Job Header */}
         <div className="mb-6">
-          <div className="flex items-center gap-2 mb-3">
-            <Badge variant="outline" className={job.status === "open" ? "bg-primary/10 text-primary border-primary/20" : "bg-muted text-muted-foreground"}>
-              {job.status}
-            </Badge>
-            {category && <span className="text-sm text-muted-foreground">{category.icon} {category.name}</span>}
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <Badge variant="outline" className={job.status === "open" ? "bg-primary/10 text-primary border-primary/20" : "bg-muted text-muted-foreground"}>
+                {job.status}
+              </Badge>
+              {category && <span className="text-sm text-muted-foreground">{category.name}</span>}
+            </div>
+            {user && !isOwner && (
+              <button onClick={handleToggleSave} className="p-1.5">
+                {isSaved ? <BookmarkCheck className="w-5 h-5 text-primary" /> : <Bookmark className="w-5 h-5 text-muted-foreground" />}
+              </button>
+            )}
           </div>
           <h1 className="font-display text-2xl font-bold text-foreground mb-2">{job.title}</h1>
           {job.description && <p className="text-muted-foreground">{job.description}</p>}
@@ -206,7 +269,37 @@ const JobDetail = () => {
           </Card>
         )}
 
-        {/* Client: View Responses */}
+        {/* Job Seeker Apply Form */}
+        {role === "job_seeker" && job.status === "open" && !isOwner && (
+          <Card className="mb-6">
+            <CardContent className="p-4">
+              {hasApplied ? (
+                <div className="flex items-center gap-3 text-primary">
+                  <CheckCircle className="w-5 h-5" />
+                  <span className="font-semibold">You've applied to this job</span>
+                </div>
+              ) : (
+                <form onSubmit={handleApply} className="space-y-4">
+                  <h3 className="font-semibold text-foreground">Apply for this Job</h3>
+                  <div>
+                    <Label className="text-sm">Cover Message</Label>
+                    <Textarea
+                      value={coverMessage}
+                      onChange={(e) => setCoverMessage(e.target.value)}
+                      placeholder="Why are you interested in this job? Describe your relevant skills..."
+                      className="rounded-xl mt-1.5"
+                      maxLength={1000}
+                    />
+                  </div>
+                  <Button type="submit" disabled={applySubmitting} className="w-full rounded-xl">
+                    <Send className="w-4 h-4 mr-2" />{applySubmitting ? "Applying..." : "Submit Application"}
+                  </Button>
+                </form>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
         {isOwner && responses.length > 0 && (
           <div>
             <h3 className="font-display font-bold text-lg text-foreground mb-4">Responses ({responses.length})</h3>

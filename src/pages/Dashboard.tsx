@@ -348,6 +348,13 @@ const Dashboard = () => {
               Opportunities
             </h3>
             <QuickAction
+              icon={<Briefcase className="w-5 h-5" />}
+              label="Job Seeker Hub"
+              description="Dashboard, applications & profile"
+              onClick={() => navigate("/job-seeker")}
+              accentClass="bg-primary/10 text-primary"
+            />
+            <QuickAction
               icon={<ClipboardList className="w-5 h-5" />}
               label="Job Board"
               description="Browse available jobs"
@@ -358,8 +365,15 @@ const Dashboard = () => {
               icon={<TrendingUp className="w-5 h-5" />}
               label="My Applications"
               description="Track your job applications"
-              onClick={() => navigate("/my-jobs")}
-              accentClass="bg-primary/10 text-primary"
+              onClick={() => navigate("/my-applications")}
+              accentClass="bg-secondary/10 text-secondary"
+            />
+            <QuickAction
+              icon={<Star className="w-5 h-5" />}
+              label="Saved Jobs"
+              description="Your bookmarked jobs"
+              onClick={() => navigate("/saved-jobs")}
+              accentClass="bg-muted text-muted-foreground"
             />
           </div>
         )}
