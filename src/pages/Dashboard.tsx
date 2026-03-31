@@ -307,6 +307,9 @@ const Dashboard = () => {
           </div>
         </Card>
 
+        {/* Role Switcher */}
+        <RoleSwitcher />
+
         {/* Provider-specific actions */}
         {role === "provider" && (
           <div className="space-y-3 mb-6">
