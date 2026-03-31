@@ -53,9 +53,9 @@ const Register = () => {
       toast({ title: "Please fill all fields", description: "Password must be at least 6 characters", variant: "destructive" });
       return;
     }
-    setLoading(true);
+    setSubmitting(true);
     const { error } = await signUp(email, password, fullName);
-    setLoading(false);
+    setSubmitting(false);
     if (error) {
       toast({ title: "Registration failed", description: error.message, variant: "destructive" });
     } else {
@@ -65,9 +65,9 @@ const Register = () => {
 
   const handleRoleSelect = async () => {
     if (!selectedRole) return;
-    setLoading(true);
+    setSubmitting(true);
     const { error } = await setUserRole(selectedRole);
-    setLoading(false);
+    setSubmitting(false);
     if (error) {
       toast({ title: "Failed to set role", description: error.message, variant: "destructive" });
     } else {
@@ -77,14 +77,14 @@ const Register = () => {
   };
 
   const handleGoogleSignIn = async () => {
-    setLoading(true);
+    setSubmitting(true);
     const result = await lovable.auth.signInWithOAuth("google", {
       redirect_uri: window.location.origin,
     });
     if (result.error) {
       toast({ title: "Google sign-in failed", description: String(result.error), variant: "destructive" });
     }
-    setLoading(false);
+    setSubmitting(false);
   };
 
   if (step === "role") {
