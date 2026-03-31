@@ -211,23 +211,8 @@ const Dashboard = () => {
           </div>
         )}
 
-        {/* Admin actions */}
-        {role === "admin" && (
-          <div className="space-y-3 mb-6">
-            <h3 className="font-display font-bold text-lg text-foreground">Admin Tools</h3>
-            <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate("/admin")}>
-              <CardContent className="flex items-center gap-4 p-4">
-                <div className="w-10 h-10 rounded-lg bg-destructive/10 flex items-center justify-center shrink-0">
-                  <Shield className="w-5 h-5 text-destructive" />
-                </div>
-                <div className="flex-1">
-                  <span className="text-sm font-medium text-foreground">Admin Panel</span>
-                  <p className="text-xs text-muted-foreground">Manage reports & suspensions</p>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        )}
+        {/* Admin Panel - inline */}
+        {role === "admin" && <AdminSection />}
 
         {/* Browse categories - visible to all */}
         <div className="space-y-3 mb-6">
