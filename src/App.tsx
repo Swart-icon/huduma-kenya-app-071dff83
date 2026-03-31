@@ -23,6 +23,9 @@ import JobDetail from "./pages/JobDetail";
 import JobBoard from "./pages/JobBoard";
 import BookService from "./pages/BookService";
 import MyBookings from "./pages/MyBookings";
+import Conversations from "./pages/Conversations";
+import Chat from "./pages/Chat";
+import Notifications from "./pages/Notifications";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
