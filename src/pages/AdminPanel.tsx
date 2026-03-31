@@ -501,7 +501,7 @@ const AdminPanel = () => {
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="analytics"><AnalyticsTab /></TabsContent>
+            <TabsContent value="analytics"><AnalyticsDashboard /></TabsContent>
             <TabsContent value="users"><UsersTab /></TabsContent>
             <TabsContent value="services"><ServicesTab /></TabsContent>
             <TabsContent value="reports"><ReportsTab /></TabsContent>
