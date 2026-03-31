@@ -107,6 +107,14 @@ const Register = () => {
     );
   }
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <p className="text-muted-foreground">Loading...</p>
+      </div>
+    );
+  }
+
   if (step === "role") {
     return (
       <div className="min-h-screen bg-background px-6 py-8">
