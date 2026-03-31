@@ -462,15 +462,26 @@ const Dashboard = () => {
         {/* Admin Panel - inline */}
         {isAdmin && <AdminSection />}
 
-        {/* Browse categories - visible to all */}
+        {/* Browse & Search - visible to all */}
         <div className="space-y-3 mb-6">
+          <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate("/search")}>
+            <CardContent className="flex items-center gap-4 p-4">
+              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                <Search className="w-5 h-5 text-primary" />
+              </div>
+              <div className="flex-1">
+                <span className="text-sm font-medium text-foreground">Search Services</span>
+                <p className="text-xs text-muted-foreground">Find services with filters & sorting</p>
+              </div>
+            </CardContent>
+          </Card>
           <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate("/categories")}>
             <CardContent className="flex items-center gap-4 p-4">
               <div className="w-10 h-10 rounded-lg bg-secondary/10 flex items-center justify-center shrink-0">
                 <Grid className="w-5 h-5 text-secondary" />
               </div>
               <div className="flex-1">
-                <span className="text-sm font-medium text-foreground">Browse Services</span>
+                <span className="text-sm font-medium text-foreground">Browse Categories</span>
                 <p className="text-xs text-muted-foreground">Explore by category</p>
               </div>
             </CardContent>

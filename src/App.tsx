@@ -34,6 +34,7 @@ import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import ReportUser from "./pages/ReportUser";
 import SessionManagement from "./pages/SessionManagement";
+import SearchServices from "./pages/SearchServices";
 
 const queryClient = new QueryClient();
 
@@ -53,6 +54,7 @@ const App = () => (
             <Route path="/profile" element={<Profile />} />
             <Route path="/provider-profile/edit" element={<ProviderProfileEdit />} />
             <Route path="/provider-profile/preview" element={<ProviderProfilePreview />} />
+            <Route path="/search" element={<SearchServices />} />
             <Route path="/categories" element={<Categories />} />
             <Route path="/categories/:slug" element={<CategoryServices />} />
             <Route path="/services/:id" element={<ServiceDetailPage />} />
