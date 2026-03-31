@@ -6,13 +6,13 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { useAuth } from "@/contexts/AuthContext";
 import { lovable } from "@/integrations/lovable";
-import { ArrowLeft, Briefcase, Search, UserCheck, Eye, EyeOff, Mail } from "lucide-react";
+import { ArrowLeft, Briefcase, Search, UserCheck, Eye, EyeOff, Mail, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import type { AppRole } from "@/contexts/AuthContext";
 
-type AppRole = "provider" | "job_seeker" | "client";
 type Step = "credentials" | "verify_email" | "role";
 
-const roles: { value: AppRole; label: string; description: string; icon: React.ReactNode }[] = [
+const roleOptions: { value: AppRole; label: string; description: string; icon: React.ReactNode }[] = [
   { value: "provider", label: "Service Provider", description: "Offer your skills & services", icon: <Briefcase className="w-7 h-7" /> },
   { value: "job_seeker", label: "Job Seeker", description: "Find jobs & upload your CV", icon: <Search className="w-7 h-7" /> },
   { value: "client", label: "Client", description: "Post jobs & book services", icon: <UserCheck className="w-7 h-7" /> },
@@ -20,24 +20,24 @@ const roles: { value: AppRole; label: string; description: string; icon: React.R
 
 const Register = () => {
   const navigate = useNavigate();
-  const { user, role, loading, signUp, setUserRole } = useAuth();
+  const { user, role, roles, loading, signUp, setUserRoles } = useAuth();
   const { toast } = useToast();
   const [step, setStep] = useState<Step>("credentials");
 
-  // When user is authenticated (e.g. after Google sign-in) but has no role, show role selection
   useEffect(() => {
-    if (!loading && user && !role) {
+    if (!loading && user && roles.filter((r) => r !== "admin").length === 0) {
       setStep("role");
     }
-    if (!loading && user && role) {
+    if (!loading && user && roles.filter((r) => r !== "admin").length > 0) {
       navigate("/dashboard");
     }
-  }, [loading, user, role, navigate]);
+  }, [loading, user, roles, navigate]);
+
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [selectedRole, setSelectedRole] = useState<AppRole | null>(null);
+  const [selectedRoles, setSelectedRoles] = useState<AppRole[]>([]);
   const [submitting, setSubmitting] = useState(false);
 
   const passwordStrength = (() => {
@@ -46,6 +46,14 @@ const Register = () => {
     if (/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(password)) return { level: 3, label: "Strong", color: "bg-primary" };
     return { level: 2, label: "Medium", color: "bg-accent" };
   })();
+
+  const toggleRole = (roleValue: AppRole) => {
+    setSelectedRoles((prev) =>
+      prev.includes(roleValue)
+        ? prev.filter((r) => r !== roleValue)
+        : [...prev, roleValue]
+    );
+  };
 
   const handleCredentialsSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -64,14 +72,15 @@ const Register = () => {
   };
 
   const handleRoleSelect = async () => {
-    if (!selectedRole) return;
+    if (selectedRoles.length === 0) return;
     setSubmitting(true);
-    const { error } = await setUserRole(selectedRole);
+    const { error } = await setUserRoles(selectedRoles);
     setSubmitting(false);
     if (error) {
       toast({ title: "Failed to set role", description: error.message, variant: "destructive" });
     } else {
-      toast({ title: "Welcome to Huduma! 🎉", description: `You're registered as a ${roles.find(r => r.value === selectedRole)?.label}` });
+      const labels = selectedRoles.map((r) => roleOptions.find((o) => o.value === r)?.label).filter(Boolean);
+      toast({ title: "Welcome to Huduma! 🎉", description: `You're registered as: ${labels.join(", ")}` });
       navigate("/dashboard");
     }
   };
@@ -98,7 +107,7 @@ const Register = () => {
           <p className="text-muted-foreground mb-6">
             We've sent a verification link to <strong className="text-foreground">{email}</strong>. Please confirm your email to continue.
           </p>
-          <p className="text-sm text-muted-foreground mb-8">After verifying, come back and sign in to choose your role.</p>
+          <p className="text-sm text-muted-foreground mb-8">After verifying, come back and sign in to choose your roles.</p>
           <Button onClick={() => navigate("/login")} className="w-full h-14 text-lg font-bold rounded-xl" size="lg">
             Go to Sign In
           </Button>
@@ -110,7 +119,7 @@ const Register = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <p className="text-muted-foreground">Loading...</p>
+        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -123,36 +132,49 @@ const Register = () => {
             <ArrowLeft className="w-5 h-5" />
             <span>Back</span>
           </button>
-          <h1 className="font-display text-2xl font-bold text-foreground mb-2">Choose your role</h1>
-          <p className="text-muted-foreground mb-8">How will you use Huduma?</p>
+          <h1 className="font-display text-2xl font-bold text-foreground mb-2">Choose your roles</h1>
+          <p className="text-muted-foreground mb-8">Select one or more — you can switch anytime</p>
           <div className="space-y-4 mb-8">
-            {roles.map((r) => (
-              <Card
-                key={r.value}
-                className={`cursor-pointer transition-all duration-200 ${
-                  selectedRole === r.value
-                    ? "ring-2 ring-primary border-primary shadow-lg"
-                    : "hover:border-primary/50"
-                }`}
-                onClick={() => setSelectedRole(r.value)}
-              >
-                <CardContent className="flex items-center gap-4 p-5">
-                  <div className={`w-14 h-14 rounded-xl flex items-center justify-center shrink-0 ${
-                    selectedRole === r.value ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
-                  }`}>
-                    {r.icon}
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-foreground">{r.label}</h3>
-                    <p className="text-sm text-muted-foreground">{r.description}</p>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+            {roleOptions.map((r) => {
+              const isSelected = selectedRoles.includes(r.value);
+              return (
+                <Card
+                  key={r.value}
+                  className={`cursor-pointer transition-all duration-200 ${
+                    isSelected
+                      ? "ring-2 ring-primary border-primary shadow-lg"
+                      : "hover:border-primary/50"
+                  }`}
+                  onClick={() => toggleRole(r.value)}
+                >
+                  <CardContent className="flex items-center gap-4 p-5">
+                    <div className={`w-14 h-14 rounded-xl flex items-center justify-center shrink-0 ${
+                      isSelected ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+                    }`}>
+                      {r.icon}
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-foreground">{r.label}</h3>
+                      <p className="text-sm text-muted-foreground">{r.description}</p>
+                    </div>
+                    {isSelected && (
+                      <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center shrink-0">
+                        <Check className="w-4 h-4 text-primary-foreground" />
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
+          {selectedRoles.length > 0 && (
+            <p className="text-sm text-muted-foreground text-center mb-4">
+              {selectedRoles.length} role{selectedRoles.length > 1 ? "s" : ""} selected
+            </p>
+          )}
           <Button
             onClick={handleRoleSelect}
-            disabled={!selectedRole || submitting}
+            disabled={selectedRoles.length === 0 || submitting}
             className="w-full h-14 text-lg font-bold rounded-xl"
             size="lg"
           >
