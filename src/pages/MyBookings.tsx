@@ -63,10 +63,21 @@ const MyBookings = () => {
     const nameMap: Record<string, string> = {};
     (profiles || []).forEach((p: { user_id: string; full_name: string | null }) => { nameMap[p.user_id] = p.full_name || "User"; });
 
+    // Fetch existing payments & reviews for these bookings
+    const bookingIds = bookingsData.map(b => b.id);
+    const [payRes, revRes] = await Promise.all([
+      supabase.from("payments").select("booking_id").in("booking_id", bookingIds),
+      supabase.from("reviews").select("booking_id").in("booking_id", bookingIds),
+    ]);
+    const paidSet = new Set((payRes.data || []).map((p: { booking_id: string }) => p.booking_id));
+    const reviewedSet = new Set((revRes.data || []).map((r: { booking_id: string }) => r.booking_id));
+
     setBookings(bookingsData.map(b => ({
       ...b,
       service_title: serviceMap[b.service_id] || "Service",
       other_name: nameMap[isProvider ? b.client_id : b.provider_id] || "User",
+      has_payment: paidSet.has(b.id),
+      has_review: reviewedSet.has(b.id),
     })));
     setLoading(false);
   };
