@@ -1,20 +1,27 @@
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth, type AppRole } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowLeft, LogOut, User, MapPin, Phone } from "lucide-react";
+import { ArrowLeft, LogOut, User, MapPin, Phone, Briefcase, Search, UserCheck, Plus, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
+const roleOptions: { value: AppRole; label: string; icon: React.ReactNode }[] = [
+  { value: "provider", label: "Service Provider", icon: <Briefcase className="w-4 h-4" /> },
+  { value: "job_seeker", label: "Job Seeker", icon: <Search className="w-4 h-4" /> },
+  { value: "client", label: "Client", icon: <UserCheck className="w-4 h-4" /> },
+];
+
 const Profile = () => {
-  const { user, role, loading, signOut } = useAuth();
+  const { user, role, roles, loading, signOut, addRole, removeRole } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [profile, setProfile] = useState({ full_name: "", phone: "", location: "" });
   const [saving, setSaving] = useState(false);
+  const [roleLoading, setRoleLoading] = useState<string | null>(null);
 
   useEffect(() => {
     if (!loading && !user) navigate("/welcome");
@@ -48,9 +55,32 @@ const Profile = () => {
     navigate("/welcome");
   };
 
+  const handleAddRole = async (r: AppRole) => {
+    setRoleLoading(r);
+    const { error } = await addRole(r);
+    setRoleLoading(null);
+    if (error) {
+      toast({ title: "Failed to add role", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: `Added ${roleOptions.find((o) => o.value === r)?.label} role ✅` });
+    }
+  };
+
+  const handleRemoveRole = async (r: AppRole) => {
+    setRoleLoading(r);
+    const { error } = await removeRole(r);
+    setRoleLoading(null);
+    if (error) {
+      toast({ title: "Cannot remove role", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: `Removed ${roleOptions.find((o) => o.value === r)?.label} role` });
+    }
+  };
+
   if (loading) return null;
 
-  const roleLabel = role === "provider" ? "Service Provider" : role === "job_seeker" ? "Job Seeker" : "Client";
+  const nonAdminRoles = roles.filter((r) => r !== "admin");
+  const activeRoleLabel = roleOptions.find((r) => r.value === role)?.label || "User";
 
   return (
     <div className="min-h-screen bg-background px-6 py-8">
@@ -71,10 +101,60 @@ const Profile = () => {
               <div>
                 <p className="font-semibold text-foreground">{profile.full_name || "No name set"}</p>
                 <p className="text-sm text-muted-foreground">{user?.email}</p>
-                <span className="inline-block mt-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-primary/10 text-primary">
-                  {roleLabel}
-                </span>
+                <div className="flex flex-wrap gap-1 mt-1">
+                  {nonAdminRoles.map((r) => (
+                    <span key={r} className={`inline-block text-xs font-semibold px-2 py-0.5 rounded-full ${
+                      r === role ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
+                    }`}>
+                      {roleOptions.find((o) => o.value === r)?.label}
+                    </span>
+                  ))}
+                </div>
               </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Role Management */}
+        <Card className="mb-6">
+          <CardContent className="p-5">
+            <h3 className="font-semibold text-foreground mb-3">Manage Roles</h3>
+            <div className="space-y-2">
+              {roleOptions.map((opt) => {
+                const hasRole = nonAdminRoles.includes(opt.value);
+                const isOnlyRole = hasRole && nonAdminRoles.length === 1;
+                const isLoading = roleLoading === opt.value;
+
+                return (
+                  <div key={opt.value} className="flex items-center justify-between py-2">
+                    <div className="flex items-center gap-2">
+                      {opt.icon}
+                      <span className="text-sm font-medium text-foreground">{opt.label}</span>
+                    </div>
+                    {hasRole ? (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="text-xs h-8 text-destructive"
+                        disabled={isOnlyRole || isLoading}
+                        onClick={() => handleRemoveRole(opt.value)}
+                      >
+                        {isLoading ? "..." : <><X className="w-3 h-3 mr-1" />Remove</>}
+                      </Button>
+                    ) : (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="text-xs h-8"
+                        disabled={isLoading}
+                        onClick={() => handleAddRole(opt.value)}
+                      >
+                        {isLoading ? "..." : <><Plus className="w-3 h-3 mr-1" />Add</>}
+                      </Button>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </CardContent>
         </Card>

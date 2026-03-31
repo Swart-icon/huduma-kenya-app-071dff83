@@ -19,13 +19,14 @@ const Login = () => {
 
   useEffect(() => {
     if (!authLoading && user) {
-      if (role) {
+      const hasNonAdminRole = roles.filter((r) => r !== "admin").length > 0;
+      if (hasNonAdminRole) {
         navigate("/dashboard");
       } else {
         navigate("/register"); // needs role selection
       }
     }
-  }, [authLoading, user, role, navigate]);
+  }, [authLoading, user, roles, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
