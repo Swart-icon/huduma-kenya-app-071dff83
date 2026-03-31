@@ -106,6 +106,10 @@ const App = () => (
             <Route path="/jobs/new" element={<PostJob />} />
             <Route path="/my-jobs" element={<MyJobs />} />
             <Route path="/jobs/:id" element={<JobDetail />} />
+            <Route path="/job-seeker" element={<JobSeekerDashboard />} />
+            <Route path="/job-seeker-profile" element={<JobSeekerProfile />} />
+            <Route path="/my-applications" element={<MyApplications />} />
+            <Route path="/saved-jobs" element={<SavedJobs />} />
             <Route path="/job-board" element={<JobBoard />} />
             <Route path="/book/:serviceId" element={<BookService />} />
             <Route path="/my-bookings" element={<MyBookings />} />
