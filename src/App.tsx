@@ -71,6 +71,11 @@ const App = () => (
             <Route path="/payment/:bookingId" element={<PaymentScreen />} />
             <Route path="/review/:bookingId" element={<ReviewForm />} />
             <Route path="/provider/:providerId/reviews" element={<ProviderReviews />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/report/:userId" element={<ReportUser />} />
+            <Route path="/admin" element={<AdminPanel />} />
+            <Route path="/security" element={<SessionManagement />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
