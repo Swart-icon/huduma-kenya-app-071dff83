@@ -219,7 +219,7 @@ const AdminSection = () => {
 };
 
 const Dashboard = () => {
-  const { user, role, loading, isSuspended, signOut } = useAuth();
+  const { user, role, loading, isAdmin, isSuspended, signOut } = useAuth();
   const navigate = useNavigate();
   const { unreadMessages, unreadNotifications } = useUnreadCount();
 
