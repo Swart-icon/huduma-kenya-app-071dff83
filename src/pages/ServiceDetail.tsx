@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowLeft, MapPin, Phone, Mail, User, Tag, Calendar, MessageCircle } from "lucide-react";
+import { ArrowLeft, MapPin, Phone, Mail, User, Tag, Calendar, MessageCircle, Star } from "lucide-react";
 import { getOrCreateConversation } from "@/lib/conversations";
 
 type ServiceDetail = {
@@ -80,6 +80,8 @@ const ServiceDetailPage = () => {
   const [provider, setProvider] = useState<ProviderInfo | null>(null);
   const [category, setCategory] = useState<CategoryInfo | null>(null);
   const [loading, setLoading] = useState(true);
+  const [avgRating, setAvgRating] = useState<number | null>(null);
+  const [reviewCount, setReviewCount] = useState(0);
 
   useEffect(() => {
     const fetch = async () => {
@@ -92,14 +94,20 @@ const ServiceDetailPage = () => {
       if (!svc) { setLoading(false); return; }
       setService(svc);
 
-      // Fetch provider and category in parallel
-      const [provRes, catRes] = await Promise.all([
+      const [provRes, catRes, revRes] = await Promise.all([
         supabase.from("provider_profiles").select("business_name, profile_image_url, contact_phone, contact_email, availability_status").eq("user_id", svc.provider_id).maybeSingle(),
         supabase.from("service_categories").select("name, icon").eq("id", svc.category_id).maybeSingle(),
+        supabase.from("reviews").select("rating").eq("provider_id", svc.provider_id),
       ]);
 
       setProvider(provRes.data);
       setCategory(catRes.data);
+      
+      const reviews = revRes.data || [];
+      if (reviews.length > 0) {
+        setAvgRating(reviews.reduce((s, r) => s + r.rating, 0) / reviews.length);
+        setReviewCount(reviews.length);
+      }
       setLoading(false);
     };
     fetch();
@@ -181,6 +189,13 @@ const ServiceDetailPage = () => {
                   <span className={`text-xs font-medium ${provider.availability_status === 'available' ? 'text-primary' : 'text-muted-foreground'}`}>
                     {provider.availability_status === 'available' ? '🟢 Available' : provider.availability_status === 'busy' ? '🟡 Busy' : '🔴 Offline'}
                   </span>
+                  {avgRating !== null && (
+                    <button onClick={() => navigate(`/provider/${service.provider_id}/reviews`)} className="flex items-center gap-1 mt-1">
+                      <Star className="w-3.5 h-3.5 text-accent fill-accent" />
+                      <span className="text-xs font-semibold text-foreground">{avgRating.toFixed(1)}</span>
+                      <span className="text-xs text-muted-foreground">({reviewCount})</span>
+                    </button>
+                  )}
                 </div>
               </div>
 

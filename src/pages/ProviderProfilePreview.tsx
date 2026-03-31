@@ -4,7 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowLeft, MapPin, Phone, Mail, Edit, Briefcase } from "lucide-react";
+import { ArrowLeft, MapPin, Phone, Mail, Edit, Briefcase, Star } from "lucide-react";
 
 type ProviderProfile = {
   business_name: string;
@@ -28,6 +28,8 @@ const ProviderProfilePreview = () => {
   const navigate = useNavigate();
   const [profile, setProfile] = useState<ProviderProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [avgRating, setAvgRating] = useState<number | null>(null);
+  const [reviewCount, setReviewCount] = useState(0);
 
   useEffect(() => {
     if (!authLoading && (!user || role !== "provider")) {
@@ -38,12 +40,16 @@ const ProviderProfilePreview = () => {
   }, [authLoading, user, role]);
 
   const fetchProfile = async () => {
-    const { data } = await supabase
-      .from("provider_profiles")
-      .select("*")
-      .eq("user_id", user!.id)
-      .maybeSingle();
-    setProfile(data);
+    const [profRes, revRes] = await Promise.all([
+      supabase.from("provider_profiles").select("*").eq("user_id", user!.id).maybeSingle(),
+      supabase.from("reviews").select("rating").eq("provider_id", user!.id),
+    ]);
+    setProfile(profRes.data);
+    const reviews = revRes.data || [];
+    if (reviews.length > 0) {
+      setAvgRating(reviews.reduce((s, r) => s + r.rating, 0) / reviews.length);
+      setReviewCount(reviews.length);
+    }
     setLoading(false);
   };
 
@@ -165,12 +171,29 @@ const ProviderProfilePreview = () => {
             )}
           </div>
 
-          {/* Services placeholder */}
-          <Card className="mt-6 border-dashed">
+          {/* Reviews section */}
+          <Card className="mt-6">
             <CardContent className="p-6 text-center">
-              <Briefcase className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
-              <p className="text-sm font-medium text-muted-foreground">Services coming soon</p>
-              <p className="text-xs text-muted-foreground mt-1">You'll be able to list your services here</p>
+              <Star className="w-8 h-8 text-accent mx-auto mb-2" />
+              {avgRating !== null ? (
+                <>
+                  <p className="text-2xl font-bold text-foreground">{avgRating.toFixed(1)}</p>
+                  <div className="flex justify-center gap-1 my-1">
+                    {[1, 2, 3, 4, 5].map(s => (
+                      <Star key={s} className={`w-4 h-4 ${s <= Math.round(avgRating) ? "text-accent fill-accent" : "text-muted-foreground"}`} />
+                    ))}
+                  </div>
+                  <p className="text-sm text-muted-foreground">{reviewCount} review{reviewCount !== 1 ? "s" : ""}</p>
+                  <Button variant="link" onClick={() => navigate(`/provider/${user!.id}/reviews`)} className="mt-2">
+                    View all reviews
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <p className="text-sm font-medium text-muted-foreground">No reviews yet</p>
+                  <p className="text-xs text-muted-foreground mt-1">Reviews will appear here after completed jobs</p>
+                </>
+              )}
             </CardContent>
           </Card>
 

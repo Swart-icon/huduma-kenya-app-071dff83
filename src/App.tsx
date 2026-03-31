@@ -27,6 +27,9 @@ import Conversations from "./pages/Conversations";
 import Chat from "./pages/Chat";
 import Notifications from "./pages/Notifications";
 import NotFound from "./pages/NotFound";
+import PaymentScreen from "./pages/PaymentScreen";
+import ReviewForm from "./pages/ReviewForm";
+import ProviderReviews from "./pages/ProviderReviews";
 
 const queryClient = new QueryClient();
 
@@ -60,6 +63,9 @@ const App = () => (
             <Route path="/conversations" element={<Conversations />} />
             <Route path="/chat/:conversationId" element={<Chat />} />
             <Route path="/notifications" element={<Notifications />} />
+            <Route path="/payment/:bookingId" element={<PaymentScreen />} />
+            <Route path="/review/:bookingId" element={<ReviewForm />} />
+            <Route path="/provider/:providerId/reviews" element={<ProviderReviews />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
