@@ -10,7 +10,7 @@ import { ArrowLeft, Briefcase, Search, UserCheck, Eye, EyeOff, Mail } from "luci
 import { useToast } from "@/hooks/use-toast";
 
 type AppRole = "provider" | "job_seeker" | "client";
-type Step = "credentials" | "role";
+type Step = "credentials" | "verify_email" | "role";
 
 const roles: { value: AppRole; label: string; description: string; icon: React.ReactNode }[] = [
   { value: "provider", label: "Service Provider", description: "Offer your skills & services", icon: <Briefcase className="w-7 h-7" /> },
