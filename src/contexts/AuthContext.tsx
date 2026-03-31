@@ -97,7 +97,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (!user) return { error: new Error("Not authenticated") };
     const { error } = await supabase
       .from("user_roles")
-      .insert({ user_id: user.id, role: selectedRole });
+      .upsert({ user_id: user.id, role: selectedRole }, { onConflict: "user_id,role" });
     if (!error) setRole(selectedRole);
     return { error: error ? new Error(error.message) : null };
   };
