@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Briefcase, Search, UserCheck, LogOut, User, Shield } from "lucide-react";
+import { Briefcase, Search, UserCheck, LogOut, User, Shield, List, Grid } from "lucide-react";
 
 const roleConfig = {
   provider: {
@@ -103,8 +103,34 @@ const Dashboard = () => {
                 </div>
               </CardContent>
             </Card>
+            <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate("/my-services")}>
+              <CardContent className="flex items-center gap-4 p-4">
+                <div className="w-10 h-10 rounded-lg bg-accent/20 flex items-center justify-center shrink-0">
+                  <List className="w-5 h-5 text-accent-foreground" />
+                </div>
+                <div className="flex-1">
+                  <span className="text-sm font-medium text-foreground">My Services</span>
+                  <p className="text-xs text-muted-foreground">Manage your service listings</p>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         )}
+
+        {/* Browse categories - visible to all */}
+        <div className="mb-6">
+          <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate("/categories")}>
+            <CardContent className="flex items-center gap-4 p-4">
+              <div className="w-10 h-10 rounded-lg bg-secondary/10 flex items-center justify-center shrink-0">
+                <Grid className="w-5 h-5 text-secondary" />
+              </div>
+              <div className="flex-1">
+                <span className="text-sm font-medium text-foreground">Browse Services</span>
+                <p className="text-xs text-muted-foreground">Explore by category</p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
 
         {/* Features */}
         <h3 className="font-display font-bold text-lg text-foreground mb-4">What you can do</h3>
