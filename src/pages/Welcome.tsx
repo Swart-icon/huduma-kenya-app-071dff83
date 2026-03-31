@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useCategories } from "@/hooks/useCategories";
 import { CategoryGridSkeleton, ProviderCardSkeleton } from "@/components/Skeletons";
+import { InstallBanner } from "@/components/InstallBanner";
 import {
   Search,
   Shield,
