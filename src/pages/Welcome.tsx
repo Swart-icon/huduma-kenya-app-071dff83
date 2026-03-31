@@ -190,22 +190,26 @@ const Welcome = () => {
                 View all <ChevronRight className="w-3 h-3" />
               </button>
             </div>
-            <div className="grid grid-cols-4 gap-3">
-              {categories.slice(0, 8).map((cat) => (
-                <button
-                  key={cat.id}
-                  onClick={() => navigate(`/categories/${cat.slug}`)}
-                  className="flex flex-col items-center gap-1.5 p-2 rounded-xl hover:bg-muted transition-colors active:scale-95"
-                >
-                  <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center">
-                    {getCategoryIcon(cat.slug)}
-                  </div>
-                  <span className="text-[11px] font-semibold text-foreground text-center leading-tight line-clamp-2">
-                    {cat.name}
-                  </span>
-                </button>
-              ))}
-            </div>
+            {categoriesLoading ? (
+              <CategoryGridSkeleton />
+            ) : (
+              <div className="grid grid-cols-4 gap-3">
+                {categories.slice(0, 8).map((cat) => (
+                  <button
+                    key={cat.id}
+                    onClick={() => navigate(`/categories/${cat.slug}`)}
+                    className="flex flex-col items-center gap-1.5 p-2 rounded-xl hover:bg-muted transition-colors active:scale-95"
+                  >
+                    <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center">
+                      {getCategoryIcon(cat.slug)}
+                    </div>
+                    <span className="text-[11px] font-semibold text-foreground text-center leading-tight line-clamp-2">
+                      {cat.name}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
       </section>

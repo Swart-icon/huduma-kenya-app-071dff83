@@ -1,47 +1,20 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ArrowLeft, Search } from "lucide-react";
 import { getCategoryIcon } from "@/lib/categoryIcons";
-
-type Category = {
-  id: string;
-  name: string;
-  slug: string;
-  icon: string | null;
-  sort_order: number;
-};
+import { useCategories } from "@/hooks/useCategories";
+import { CategoryGridSkeleton } from "@/components/Skeletons";
 
 const Categories = () => {
   const navigate = useNavigate();
-  const [categories, setCategories] = useState<Category[]>([]);
+  const { data: categories = [], isLoading } = useCategories();
   const [search, setSearch] = useState("");
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    supabase
-      .from("service_categories")
-      .select("*")
-      .order("sort_order")
-      .then(({ data }) => {
-        setCategories(data || []);
-        setLoading(false);
-      });
-  }, []);
 
   const filtered = categories.filter((c) =>
     c.name.toLowerCase().includes(search.toLowerCase())
   );
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-background px-6 py-6">
@@ -64,22 +37,26 @@ const Categories = () => {
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
-          {filtered.map((cat) => (
-            <Card
-              key={cat.id}
-              className="cursor-pointer hover:shadow-md transition-shadow active:scale-[0.98]"
-              onClick={() => navigate(`/categories/${cat.slug}`)}
-            >
-              <CardContent className="p-4 text-center">
-                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center mb-2">{getCategoryIcon(cat.slug)}</div>
-                <p className="text-sm font-semibold text-foreground leading-tight">{cat.name}</p>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        {isLoading ? (
+          <CategoryGridSkeleton count={12} />
+        ) : (
+          <div className="grid grid-cols-2 gap-3">
+            {filtered.map((cat) => (
+              <Card
+                key={cat.id}
+                className="cursor-pointer hover:shadow-md transition-shadow active:scale-[0.98]"
+                onClick={() => navigate(`/categories/${cat.slug}`)}
+              >
+                <CardContent className="p-4 text-center">
+                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center mb-2 mx-auto">{getCategoryIcon(cat.slug)}</div>
+                  <p className="text-sm font-semibold text-foreground leading-tight">{cat.name}</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
 
-        {filtered.length === 0 && (
+        {!isLoading && filtered.length === 0 && (
           <p className="text-center text-muted-foreground mt-8">No categories found</p>
         )}
       </div>
