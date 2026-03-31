@@ -111,6 +111,7 @@ const Welcome = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <InstallBanner />
       {/* Hero Section */}
       <section className="relative min-h-[480px] flex flex-col justify-end overflow-hidden">
         <img
