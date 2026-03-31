@@ -1,10 +1,15 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
-import { Briefcase, Search, UserCheck, LogOut, User, Shield, List, Grid, FileText, Calendar, ClipboardList, MessageCircle, Bell } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { supabase } from "@/integrations/supabase/client";
+import { Briefcase, Search, UserCheck, LogOut, User, Shield, List, Grid, FileText, Calendar, ClipboardList, MessageCircle, Bell, Ban, Clock, UserPlus, Trash2 } from "lucide-react";
 import { useUnreadCount } from "@/hooks/useUnreadCount";
+import { useToast } from "@/hooks/use-toast";
 
 const roleConfig: Record<string, { title: string; subtitle: string; icon: React.ReactNode; color: string; features: string[] }> = {
   provider: {
