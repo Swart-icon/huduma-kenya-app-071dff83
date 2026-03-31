@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Briefcase, Search, UserCheck, LogOut, User, Shield, List, Grid, FileText, Calendar, ClipboardList, MessageCircle, Bell } from "lucide-react";
 import { useUnreadCount } from "@/hooks/useUnreadCount";
 
-const roleConfig = {
+const roleConfig: Record<string, { title: string; subtitle: string; icon: React.ReactNode; color: string; features: string[] }> = {
   provider: {
     title: "Service Provider",
     subtitle: "Manage your services & bookings",
@@ -27,6 +27,13 @@ const roleConfig = {
     icon: <UserCheck className="w-6 h-6" />,
     color: "bg-secondary text-secondary-foreground",
     features: ["Post job listings", "Book services", "Manage orders", "Review providers"],
+  },
+  admin: {
+    title: "Administrator",
+    subtitle: "Manage users & platform",
+    icon: <Shield className="w-6 h-6" />,
+    color: "bg-destructive text-destructive-foreground",
+    features: ["Review user reports", "Manage suspensions", "Monitor login activity", "Platform security"],
   },
 };
 
