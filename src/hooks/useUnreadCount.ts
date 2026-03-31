@@ -25,6 +25,8 @@ export const useUnreadCount = () => {
         .eq("read", false)
         .neq("sender_id", user.id);
       setUnreadMessages(count || 0);
+    } else {
+      setUnreadMessages(0);
     }
 
     const { count: notifCount } = await supabase
