@@ -3,13 +3,14 @@ import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 
-type AppRole = "provider" | "job_seeker" | "client";
+type AppRole = "provider" | "job_seeker" | "client" | "admin";
 
 interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
   role: AppRole | null;
+  isSuspended: boolean;
   signUp: (email: string, password: string, fullName: string) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
@@ -23,7 +24,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [role, setRole] = useState<AppRole | null>(null);
+  const [isSuspended, setIsSuspended] = useState(false);
 
+  const checkSuspension = async (userId: string) => {
+    const { data } = await supabase.rpc("is_user_suspended", { _user_id: userId });
+    setIsSuspended(!!data);
+  };
   const fetchRole = async (userId: string) => {
     const { data } = await supabase
       .from("user_roles")
@@ -39,9 +45,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setSession(session);
         setUser(session?.user ?? null);
         if (session?.user) {
-          setTimeout(() => fetchRole(session.user.id), 0);
+          setTimeout(() => {
+            fetchRole(session.user.id);
+            checkSuspension(session.user.id);
+          }, 0);
         } else {
           setRole(null);
+          setIsSuspended(false);
         }
         setLoading(false);
       }
@@ -52,6 +62,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(session?.user ?? null);
       if (session?.user) {
         fetchRole(session.user.id);
+        checkSuspension(session.user.id);
       }
       setLoading(false);
     });
@@ -79,6 +90,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signOut = async () => {
     await supabase.auth.signOut();
     setRole(null);
+    setIsSuspended(false);
   };
 
   const setUserRole = async (selectedRole: AppRole) => {
@@ -91,7 +103,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, role, signUp, signIn, signOut, setUserRole }}>
+    <AuthContext.Provider value={{ user, session, loading, role, isSuspended, signUp, signIn, signOut, setUserRole }}>
       {children}
     </AuthContext.Provider>
   );

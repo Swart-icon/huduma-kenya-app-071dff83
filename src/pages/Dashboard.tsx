@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Briefcase, Search, UserCheck, LogOut, User, Shield, List, Grid, FileText, Calendar, ClipboardList, MessageCircle, Bell } from "lucide-react";
 import { useUnreadCount } from "@/hooks/useUnreadCount";
 
-const roleConfig = {
+const roleConfig: Record<string, { title: string; subtitle: string; icon: React.ReactNode; color: string; features: string[] }> = {
   provider: {
     title: "Service Provider",
     subtitle: "Manage your services & bookings",
@@ -28,10 +28,17 @@ const roleConfig = {
     color: "bg-secondary text-secondary-foreground",
     features: ["Post job listings", "Book services", "Manage orders", "Review providers"],
   },
+  admin: {
+    title: "Administrator",
+    subtitle: "Manage users & platform",
+    icon: <Shield className="w-6 h-6" />,
+    color: "bg-destructive text-destructive-foreground",
+    features: ["Review user reports", "Manage suspensions", "Monitor login activity", "Platform security"],
+  },
 };
 
 const Dashboard = () => {
-  const { user, role, loading, signOut } = useAuth();
+  const { user, role, loading, isSuspended, signOut } = useAuth();
   const navigate = useNavigate();
   const { unreadMessages, unreadNotifications } = useUnreadCount();
 
@@ -48,7 +55,7 @@ const Dashboard = () => {
     );
   }
 
-  const config = roleConfig[role];
+  const config = roleConfig[role] || roleConfig.client;
 
   const handleLogout = async () => {
     await signOut();
@@ -91,6 +98,19 @@ const Dashboard = () => {
             </Button>
           </div>
         </div>
+
+        {/* Suspension Warning */}
+        {isSuspended && (
+          <Card className="mb-6 border-destructive bg-destructive/10">
+            <CardContent className="p-4 flex items-center gap-3">
+              <Shield className="w-5 h-5 text-destructive shrink-0" />
+              <div>
+                <p className="font-semibold text-destructive text-sm">Account Suspended</p>
+                <p className="text-xs text-muted-foreground">Your account has been suspended. Some features may be restricted.</p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Welcome Card */}
         <Card className="mb-6 border-0 shadow-lg overflow-hidden">
@@ -186,8 +206,26 @@ const Dashboard = () => {
           </div>
         )}
 
+        {/* Admin actions */}
+        {role === "admin" && (
+          <div className="space-y-3 mb-6">
+            <h3 className="font-display font-bold text-lg text-foreground">Admin Tools</h3>
+            <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate("/admin")}>
+              <CardContent className="flex items-center gap-4 p-4">
+                <div className="w-10 h-10 rounded-lg bg-destructive/10 flex items-center justify-center shrink-0">
+                  <Shield className="w-5 h-5 text-destructive" />
+                </div>
+                <div className="flex-1">
+                  <span className="text-sm font-medium text-foreground">Admin Panel</span>
+                  <p className="text-xs text-muted-foreground">Manage reports & suspensions</p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
         {/* Browse categories - visible to all */}
-        <div className="mb-6">
+        <div className="space-y-3 mb-6">
           <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate("/categories")}>
             <CardContent className="flex items-center gap-4 p-4">
               <div className="w-10 h-10 rounded-lg bg-secondary/10 flex items-center justify-center shrink-0">
@@ -196,6 +234,17 @@ const Dashboard = () => {
               <div className="flex-1">
                 <span className="text-sm font-medium text-foreground">Browse Services</span>
                 <p className="text-xs text-muted-foreground">Explore by category</p>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate("/security")}>
+            <CardContent className="flex items-center gap-4 p-4">
+              <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                <Shield className="w-5 h-5 text-muted-foreground" />
+              </div>
+              <div className="flex-1">
+                <span className="text-sm font-medium text-foreground">Security Settings</span>
+                <p className="text-xs text-muted-foreground">Manage sessions & password</p>
               </div>
             </CardContent>
           </Card>

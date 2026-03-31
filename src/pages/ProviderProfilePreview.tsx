@@ -4,7 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowLeft, MapPin, Phone, Mail, Edit, Briefcase, Star } from "lucide-react";
+import { ArrowLeft, MapPin, Phone, Mail, Edit, Briefcase, Star, Flag } from "lucide-react";
 
 type ProviderProfile = {
   business_name: string;
@@ -196,6 +196,18 @@ const ProviderProfilePreview = () => {
               )}
             </CardContent>
           </Card>
+
+          {/* Report button - only show if viewing own profile (for demo) or another user's */}
+          {user && (
+            <Button
+              variant="ghost"
+              className="w-full text-muted-foreground mt-4"
+              onClick={() => navigate(`/report/${user.id}`)}
+            >
+              <Flag className="w-4 h-4 mr-2" />
+              Report this provider
+            </Button>
+          )}
 
           <div className="h-8" />
         </div>
