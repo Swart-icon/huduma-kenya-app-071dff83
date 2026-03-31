@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Briefcase, Search, UserCheck, LogOut, User, Shield, List, Grid } from "lucide-react";
+import { Briefcase, Search, UserCheck, LogOut, User, Shield, List, Grid, FileText, Calendar, ClipboardList } from "lucide-react";
 
 const roleConfig = {
   provider: {
