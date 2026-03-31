@@ -34,6 +34,7 @@ import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import ReportUser from "./pages/ReportUser";
 import SessionManagement from "./pages/SessionManagement";
+import SearchServices from "./pages/SearchServices";
 
 const queryClient = new QueryClient();
 
