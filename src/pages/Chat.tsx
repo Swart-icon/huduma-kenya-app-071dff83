@@ -34,26 +34,35 @@ const Chat = () => {
   useEffect(() => {
     if (!user || !conversationId) return;
 
-    loadConversationInfo();
-    loadMessages();
+    void loadConversationInfo();
+    void loadMessages();
 
     const channel = supabase
       .channel(`chat-${conversationId}`)
-      .on("postgres_changes", {
-        event: "INSERT",
-        schema: "public",
-        table: "messages",
-        filter: `conversation_id=eq.${conversationId}`,
-      }, (payload) => {
-        const msg = payload.new as Message;
-        setMessages((prev) => [...prev, msg]);
-        if (msg.sender_id !== user.id) {
-          markAsRead(msg.id);
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "messages",
+          filter: `conversation_id=eq.${conversationId}`,
+        },
+        (payload) => {
+          const msg = payload.new as Message;
+          setMessages((prev) =>
+            prev.some((existing) => existing.id === msg.id) ? prev : [...prev, msg]
+          );
+
+          if (msg.sender_id !== user.id) {
+            void markConversationAsRead();
+          }
         }
-      })
+      )
       .subscribe();
 
-    return () => { supabase.removeChannel(channel); };
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [user, conversationId]);
 
   useEffect(() => {
@@ -79,7 +88,8 @@ const Chat = () => {
   };
 
   const loadMessages = async () => {
-    if (!conversationId) return;
+    if (!user || !conversationId) return;
+
     const { data } = await supabase
       .from("messages")
       .select("*")
@@ -88,17 +98,35 @@ const Chat = () => {
 
     if (data) {
       setMessages(data);
-      // Mark unread messages as read
-      const unread = data.filter((m) => !m.read && m.sender_id !== user?.id);
-      for (const m of unread) {
-        markAsRead(m.id);
+
+      const hasUnreadMessages = data.some((message) => !message.read && message.sender_id !== user.id);
+      if (hasUnreadMessages) {
+        await markConversationAsRead();
       }
     }
+
     setLoading(false);
   };
 
-  const markAsRead = async (messageId: string) => {
-    await supabase.from("messages").update({ read: true }).eq("id", messageId);
+  const markConversationAsRead = async () => {
+    if (!user || !conversationId) return;
+
+    const { error } = await supabase
+      .from("messages")
+      .update({ read: true })
+      .eq("conversation_id", conversationId)
+      .neq("sender_id", user.id)
+      .eq("read", false);
+
+    if (!error) {
+      setMessages((prev) =>
+        prev.map((message) =>
+          message.sender_id === user.id || message.read
+            ? message
+            : { ...message, read: true }
+        )
+      );
+    }
   };
 
   const handleSend = async () => {
