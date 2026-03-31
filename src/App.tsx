@@ -35,6 +35,7 @@ import ResetPassword from "./pages/ResetPassword";
 import ReportUser from "./pages/ReportUser";
 import SessionManagement from "./pages/SessionManagement";
 import SearchServices from "./pages/SearchServices";
+import AdminPanel from "./pages/AdminPanel";
 
 const queryClient = new QueryClient();
 
