@@ -201,6 +201,7 @@ const ServiceDetailPage = () => {
         {/* Book & Contact CTAs */}
         <div className="space-y-3">
           <BookButton serviceId={service.id} />
+          <MessageButton providerId={service.provider_id} />
           {provider?.contact_phone && (
             <Button asChild variant="outline" className="w-full h-14 text-lg font-bold rounded-xl" size="lg">
               <a href={`tel:${provider.contact_phone}`}>
