@@ -1,4 +1,4 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClient, QueryClientProvider, onlineManager } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
@@ -36,8 +36,37 @@ import ReportUser from "./pages/ReportUser";
 import SessionManagement from "./pages/SessionManagement";
 import SearchServices from "./pages/SearchServices";
 import AdminPanel from "./pages/AdminPanel";
+import { OfflineBanner } from "@/components/OfflineBanner";
 
-const queryClient = new QueryClient();
+// Keep React Query's online status in sync with browser events
+onlineManager.setEventListener((setOnline) => {
+  const onlineHandler = () => setOnline(true);
+  const offlineHandler = () => setOnline(false);
+  window.addEventListener("online", onlineHandler);
+  window.addEventListener("offline", offlineHandler);
+  return () => {
+    window.removeEventListener("online", onlineHandler);
+    window.removeEventListener("offline", offlineHandler);
+  };
+});
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 3,
+      retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 15000),
+      staleTime: 1000 * 60 * 2, // 2 min default
+      gcTime: 1000 * 60 * 30,   // Keep cache 30 min
+      refetchOnReconnect: "always",
+      networkMode: "offlineFirst", // Serve cache first, refetch in background
+    },
+    mutations: {
+      retry: 2,
+      retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 10000),
+      networkMode: "offlineFirst",
+    },
+  },
+});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -46,6 +75,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
+          <OfflineBanner />
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/welcome" element={<Welcome />} />
