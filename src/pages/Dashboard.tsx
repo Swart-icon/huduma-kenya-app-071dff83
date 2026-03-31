@@ -42,7 +42,210 @@ const roleConfig: Record<string, { title: string; subtitle: string; icon: React.
   },
 };
 
-const Dashboard = () => {
+const AdminSection = () => {
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const [reports, setReports] = useState<any[]>([]);
+  const [suspensions, setSuspensions] = useState<any[]>([]);
+  const [admins, setAdmins] = useState<any[]>([]);
+  const [newAdminEmail, setNewAdminEmail] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [adding, setAdding] = useState(false);
+
+  useEffect(() => { loadData(); }, []);
+
+  const loadData = async () => {
+    setLoading(true);
+    const [reportsRes, suspensionsRes, adminsRes] = await Promise.all([
+      supabase.from("user_reports").select("*").order("created_at", { ascending: false }),
+      supabase.from("user_suspensions").select("*").order("created_at", { ascending: false }),
+      supabase.from("user_roles").select("*").eq("role", "admin"),
+    ]);
+    setReports(reportsRes.data || []);
+    setSuspensions(suspensionsRes.data || []);
+    setAdmins(adminsRes.data || []);
+    setLoading(false);
+  };
+
+  const handleSuspendUser = async (userId: string, type: "temporary" | "permanent") => {
+    if (!user) return;
+    const { error } = await supabase.from("user_suspensions").insert({
+      user_id: userId,
+      suspended_by: user.id,
+      reason: "Admin action",
+      suspension_type: type,
+      suspended_until: type === "temporary" ? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString() : null,
+    });
+    if (error) toast({ title: "Failed", description: error.message, variant: "destructive" });
+    else { toast({ title: type === "permanent" ? "User banned" : "User suspended 7 days" }); loadData(); }
+  };
+
+  const handleResolveReport = async (reportId: string) => {
+    if (!user) return;
+    const { error } = await supabase.from("user_reports")
+      .update({ status: "resolved", resolved_at: new Date().toISOString(), resolved_by: user.id })
+      .eq("id", reportId);
+    if (error) toast({ title: "Failed", description: error.message, variant: "destructive" });
+    else { toast({ title: "Report resolved" }); loadData(); }
+  };
+
+  const handleLiftSuspension = async (suspensionId: string) => {
+    const { error } = await supabase.from("user_suspensions").update({ is_active: false }).eq("id", suspensionId);
+    if (error) toast({ title: "Failed", description: error.message, variant: "destructive" });
+    else { toast({ title: "Suspension lifted" }); loadData(); }
+  };
+
+  const handleAddAdmin = async () => {
+    if (!newAdminEmail.trim()) return;
+    setAdding(true);
+    // Look up user by email from profiles
+    const { data: profileData } = await supabase.from("profiles").select("user_id, full_name").limit(100);
+    // We need to find user by email - check auth metadata isn't accessible, so use a different approach
+    // Query all user_roles to find if already admin, and try inserting by looking up via supabase auth admin
+    // Since we can't query auth.users from client, we'll use an edge function or ask for user ID
+    // For now, let's search by checking if any profile matches
+    
+    // Actually we can use supabase auth admin API isn't available from client
+    // Let's just inform the user we need the user ID, or better - use RPC
+    // Simplest: ask admin to provide exact email, we'll try to find via profiles table
+    // But profiles don't store email... Let's check conversations/bookings or just try direct
+    
+    // Best approach: try to find user via supabase.auth.admin (not available on client)
+    // Alternative: create an edge function. For now, let's use a workaround -
+    // check user_roles table and profiles to find matching users
+    
+    toast({ title: "Looking up user...", description: "Searching by email" });
+    
+    // We'll need to use an RPC or edge function to look up by email
+    // For now, let's create a simple approach using the service role in an edge function
+    // Actually, the simplest workaround: just try to insert and see if it works
+    const { data: allProfiles } = await supabase.from("profiles").select("user_id, full_name");
+    
+    // Since profiles don't have email, we need another way. Let's check provider_profiles for contact_email
+    const { data: providerMatch } = await supabase.from("provider_profiles")
+      .select("user_id")
+      .eq("contact_email", newAdminEmail.trim())
+      .maybeSingle();
+
+    if (providerMatch) {
+      const { error } = await supabase.from("user_roles").insert({ user_id: providerMatch.user_id, role: "admin" as any });
+      setAdding(false);
+      if (error) toast({ title: "Failed to add admin", description: error.message, variant: "destructive" });
+      else { toast({ title: "Admin added!" }); setNewAdminEmail(""); loadData(); }
+      return;
+    }
+    
+    setAdding(false);
+    toast({ title: "User not found", description: "Could not find a user with that email. They must have a provider profile with that contact email, or use the database directly.", variant: "destructive" });
+  };
+
+  const handleRemoveAdmin = async (roleId: string, userId: string) => {
+    if (userId === user?.id) {
+      toast({ title: "Cannot remove yourself", variant: "destructive" });
+      return;
+    }
+    const { error } = await supabase.from("user_roles").delete().eq("id", roleId);
+    if (error) toast({ title: "Failed", description: error.message, variant: "destructive" });
+    else { toast({ title: "Admin removed" }); loadData(); }
+  };
+
+  return (
+    <div className="space-y-3 mb-6">
+      <h3 className="font-display font-bold text-lg text-foreground flex items-center gap-2">
+        <Shield className="w-5 h-5 text-destructive" /> Admin Tools
+      </h3>
+      <Tabs defaultValue="reports">
+        <TabsList className="w-full mb-3">
+          <TabsTrigger value="reports" className="flex-1 text-xs">
+            Reports ({reports.filter(r => r.status === "pending").length})
+          </TabsTrigger>
+          <TabsTrigger value="suspensions" className="flex-1 text-xs">
+            Bans ({suspensions.filter(s => s.is_active).length})
+          </TabsTrigger>
+          <TabsTrigger value="admins" className="flex-1 text-xs">
+            Admins ({admins.length})
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="reports" className="space-y-3">
+          {loading ? <p className="text-center text-muted-foreground py-4 text-sm">Loading...</p> :
+           reports.length === 0 ? <p className="text-center text-muted-foreground py-4 text-sm">No reports</p> :
+           reports.map((report) => (
+            <Card key={report.id}>
+              <CardContent className="p-3 space-y-2">
+                <div className="flex items-center justify-between">
+                  <Badge variant={report.status === "pending" ? "destructive" : "secondary"} className="text-xs">{report.status}</Badge>
+                  <span className="text-xs text-muted-foreground">{new Date(report.created_at).toLocaleDateString()}</span>
+                </div>
+                <p className="text-sm font-medium text-foreground capitalize">{report.reason.replace("_", " ")}</p>
+                {report.description && <p className="text-xs text-muted-foreground">{report.description}</p>}
+                {report.status === "pending" && (
+                  <div className="flex gap-2 flex-wrap">
+                    <Button size="sm" variant="outline" className="text-xs h-8" onClick={() => handleResolveReport(report.id)}>Resolve</Button>
+                    <Button size="sm" variant="outline" className="text-xs h-8" onClick={() => handleSuspendUser(report.reported_user_id, "temporary")}>
+                      <Clock className="w-3 h-3 mr-1" />7d
+                    </Button>
+                    <Button size="sm" variant="destructive" className="text-xs h-8" onClick={() => handleSuspendUser(report.reported_user_id, "permanent")}>
+                      <Ban className="w-3 h-3 mr-1" />Ban
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          ))}
+        </TabsContent>
+
+        <TabsContent value="suspensions" className="space-y-3">
+          {loading ? <p className="text-center text-muted-foreground py-4 text-sm">Loading...</p> :
+           suspensions.length === 0 ? <p className="text-center text-muted-foreground py-4 text-sm">No suspensions</p> :
+           suspensions.map((s) => (
+            <Card key={s.id}>
+              <CardContent className="p-3 space-y-2">
+                <div className="flex items-center justify-between">
+                  <Badge variant={s.is_active ? "destructive" : "secondary"} className="text-xs">
+                    {s.is_active ? (s.suspension_type === "permanent" ? "Banned" : "Suspended") : "Lifted"}
+                  </Badge>
+                  <span className="text-xs text-muted-foreground">{new Date(s.created_at).toLocaleDateString()}</span>
+                </div>
+                <p className="text-xs text-muted-foreground">User: {s.user_id.slice(0, 8)}...</p>
+                {s.is_active && (
+                  <Button size="sm" variant="outline" className="text-xs h-8" onClick={() => handleLiftSuspension(s.id)}>Lift</Button>
+                )}
+              </CardContent>
+            </Card>
+          ))}
+        </TabsContent>
+
+        <TabsContent value="admins" className="space-y-3">
+          {admins.map((a) => (
+            <Card key={a.id}>
+              <CardContent className="p-3 flex items-center justify-between">
+                <span className="text-sm text-foreground">{a.user_id === user?.id ? "You" : a.user_id.slice(0, 12) + "..."}</span>
+                {a.user_id !== user?.id && (
+                  <Button size="sm" variant="ghost" className="text-xs h-8 text-destructive" onClick={() => handleRemoveAdmin(a.id, a.user_id)}>
+                    <Trash2 className="w-3 h-3 mr-1" />Remove
+                  </Button>
+                )}
+              </CardContent>
+            </Card>
+          ))}
+          <div className="flex gap-2">
+            <Input
+              placeholder="User email..."
+              value={newAdminEmail}
+              onChange={(e) => setNewAdminEmail(e.target.value)}
+              className="h-10 rounded-xl text-sm"
+            />
+            <Button size="sm" className="h-10 rounded-xl px-4" onClick={handleAddAdmin} disabled={adding}>
+              <UserPlus className="w-4 h-4" />
+            </Button>
+          </div>
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+};
+
   const { user, role, loading, isSuspended, signOut } = useAuth();
   const navigate = useNavigate();
   const { unreadMessages, unreadNotifications } = useUnreadCount();
