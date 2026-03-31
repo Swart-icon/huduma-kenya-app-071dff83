@@ -93,6 +93,44 @@ export type Database = {
           },
         ]
       }
+      job_applications: {
+        Row: {
+          applicant_id: string
+          cover_message: string | null
+          created_at: string
+          id: string
+          job_post_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          applicant_id: string
+          cover_message?: string | null
+          created_at?: string
+          id?: string
+          job_post_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          applicant_id?: string
+          cover_message?: string | null
+          created_at?: string
+          id?: string
+          job_post_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "job_applications_job_post_id_fkey"
+            columns: ["job_post_id"]
+            isOneToOne: false
+            referencedRelation: "job_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       job_posts: {
         Row: {
           budget: number | null
@@ -186,6 +224,57 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      job_seeker_profiles: {
+        Row: {
+          bio: string | null
+          certifications: string | null
+          created_at: string
+          cv_url: string | null
+          education: string | null
+          experience_description: string | null
+          experience_years: number | null
+          id: string
+          preferred_categories: string[] | null
+          preferred_city: string | null
+          preferred_county: string | null
+          skills: string[] | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          bio?: string | null
+          certifications?: string | null
+          created_at?: string
+          cv_url?: string | null
+          education?: string | null
+          experience_description?: string | null
+          experience_years?: number | null
+          id?: string
+          preferred_categories?: string[] | null
+          preferred_city?: string | null
+          preferred_county?: string | null
+          skills?: string[] | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          bio?: string | null
+          certifications?: string | null
+          created_at?: string
+          cv_url?: string | null
+          education?: string | null
+          experience_description?: string | null
+          experience_years?: number | null
+          id?: string
+          preferred_categories?: string[] | null
+          preferred_city?: string | null
+          preferred_county?: string | null
+          skills?: string[] | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       login_attempts: {
         Row: {
@@ -537,6 +626,35 @@ export type Database = {
             columns: ["booking_id"]
             isOneToOne: true
             referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      saved_jobs: {
+        Row: {
+          created_at: string
+          id: string
+          job_post_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          job_post_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          job_post_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "saved_jobs_job_post_id_fkey"
+            columns: ["job_post_id"]
+            isOneToOne: false
+            referencedRelation: "job_posts"
             referencedColumns: ["id"]
           },
         ]
