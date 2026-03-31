@@ -23,6 +23,9 @@ import JobDetail from "./pages/JobDetail";
 import JobBoard from "./pages/JobBoard";
 import BookService from "./pages/BookService";
 import MyBookings from "./pages/MyBookings";
+import Conversations from "./pages/Conversations";
+import Chat from "./pages/Chat";
+import Notifications from "./pages/Notifications";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -54,6 +57,9 @@ const App = () => (
             <Route path="/job-board" element={<JobBoard />} />
             <Route path="/book/:serviceId" element={<BookService />} />
             <Route path="/my-bookings" element={<MyBookings />} />
+            <Route path="/conversations" element={<Conversations />} />
+            <Route path="/chat/:conversationId" element={<Chat />} />
+            <Route path="/notifications" element={<Notifications />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>

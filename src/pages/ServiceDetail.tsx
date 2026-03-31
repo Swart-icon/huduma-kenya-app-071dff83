@@ -4,7 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowLeft, MapPin, Phone, Mail, User, Tag, Calendar } from "lucide-react";
+import { ArrowLeft, MapPin, Phone, Mail, User, Tag, Calendar, MessageCircle } from "lucide-react";
+import { getOrCreateConversation } from "@/lib/conversations";
 
 type ServiceDetail = {
   id: string;
@@ -47,6 +48,27 @@ const BookButton = ({ serviceId }: { serviceId: string }) => {
   return (
     <Button onClick={() => navigate(`/book/${serviceId}`)} className="w-full h-14 text-lg font-bold rounded-xl" size="lg">
       <Calendar className="w-5 h-5 mr-2" /> Book This Service
+    </Button>
+  );
+};
+
+const MessageButton = ({ providerId }: { providerId: string }) => {
+  const { user, role } = useAuth();
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+
+  if (!user || user.id === providerId || role === "provider") return null;
+
+  const handleMessage = async () => {
+    setLoading(true);
+    const conversationId = await getOrCreateConversation(user.id, providerId);
+    setLoading(false);
+    if (conversationId) navigate(`/chat/${conversationId}`);
+  };
+
+  return (
+    <Button onClick={handleMessage} disabled={loading} variant="outline" className="w-full h-14 text-lg font-bold rounded-xl" size="lg">
+      <MessageCircle className="w-5 h-5 mr-2" /> {loading ? "Opening..." : "Message Provider"}
     </Button>
   );
 };
@@ -179,6 +201,7 @@ const ServiceDetailPage = () => {
         {/* Book & Contact CTAs */}
         <div className="space-y-3">
           <BookButton serviceId={service.id} />
+          <MessageButton providerId={service.provider_id} />
           {provider?.contact_phone && (
             <Button asChild variant="outline" className="w-full h-14 text-lg font-bold rounded-xl" size="lg">
               <a href={`tel:${provider.contact_phone}`}>
