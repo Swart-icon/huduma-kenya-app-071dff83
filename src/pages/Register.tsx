@@ -59,7 +59,7 @@ const Register = () => {
     if (error) {
       toast({ title: "Registration failed", description: error.message, variant: "destructive" });
     } else {
-      setStep("role");
+      setStep("verify_email");
     }
   };
 
