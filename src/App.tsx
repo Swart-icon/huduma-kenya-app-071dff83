@@ -30,6 +30,8 @@ const App = () => (
             <Route path="/login" element={<Login />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/profile" element={<Profile />} />
+            <Route path="/provider-profile/edit" element={<ProviderProfileEdit />} />
+            <Route path="/provider-profile/preview" element={<ProviderProfilePreview />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
