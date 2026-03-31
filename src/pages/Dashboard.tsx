@@ -99,6 +99,19 @@ const Dashboard = () => {
           </div>
         </div>
 
+        {/* Suspension Warning */}
+        {isSuspended && (
+          <Card className="mb-6 border-destructive bg-destructive/10">
+            <CardContent className="p-4 flex items-center gap-3">
+              <Shield className="w-5 h-5 text-destructive shrink-0" />
+              <div>
+                <p className="font-semibold text-destructive text-sm">Account Suspended</p>
+                <p className="text-xs text-muted-foreground">Your account has been suspended. Some features may be restricted.</p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Welcome Card */}
         <Card className="mb-6 border-0 shadow-lg overflow-hidden">
           <div className={`${config.color} p-6`}>
