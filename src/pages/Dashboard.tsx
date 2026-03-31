@@ -29,6 +29,7 @@ import {
   Eye,
 } from "lucide-react";
 import { useUnreadCount } from "@/hooks/useUnreadCount";
+import { InstallBanner } from "@/components/InstallBanner";
 
 /* ────────── Role Config ────────── */
 const roleConfig: Record<
@@ -170,6 +171,7 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-background pb-8">
+      <InstallBanner />
       {/* ─── Top Bar ─── */}
       <div className="sticky top-0 z-30 bg-background/80 backdrop-blur-lg border-b border-border/50">
         <div className="flex items-center justify-between px-5 py-3 max-w-lg mx-auto">

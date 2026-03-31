@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useCategories } from "@/hooks/useCategories";
 import { CategoryGridSkeleton, ProviderCardSkeleton } from "@/components/Skeletons";
+import { InstallBanner } from "@/components/InstallBanner";
 import {
   Search,
   Shield,
@@ -111,6 +112,7 @@ const Welcome = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <InstallBanner />
       {/* Hero Section */}
       <section className="relative min-h-[480px] flex flex-col justify-end overflow-hidden">
         <img
