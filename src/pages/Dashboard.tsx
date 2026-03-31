@@ -459,8 +459,20 @@ const Dashboard = () => {
           </div>
         )}
 
-        {/* Admin Panel - inline */}
-        {isAdmin && <AdminSection />}
+        {/* Admin Panel link */}
+        {isAdmin && (
+          <Card className="mb-6 hover:shadow-md transition-shadow cursor-pointer border-destructive/30" onClick={() => navigate("/admin")}>
+            <CardContent className="flex items-center gap-4 p-4">
+              <div className="w-10 h-10 rounded-lg bg-destructive/10 flex items-center justify-center shrink-0">
+                <Shield className="w-5 h-5 text-destructive" />
+              </div>
+              <div className="flex-1">
+                <span className="text-sm font-medium text-foreground">Admin Panel</span>
+                <p className="text-xs text-muted-foreground">Manage users, services, reports & analytics</p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Browse & Search - visible to all */}
         <div className="space-y-3 mb-6">
