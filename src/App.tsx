@@ -57,6 +57,9 @@ const App = () => (
             <Route path="/job-board" element={<JobBoard />} />
             <Route path="/book/:serviceId" element={<BookService />} />
             <Route path="/my-bookings" element={<MyBookings />} />
+            <Route path="/conversations" element={<Conversations />} />
+            <Route path="/chat/:conversationId" element={<Chat />} />
+            <Route path="/notifications" element={<Notifications />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>

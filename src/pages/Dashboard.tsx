@@ -66,7 +66,23 @@ const Dashboard = () => {
             </div>
             <span className="font-display font-bold text-lg text-foreground">Huduma</span>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-1">
+            <Button variant="ghost" size="icon" onClick={() => navigate("/conversations")} className="rounded-xl relative">
+              <MessageCircle className="w-5 h-5" />
+              {unreadMessages > 0 && (
+                <span className="absolute -top-1 -right-1 w-4 h-4 text-[10px] font-bold rounded-full bg-destructive text-destructive-foreground flex items-center justify-center">
+                  {unreadMessages}
+                </span>
+              )}
+            </Button>
+            <Button variant="ghost" size="icon" onClick={() => navigate("/notifications")} className="rounded-xl relative">
+              <Bell className="w-5 h-5" />
+              {unreadNotifications > 0 && (
+                <span className="absolute -top-1 -right-1 w-4 h-4 text-[10px] font-bold rounded-full bg-destructive text-destructive-foreground flex items-center justify-center">
+                  {unreadNotifications}
+                </span>
+              )}
+            </Button>
             <Button variant="ghost" size="icon" onClick={() => navigate("/profile")} className="rounded-xl">
               <User className="w-5 h-5" />
             </Button>
