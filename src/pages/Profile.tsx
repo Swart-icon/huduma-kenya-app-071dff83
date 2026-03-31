@@ -121,7 +121,7 @@ const Profile = () => {
             <h3 className="font-semibold text-foreground mb-3">Manage Roles</h3>
             <div className="space-y-2">
               {roleOptions.map((opt) => {
-                const hasRole = nonAdminRoles.includes(opt.value);
+                const hasRole = (nonAdminRoles as string[]).includes(opt.value);
                 const isOnlyRole = hasRole && nonAdminRoles.length === 1;
                 const isLoading = roleLoading === opt.value;
 
