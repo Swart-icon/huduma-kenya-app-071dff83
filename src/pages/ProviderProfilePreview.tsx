@@ -28,6 +28,8 @@ const ProviderProfilePreview = () => {
   const navigate = useNavigate();
   const [profile, setProfile] = useState<ProviderProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [avgRating, setAvgRating] = useState<number | null>(null);
+  const [reviewCount, setReviewCount] = useState(0);
 
   useEffect(() => {
     if (!authLoading && (!user || role !== "provider")) {
@@ -38,12 +40,16 @@ const ProviderProfilePreview = () => {
   }, [authLoading, user, role]);
 
   const fetchProfile = async () => {
-    const { data } = await supabase
-      .from("provider_profiles")
-      .select("*")
-      .eq("user_id", user!.id)
-      .maybeSingle();
-    setProfile(data);
+    const [profRes, revRes] = await Promise.all([
+      supabase.from("provider_profiles").select("*").eq("user_id", user!.id).maybeSingle(),
+      supabase.from("reviews").select("rating").eq("provider_id", user!.id),
+    ]);
+    setProfile(profRes.data);
+    const reviews = revRes.data || [];
+    if (reviews.length > 0) {
+      setAvgRating(reviews.reduce((s, r) => s + r.rating, 0) / reviews.length);
+      setReviewCount(reviews.length);
+    }
     setLoading(false);
   };
 
