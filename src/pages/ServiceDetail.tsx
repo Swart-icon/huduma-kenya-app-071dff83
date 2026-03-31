@@ -52,6 +52,27 @@ const BookButton = ({ serviceId }: { serviceId: string }) => {
   );
 };
 
+const MessageButton = ({ providerId }: { providerId: string }) => {
+  const { user, role } = useAuth();
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+
+  if (!user || user.id === providerId || role === "provider") return null;
+
+  const handleMessage = async () => {
+    setLoading(true);
+    const conversationId = await getOrCreateConversation(user.id, providerId);
+    setLoading(false);
+    if (conversationId) navigate(`/chat/${conversationId}`);
+  };
+
+  return (
+    <Button onClick={handleMessage} disabled={loading} variant="outline" className="w-full h-14 text-lg font-bold rounded-xl" size="lg">
+      <MessageCircle className="w-5 h-5 mr-2" /> {loading ? "Opening..." : "Message Provider"}
+    </Button>
+  );
+};
+
 const ServiceDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
