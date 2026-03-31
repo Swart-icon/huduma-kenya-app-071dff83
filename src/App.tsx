@@ -57,20 +57,24 @@ const queryClient = new QueryClient({
     queries: {
       retry: 3,
       retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 15000),
-      staleTime: 1000 * 60 * 2, // 2 min default
-      gcTime: 1000 * 60 * 30,   // Keep cache 30 min
+      staleTime: 1000 * 60 * 2,
+      gcTime: 1000 * 60 * 30,
       refetchOnReconnect: "always",
-      networkMode: "offlineFirst", // Serve cache first, refetch in background
+      networkMode: "offlineFirst",
     },
     mutations: {
       retry: 2,
       retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 10000),
       networkMode: "offlineFirst",
+      onError: (error) => {
+        showErrorToast(error, "saving data");
+      },
     },
   },
 });
 
 const App = () => (
+  <ErrorBoundary>
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <Toaster />
