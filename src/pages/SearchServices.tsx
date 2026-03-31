@@ -487,7 +487,11 @@ const SearchServices = () => {
           )}
 
           {/* Loading / Load more */}
-          {loading && (
+          {loading && page === 0 && (
+            <ListSkeletons Component={ServiceCardSkeleton} count={4} />
+          )}
+
+          {loading && page > 0 && (
             <div className="flex justify-center py-6">
               <Loader2 className="w-6 h-6 animate-spin text-primary" />
             </div>
