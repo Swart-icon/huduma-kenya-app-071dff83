@@ -33,6 +33,7 @@ const roleConfig = {
 const Dashboard = () => {
   const { user, role, loading, signOut } = useAuth();
   const navigate = useNavigate();
+  const { unreadMessages, unreadNotifications } = useUnreadCount();
 
   useEffect(() => {
     if (!loading && !user) navigate("/welcome");
