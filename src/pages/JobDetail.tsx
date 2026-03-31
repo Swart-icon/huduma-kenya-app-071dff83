@@ -80,6 +80,20 @@ const JobDetail = () => {
       if (existingResponse) setHasResponded(true);
     }
 
+    // Check if job seeker already applied
+    if (user && role === "job_seeker") {
+      const { data: existingApp } = await supabase
+        .from("job_applications").select("*").eq("job_post_id", id!).eq("applicant_id", user.id).maybeSingle();
+      if (existingApp) setHasApplied(true);
+    }
+
+    // Check if saved
+    if (user) {
+      const { data: saved } = await supabase
+        .from("saved_jobs").select("id").eq("user_id", user.id).eq("job_post_id", id!).maybeSingle();
+      if (saved) { setIsSaved(true); setSavedId(saved.id); }
+    }
+
     // If client owns this job, fetch responses
     if (user && jobData.client_id === user.id) {
       const { data: resps } = await supabase.from("job_responses").select("*").eq("job_post_id", id!).order("created_at", { ascending: false });
