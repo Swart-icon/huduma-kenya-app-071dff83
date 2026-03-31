@@ -74,7 +74,6 @@ const App = () => (
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/report/:userId" element={<ReportUser />} />
-            <Route path="/admin" element={<AdminPanel />} />
             <Route path="/security" element={<SessionManagement />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
