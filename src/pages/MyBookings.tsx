@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Calendar, CheckCircle, Clock, XCircle } from "lucide-react";
+import { ArrowLeft, Calendar, CheckCircle, Clock, XCircle, CreditCard, Star } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 type Booking = {
