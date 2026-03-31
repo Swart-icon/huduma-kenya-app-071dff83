@@ -1,46 +1,47 @@
 
 
-## Kenyan Service Marketplace — Mobile App (Phase 1: Auth & Roles)
+## Payment & Review System
 
-### Visual Identity
-- **Bold & colorful** design inspired by Kenyan aesthetics — vibrant greens, reds, and warm earth tones
-- Mobile-first layout with large touch targets, rounded cards, and smooth transitions
+### Database Changes (1 migration)
 
-### Authentication & Onboarding Flow
-1. **Welcome/Splash Screen** — App branding with "Get Started" and "Sign In" buttons
-2. **Registration Screen**
-   - Email & password fields (with strength validation)
-   - Google sign-in button
-   - **Role selection step** — user picks one of: Service Provider, Job Seeker, or Client (visual cards with icons)
-3. **Login Screen** — Email/password + Google sign-in
-4. **Logout** — accessible from profile/settings
+**`reviews` table:**
+- `id`, `booking_id` (unique FK to bookings), `client_id`, `provider_id`, `rating` (1-5 integer), `comment` (text, nullable), timestamps
+- RLS: clients can insert only for their own completed bookings (one review per booking); everyone can read; no update/delete
 
-### User Roles & Access Control
-- Roles stored in a dedicated `user_roles` table (not on profiles) with RLS policies
-- Security-definer function `has_role()` for safe role checks
-- Role-based UI: after login, users see only features matching their role
+**`payments` table:**
+- `id`, `booking_id` (unique FK to bookings), `client_id`, `provider_id`, `amount` (numeric), `status` (pending/completed/failed), `payment_method` (text), timestamps
+- RLS: clients can insert for own bookings; both parties can view their own payments; no delete
 
-### Database Structure
-- **profiles** table — name, avatar, phone, location (linked to auth.users)
-- **user_roles** table — user_id + role enum (provider / job_seeker / client)
-- Auto-create profile + role on signup via database trigger
+**Validation:**
+- Review insert trigger: verify booking status = 'completed' and client_id matches booking's client_id
+- One review per booking enforced via unique constraint on `booking_id`
 
-### Pages & Components
-| Page | Description |
-|------|-------------|
-| Welcome | Splash with branding, Get Started / Sign In |
-| Register | Email/password, Google, role selection |
-| Login | Email/password + Google |
-| Dashboard | Role-specific home (placeholder content for future modules) |
-| Profile | View/edit profile, logout |
+### New Pages
 
-### Capacitor (Native App)
-- Install Capacitor with iOS & Android targets
-- Configure for hot-reload during development
-- Ready for app store builds
+1. **`src/pages/PaymentScreen.tsx`** — Client pays for a booking
+   - Shows booking summary, amount, simple payment confirmation (simulated for now — no real payment gateway yet)
+   - Creates payment record linked to booking
+   - Updates booking with payment reference
 
-### Backend (Lovable Cloud)
-- Supabase auth with email/password + Google
-- RLS policies enforcing role-based access
-- Secure password handling (built-in)
+2. **`src/pages/ReviewForm.tsx`** — Client reviews a completed booking
+   - Star rating (1-5), comment textarea
+   - Only accessible for completed bookings without existing review
+   - Submits to `reviews` table
+
+3. **`src/pages/ProviderReviews.tsx`** — Public view of a provider's reviews
+   - Average rating display, review list with client names
+
+### Existing Page Updates
+
+- **`MyBookings.tsx`** — Add "Pay" button for accepted bookings (clients), "Leave Review" button for completed bookings without a review
+- **`ServiceDetail.tsx`** — Show provider's average rating and review count; link to full reviews
+- **`ProviderProfilePreview.tsx`** — Display reviews section
+- **`App.tsx`** — Add routes: `/payment/:bookingId`, `/review/:bookingId`, `/provider/:providerId/reviews`
+
+### Technical Details
+
+- Reviews query uses a join to `profiles` for client names
+- Average rating computed client-side from reviews array (or a DB function if performance matters later)
+- Payment is simulated (record-keeping only) — ready for Stripe integration later
+- Star rating component built inline with interactive touch targets
 
