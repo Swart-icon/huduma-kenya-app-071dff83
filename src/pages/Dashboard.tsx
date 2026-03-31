@@ -388,7 +388,7 @@ const Dashboard = () => {
         )}
 
         {/* Admin Panel - inline */}
-        {role === "admin" && <AdminSection />}
+        {isAdmin && <AdminSection />}
 
         {/* Browse categories - visible to all */}
         <div className="space-y-3 mb-6">
