@@ -114,6 +114,57 @@ const Dashboard = () => {
                 </div>
               </CardContent>
             </Card>
+            <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate("/job-board")}>
+              <CardContent className="flex items-center gap-4 p-4">
+                <div className="w-10 h-10 rounded-lg bg-secondary/10 flex items-center justify-center shrink-0">
+                  <ClipboardList className="w-5 h-5 text-secondary" />
+                </div>
+                <div className="flex-1">
+                  <span className="text-sm font-medium text-foreground">Job Board</span>
+                  <p className="text-xs text-muted-foreground">Browse open job posts</p>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate("/my-bookings")}>
+              <CardContent className="flex items-center gap-4 p-4">
+                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                  <Calendar className="w-5 h-5 text-primary" />
+                </div>
+                <div className="flex-1">
+                  <span className="text-sm font-medium text-foreground">My Bookings</span>
+                  <p className="text-xs text-muted-foreground">View & manage bookings</p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Client-specific actions */}
+        {role === "client" && (
+          <div className="space-y-3 mb-6">
+            <h3 className="font-display font-bold text-lg text-foreground">Your Activity</h3>
+            <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate("/my-jobs")}>
+              <CardContent className="flex items-center gap-4 p-4">
+                <div className="w-10 h-10 rounded-lg bg-secondary/10 flex items-center justify-center shrink-0">
+                  <FileText className="w-5 h-5 text-secondary" />
+                </div>
+                <div className="flex-1">
+                  <span className="text-sm font-medium text-foreground">My Job Posts</span>
+                  <p className="text-xs text-muted-foreground">Post & manage jobs</p>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate("/my-bookings")}>
+              <CardContent className="flex items-center gap-4 p-4">
+                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                  <Calendar className="w-5 h-5 text-primary" />
+                </div>
+                <div className="flex-1">
+                  <span className="text-sm font-medium text-foreground">My Bookings</span>
+                  <p className="text-xs text-muted-foreground">Track service bookings</p>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         )}
 
