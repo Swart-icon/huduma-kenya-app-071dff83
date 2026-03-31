@@ -92,6 +92,86 @@ export type Database = {
         }
         Relationships: []
       }
+      service_categories: {
+        Row: {
+          created_at: string
+          icon: string | null
+          id: string
+          name: string
+          slug: string
+          sort_order: number
+        }
+        Insert: {
+          created_at?: string
+          icon?: string | null
+          id?: string
+          name: string
+          slug: string
+          sort_order?: number
+        }
+        Update: {
+          created_at?: string
+          icon?: string | null
+          id?: string
+          name?: string
+          slug?: string
+          sort_order?: number
+        }
+        Relationships: []
+      }
+      services: {
+        Row: {
+          category_id: string
+          city: string | null
+          county: string | null
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          price: number | null
+          price_type: string
+          provider_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category_id: string
+          city?: string | null
+          county?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          price?: number | null
+          price_type?: string
+          provider_id: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category_id?: string
+          city?: string | null
+          county?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          price?: number | null
+          price_type?: string
+          provider_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "services_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "service_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           id: string
