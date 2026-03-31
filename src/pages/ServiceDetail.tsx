@@ -51,6 +51,7 @@ const BookButton = ({ serviceId }: { serviceId: string }) => {
   );
 };
 
+const ServiceDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [service, setService] = useState<ServiceDetail | null>(null);
