@@ -54,6 +54,13 @@ const JobDetail = () => {
   const [submitting, setSubmitting] = useState(false);
   const [hasResponded, setHasResponded] = useState(false);
 
+  // Job seeker application
+  const [coverMessage, setCoverMessage] = useState("");
+  const [applySubmitting, setApplySubmitting] = useState(false);
+  const [hasApplied, setHasApplied] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
+  const [savedId, setSavedId] = useState<string | null>(null);
+
   useEffect(() => {
     if (id) fetchJob();
   }, [id]);
