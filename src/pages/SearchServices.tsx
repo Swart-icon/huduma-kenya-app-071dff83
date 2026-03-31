@@ -8,6 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { ArrowLeft, Search, MapPin, Star, SlidersHorizontal, X, ChevronDown, Loader2 } from "lucide-react";
+import { useCategories } from "@/hooks/useCategories";
+import { ServiceCardSkeleton, ListSkeletons } from "@/components/Skeletons";
 
 type Service = {
   id: string;
@@ -66,7 +68,7 @@ const SearchServices = () => {
   const [minRating, setMinRating] = useState(0);
   const [showFilters, setShowFilters] = useState(false);
 
-  const [categories, setCategories] = useState<Category[]>([]);
+  const { data: categories = [] } = useCategories();
   const [counties, setCounties] = useState<string[]>([]);
   const [services, setServices] = useState<Service[]>([]);
   const [providers, setProviders] = useState<Map<string, ProviderInfo>>(new Map());
@@ -76,11 +78,8 @@ const SearchServices = () => {
   const [hasMore, setHasMore] = useState(true);
   const [totalHint, setTotalHint] = useState(0);
 
-  // Load categories & counties once
+  // Load counties once
   useEffect(() => {
-    supabase.from("service_categories").select("id,name,slug,icon").order("sort_order").then(({ data }) => {
-      setCategories(data || []);
-    });
     supabase.from("services").select("county").neq("county", null).then(({ data }) => {
       const unique = [...new Set((data || []).map((d) => d.county).filter(Boolean))] as string[];
       setCounties(unique.sort());
@@ -488,7 +487,11 @@ const SearchServices = () => {
           )}
 
           {/* Loading / Load more */}
-          {loading && (
+          {loading && page === 0 && (
+            <ListSkeletons Component={ServiceCardSkeleton} count={4} />
+          )}
+
+          {loading && page > 0 && (
             <div className="flex justify-center py-6">
               <Loader2 className="w-6 h-6 animate-spin text-primary" />
             </div>

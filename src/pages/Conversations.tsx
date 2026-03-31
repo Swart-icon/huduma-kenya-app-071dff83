@@ -1,11 +1,12 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ArrowLeft, MessageCircle } from "lucide-react";
 import { format } from "date-fns";
+import { ConversationSkeleton, ListSkeletons } from "@/components/Skeletons";
 
 interface ConversationItem {
   id: string;
@@ -21,35 +22,7 @@ const Conversations = () => {
   const [conversations, setConversations] = useState<ConversationItem[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (!authLoading && !user) navigate("/welcome");
-    if (user) {
-      setLoading(true);
-      loadConversations();
-    }
-  }, [authLoading, user, navigate]);
-
-  useEffect(() => {
-    if (!user) return;
-    loadConversations();
-
-    const channel = supabase
-      .channel("conversations-realtime")
-      .on("postgres_changes", { event: "*", schema: "public", table: "messages" }, () => {
-        loadConversations();
-      })
-      .subscribe();
-
-    const handleFocus = () => loadConversations();
-    window.addEventListener("focus", handleFocus);
-
-    return () => {
-      supabase.removeChannel(channel);
-      window.removeEventListener("focus", handleFocus);
-    };
-  }, [user]);
-
-  const loadConversations = async () => {
+  const loadConversations = useCallback(async () => {
     if (!user) return;
     const { data: convos } = await supabase
       .from("conversations")
@@ -59,43 +32,72 @@ const Conversations = () => {
 
     if (!convos) { setLoading(false); return; }
 
-    const items: ConversationItem[] = [];
-    for (const c of convos) {
+    // Batch fetch all profiles and unread counts
+    const otherIds = convos.map((c) =>
+      c.participant_one === user.id ? c.participant_two : c.participant_one
+    );
+    const convoIds = convos.map((c) => c.id);
+
+    const [profilesRes, unreadRes] = await Promise.all([
+      otherIds.length > 0
+        ? supabase.from("profiles").select("user_id, full_name").in("user_id", otherIds)
+        : Promise.resolve({ data: [] }),
+      convoIds.length > 0
+        ? supabase
+            .from("messages")
+            .select("conversation_id")
+            .in("conversation_id", convoIds)
+            .eq("read", false)
+            .neq("sender_id", user.id)
+        : Promise.resolve({ data: [] }),
+    ]);
+
+    const profileMap = new Map(
+      (profilesRes.data || []).map((p) => [p.user_id, p.full_name || "User"])
+    );
+
+    const unreadMap = new Map<string, number>();
+    (unreadRes.data || []).forEach((m) => {
+      unreadMap.set(m.conversation_id, (unreadMap.get(m.conversation_id) || 0) + 1);
+    });
+
+    const items: ConversationItem[] = convos.map((c) => {
       const otherId = c.participant_one === user.id ? c.participant_two : c.participant_one;
-
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("full_name")
-        .eq("user_id", otherId)
-        .maybeSingle();
-
-      const { count } = await supabase
-        .from("messages")
-        .select("*", { count: "exact", head: true })
-        .eq("conversation_id", c.id)
-        .eq("read", false)
-        .neq("sender_id", user.id);
-
-      items.push({
+      return {
         id: c.id,
         other_user_id: otherId,
-        other_user_name: profile?.full_name || "User",
+        other_user_name: profileMap.get(otherId) || "User",
         last_message_at: c.last_message_at || c.created_at,
-        unread_count: count || 0,
-      });
-    }
+        unread_count: unreadMap.get(c.id) || 0,
+      };
+    });
 
     setConversations(items);
     setLoading(false);
-  };
+  }, [user]);
 
-  if (authLoading || loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
-  }
+  useEffect(() => {
+    if (!authLoading && !user) navigate("/welcome");
+    if (user) {
+      setLoading(true);
+      loadConversations();
+    }
+  }, [authLoading, user, navigate, loadConversations]);
+
+  useEffect(() => {
+    if (!user) return;
+
+    const channel = supabase
+      .channel("conversations-realtime")
+      .on("postgres_changes", { event: "*", schema: "public", table: "messages" }, () => {
+        loadConversations();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user, loadConversations]);
 
   return (
     <div className="min-h-screen bg-background px-4 py-4">
@@ -107,7 +109,9 @@ const Conversations = () => {
           <h1 className="font-display font-bold text-xl text-foreground">Messages</h1>
         </div>
 
-        {conversations.length === 0 ? (
+        {(authLoading || loading) ? (
+          <ListSkeletons Component={ConversationSkeleton} count={4} />
+        ) : conversations.length === 0 ? (
           <div className="text-center py-16">
             <MessageCircle className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
             <p className="text-muted-foreground">No conversations yet</p>

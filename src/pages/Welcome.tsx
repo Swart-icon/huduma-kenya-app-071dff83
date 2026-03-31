@@ -1,10 +1,12 @@
 import { useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState, useEffect, memo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
+import { useCategories } from "@/hooks/useCategories";
+import { CategoryGridSkeleton, ProviderCardSkeleton } from "@/components/Skeletons";
 import {
   Search,
   Shield,
@@ -42,19 +44,12 @@ type FeaturedProvider = {
 
 const Welcome = () => {
   const navigate = useNavigate();
-  const [categories, setCategories] = useState<Category[]>([]);
+  const { data: categories = [], isLoading: categoriesLoading } = useCategories();
   const [providers, setProviders] = useState<FeaturedProvider[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [stats, setStats] = useState({ users: 0, services: 0 });
 
   useEffect(() => {
-    // Load categories
-    supabase
-      .from("service_categories")
-      .select("*")
-      .order("sort_order")
-      .limit(8)
-      .then(({ data }) => setCategories(data || []));
 
     // Load featured providers
     supabase
@@ -195,22 +190,26 @@ const Welcome = () => {
                 View all <ChevronRight className="w-3 h-3" />
               </button>
             </div>
-            <div className="grid grid-cols-4 gap-3">
-              {categories.slice(0, 8).map((cat) => (
-                <button
-                  key={cat.id}
-                  onClick={() => navigate(`/categories/${cat.slug}`)}
-                  className="flex flex-col items-center gap-1.5 p-2 rounded-xl hover:bg-muted transition-colors active:scale-95"
-                >
-                  <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center">
-                    {getCategoryIcon(cat.slug)}
-                  </div>
-                  <span className="text-[11px] font-semibold text-foreground text-center leading-tight line-clamp-2">
-                    {cat.name}
-                  </span>
-                </button>
-              ))}
-            </div>
+            {categoriesLoading ? (
+              <CategoryGridSkeleton />
+            ) : (
+              <div className="grid grid-cols-4 gap-3">
+                {categories.slice(0, 8).map((cat) => (
+                  <button
+                    key={cat.id}
+                    onClick={() => navigate(`/categories/${cat.slug}`)}
+                    className="flex flex-col items-center gap-1.5 p-2 rounded-xl hover:bg-muted transition-colors active:scale-95"
+                  >
+                    <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center">
+                      {getCategoryIcon(cat.slug)}
+                    </div>
+                    <span className="text-[11px] font-semibold text-foreground text-center leading-tight line-clamp-2">
+                      {cat.name}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
       </section>
