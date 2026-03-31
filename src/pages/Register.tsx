@@ -38,7 +38,7 @@ const Register = () => {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [selectedRole, setSelectedRole] = useState<AppRole | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   const passwordStrength = (() => {
     if (password.length < 6) return { level: 0, label: "Too short", color: "bg-muted" };
