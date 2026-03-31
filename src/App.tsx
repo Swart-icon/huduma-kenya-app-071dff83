@@ -40,6 +40,10 @@ import SearchServices from "./pages/SearchServices";
 import AdminPanel from "./pages/AdminPanel";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
+import JobSeekerDashboard from "./pages/JobSeekerDashboard";
+import JobSeekerProfile from "./pages/JobSeekerProfile";
+import MyApplications from "./pages/MyApplications";
+import SavedJobs from "./pages/SavedJobs";
 import { OfflineBanner } from "@/components/OfflineBanner";
 
 // Keep React Query's online status in sync with browser events
