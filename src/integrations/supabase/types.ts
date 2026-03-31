@@ -323,6 +323,33 @@ export type Database = {
           },
         ]
       }
+      portfolio_items: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          image_url: string
+          title: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url: string
+          title?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -356,6 +383,33 @@ export type Database = {
         }
         Relationships: []
       }
+      provider_availability: {
+        Row: {
+          day_of_week: number
+          end_time: string
+          id: string
+          is_available: boolean
+          start_time: string
+          user_id: string
+        }
+        Insert: {
+          day_of_week: number
+          end_time?: string
+          id?: string
+          is_available?: boolean
+          start_time?: string
+          user_id: string
+        }
+        Update: {
+          day_of_week?: number
+          end_time?: string
+          id?: string
+          is_available?: boolean
+          start_time?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       provider_profiles: {
         Row: {
           availability_status: string
@@ -367,9 +421,13 @@ export type Database = {
           created_at: string
           description: string | null
           id: string
+          is_verified: boolean | null
           profile_image_url: string | null
+          service_radius_km: number | null
+          skills: string[] | null
           updated_at: string
           user_id: string
+          years_experience: number | null
         }
         Insert: {
           availability_status?: string
@@ -381,9 +439,13 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          is_verified?: boolean | null
           profile_image_url?: string | null
+          service_radius_km?: number | null
+          skills?: string[] | null
           updated_at?: string
           user_id: string
+          years_experience?: number | null
         }
         Update: {
           availability_status?: string
@@ -395,8 +457,48 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          is_verified?: boolean | null
           profile_image_url?: string | null
+          service_radius_km?: number | null
+          skills?: string[] | null
           updated_at?: string
+          user_id?: string
+          years_experience?: number | null
+        }
+        Relationships: []
+      }
+      provider_verifications: {
+        Row: {
+          admin_notes: string | null
+          created_at: string
+          document_type: string
+          document_url: string
+          id: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          created_at?: string
+          document_type: string
+          document_url: string
+          id?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          admin_notes?: string | null
+          created_at?: string
+          document_type?: string
+          document_url?: string
+          id?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
           user_id?: string
         }
         Relationships: []

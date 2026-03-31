@@ -7,7 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
-import { Briefcase, Search, UserCheck, LogOut, User, Shield, List, Grid, FileText, Calendar, ClipboardList, MessageCircle, Bell, Ban, Clock, UserPlus, Trash2, ArrowLeftRight } from "lucide-react";
+import { Briefcase, Search, UserCheck, LogOut, User, Shield, List, Grid, FileText, Calendar, ClipboardList, MessageCircle, Bell, Ban, Clock, UserPlus, Trash2, ArrowLeftRight, CheckCircle, XCircle } from "lucide-react";
 import { useUnreadCount } from "@/hooks/useUnreadCount";
 import { useToast } from "@/hooks/use-toast";
 
@@ -48,6 +48,7 @@ const AdminSection = () => {
   const [reports, setReports] = useState<any[]>([]);
   const [suspensions, setSuspensions] = useState<any[]>([]);
   const [admins, setAdmins] = useState<any[]>([]);
+  const [verifications, setVerifications] = useState<any[]>([]);
   const [newAdminEmail, setNewAdminEmail] = useState("");
   const [loading, setLoading] = useState(true);
   const [adding, setAdding] = useState(false);
@@ -56,24 +57,23 @@ const AdminSection = () => {
 
   const loadData = async () => {
     setLoading(true);
-    const [reportsRes, suspensionsRes, adminsRes] = await Promise.all([
+    const [reportsRes, suspensionsRes, adminsRes, verifRes] = await Promise.all([
       supabase.from("user_reports").select("*").order("created_at", { ascending: false }),
       supabase.from("user_suspensions").select("*").order("created_at", { ascending: false }),
       supabase.from("user_roles").select("*").eq("role", "admin"),
+      supabase.from("provider_verifications").select("*").order("created_at", { ascending: false }),
     ]);
     setReports(reportsRes.data || []);
     setSuspensions(suspensionsRes.data || []);
     setAdmins(adminsRes.data || []);
+    setVerifications(verifRes.data || []);
     setLoading(false);
   };
 
   const handleSuspendUser = async (userId: string, type: "temporary" | "permanent") => {
     if (!user) return;
     const { error } = await supabase.from("user_suspensions").insert({
-      user_id: userId,
-      suspended_by: user.id,
-      reason: "Admin action",
-      suspension_type: type,
+      user_id: userId, suspended_by: user.id, reason: "Admin action", suspension_type: type,
       suspended_until: type === "temporary" ? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString() : null,
     });
     if (error) toast({ title: "Failed", description: error.message, variant: "destructive" });
@@ -98,27 +98,35 @@ const AdminSection = () => {
   const handleAddAdmin = async () => {
     if (!newAdminEmail.trim()) return;
     setAdding(true);
-    const { data, error } = await supabase.functions.invoke("add-admin", {
-      body: { email: newAdminEmail.trim() },
-    });
+    const { data, error } = await supabase.functions.invoke("add-admin", { body: { email: newAdminEmail.trim() } });
     setAdding(false);
     if (error || data?.error) {
       toast({ title: "Failed to add admin", description: data?.error || error?.message, variant: "destructive" });
     } else {
-      toast({ title: "Admin added!" });
-      setNewAdminEmail("");
-      loadData();
+      toast({ title: "Admin added!" }); setNewAdminEmail(""); loadData();
     }
   };
 
   const handleRemoveAdmin = async (roleId: string, userId: string) => {
-    if (userId === user?.id) {
-      toast({ title: "Cannot remove yourself", variant: "destructive" });
-      return;
-    }
+    if (userId === user?.id) { toast({ title: "Cannot remove yourself", variant: "destructive" }); return; }
     const { error } = await supabase.from("user_roles").delete().eq("id", roleId);
     if (error) toast({ title: "Failed", description: error.message, variant: "destructive" });
     else { toast({ title: "Admin removed" }); loadData(); }
+  };
+
+  const handleVerification = async (verificationId: string, status: "approved" | "rejected", userId: string) => {
+    if (!user) return;
+    const { error } = await supabase.from("provider_verifications")
+      .update({ status, reviewed_by: user.id, reviewed_at: new Date().toISOString(), admin_notes: status === "approved" ? "Approved by admin" : "Rejected by admin" })
+      .eq("id", verificationId);
+    if (error) { toast({ title: "Failed", description: error.message, variant: "destructive" }); return; }
+
+    // If approved, mark provider as verified
+    if (status === "approved") {
+      await supabase.from("provider_profiles").update({ is_verified: true }).eq("user_id", userId);
+    }
+    toast({ title: status === "approved" ? "Provider verified! ✅" : "Verification rejected" });
+    loadData();
   };
 
   return (
@@ -131,11 +139,14 @@ const AdminSection = () => {
           <TabsTrigger value="reports" className="flex-1 text-xs">
             Reports ({reports.filter(r => r.status === "pending").length})
           </TabsTrigger>
+          <TabsTrigger value="verify" className="flex-1 text-xs">
+            Verify ({verifications.filter(v => v.status === "pending").length})
+          </TabsTrigger>
           <TabsTrigger value="suspensions" className="flex-1 text-xs">
             Bans ({suspensions.filter(s => s.is_active).length})
           </TabsTrigger>
           <TabsTrigger value="admins" className="flex-1 text-xs">
-            Admins ({admins.length})
+            Admins
           </TabsTrigger>
         </TabsList>
 
@@ -159,6 +170,34 @@ const AdminSection = () => {
                     </Button>
                     <Button size="sm" variant="destructive" className="text-xs h-8" onClick={() => handleSuspendUser(report.reported_user_id, "permanent")}>
                       <Ban className="w-3 h-3 mr-1" />Ban
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          ))}
+        </TabsContent>
+
+        <TabsContent value="verify" className="space-y-3">
+          {loading ? <p className="text-center text-muted-foreground py-4 text-sm">Loading...</p> :
+           verifications.length === 0 ? <p className="text-center text-muted-foreground py-4 text-sm">No verification requests</p> :
+           verifications.map((v) => (
+            <Card key={v.id}>
+              <CardContent className="p-3 space-y-2">
+                <div className="flex items-center justify-between">
+                  <Badge variant={v.status === "pending" ? "secondary" : v.status === "approved" ? "default" : "destructive"} className="text-xs">{v.status}</Badge>
+                  <span className="text-xs text-muted-foreground">{new Date(v.created_at).toLocaleDateString()}</span>
+                </div>
+                <p className="text-sm font-medium text-foreground capitalize">{v.document_type.replace("_", " ")}</p>
+                <p className="text-xs text-muted-foreground">User: {v.user_id.slice(0, 8)}...</p>
+                <a href={v.document_url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary underline">View Document</a>
+                {v.status === "pending" && (
+                  <div className="flex gap-2">
+                    <Button size="sm" className="text-xs h-8 flex-1" onClick={() => handleVerification(v.id, "approved", v.user_id)}>
+                      <CheckCircle className="w-3 h-3 mr-1" />Approve
+                    </Button>
+                    <Button size="sm" variant="destructive" className="text-xs h-8 flex-1" onClick={() => handleVerification(v.id, "rejected", v.user_id)}>
+                      <XCircle className="w-3 h-3 mr-1" />Reject
                     </Button>
                   </div>
                 )}
@@ -202,15 +241,8 @@ const AdminSection = () => {
             </Card>
           ))}
           <div className="flex gap-2">
-            <Input
-              placeholder="User email..."
-              value={newAdminEmail}
-              onChange={(e) => setNewAdminEmail(e.target.value)}
-              className="h-10 rounded-xl text-sm"
-            />
-            <Button size="sm" className="h-10 rounded-xl px-4" onClick={handleAddAdmin} disabled={adding}>
-              <UserPlus className="w-4 h-4" />
-            </Button>
+            <Input placeholder="User email..." value={newAdminEmail} onChange={(e) => setNewAdminEmail(e.target.value)} className="h-10 rounded-xl text-sm" />
+            <Button size="sm" className="h-10 rounded-xl px-4" onClick={handleAddAdmin} disabled={adding}><UserPlus className="w-4 h-4" /></Button>
           </div>
         </TabsContent>
       </Tabs>
