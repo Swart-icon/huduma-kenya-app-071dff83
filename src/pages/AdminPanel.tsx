@@ -13,6 +13,7 @@ import {
   BarChart3, Ban, Clock, CheckCircle, XCircle, UserPlus, Trash2,
   Eye, Search, Loader2, TrendingUp, Activity,
 } from "lucide-react";
+import AnalyticsDashboard from "@/components/admin/AnalyticsDashboard";
 
 /* ─── Analytics ─── */
 const AnalyticsTab = () => {
