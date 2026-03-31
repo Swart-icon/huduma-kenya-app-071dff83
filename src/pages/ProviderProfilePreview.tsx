@@ -4,7 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowLeft, MapPin, Phone, Mail, Edit, Briefcase, Star } from "lucide-react";
+import { ArrowLeft, MapPin, Phone, Mail, Edit, Briefcase, Star, Flag } from "lucide-react";
 
 type ProviderProfile = {
   business_name: string;
