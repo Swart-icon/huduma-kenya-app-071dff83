@@ -124,11 +124,11 @@ const Register = () => {
           </div>
           <Button
             onClick={handleRoleSelect}
-            disabled={!selectedRole || loading}
+            disabled={!selectedRole || submitting}
             className="w-full h-14 text-lg font-bold rounded-xl"
             size="lg"
           >
-            {loading ? "Setting up..." : "Continue"}
+            {submitting ? "Setting up..." : "Continue"}
           </Button>
         </div>
       </div>
@@ -149,7 +149,7 @@ const Register = () => {
           variant="outline"
           className="w-full h-12 rounded-xl mb-6 border-2 font-semibold"
           onClick={handleGoogleSignIn}
-          disabled={loading}
+          disabled={submitting}
         >
           <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
             <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" />
@@ -204,8 +204,8 @@ const Register = () => {
               </div>
             )}
           </div>
-          <Button type="submit" disabled={loading} className="w-full h-14 text-lg font-bold rounded-xl" size="lg">
-            {loading ? "Creating account..." : "Create Account"}
+          <Button type="submit" disabled={submitting} className="w-full h-14 text-lg font-bold rounded-xl" size="lg">
+            {submitting ? "Creating account..." : "Create Account"}
           </Button>
         </form>
 
