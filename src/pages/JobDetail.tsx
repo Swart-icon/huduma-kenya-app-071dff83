@@ -133,6 +133,41 @@ const JobDetail = () => {
     }
   };
 
+  const handleApply = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user || role !== "job_seeker") return;
+    setApplySubmitting(true);
+    const { error } = await supabase.from("job_applications").insert({
+      job_post_id: id!,
+      applicant_id: user.id,
+      cover_message: coverMessage.trim() || null,
+    });
+    setApplySubmitting(false);
+    if (error) {
+      toast({ title: "Failed to apply", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Application sent! ✅" });
+      setHasApplied(true);
+    }
+  };
+
+  const handleToggleSave = async () => {
+    if (!user) return;
+    if (isSaved && savedId) {
+      await supabase.from("saved_jobs").delete().eq("id", savedId);
+      setIsSaved(false);
+      setSavedId(null);
+      toast({ title: "Removed from saved" });
+    } else {
+      const { data, error } = await supabase.from("saved_jobs").insert({ user_id: user.id, job_post_id: id! }).select("id").single();
+      if (!error && data) {
+        setIsSaved(true);
+        setSavedId(data.id);
+        toast({ title: "Job saved! 🔖" });
+      }
+    }
+  };
+
   const handleAcceptResponse = async (responseId: string, providerId: string) => {
     // Accept the response and close the job
     await supabase.from("job_responses").update({ status: "accepted" }).eq("id", responseId);
