@@ -269,7 +269,37 @@ const JobDetail = () => {
           </Card>
         )}
 
-        {/* Client: View Responses */}
+        {/* Job Seeker Apply Form */}
+        {role === "job_seeker" && job.status === "open" && !isOwner && (
+          <Card className="mb-6">
+            <CardContent className="p-4">
+              {hasApplied ? (
+                <div className="flex items-center gap-3 text-primary">
+                  <CheckCircle className="w-5 h-5" />
+                  <span className="font-semibold">You've applied to this job</span>
+                </div>
+              ) : (
+                <form onSubmit={handleApply} className="space-y-4">
+                  <h3 className="font-semibold text-foreground">Apply for this Job</h3>
+                  <div>
+                    <Label className="text-sm">Cover Message</Label>
+                    <Textarea
+                      value={coverMessage}
+                      onChange={(e) => setCoverMessage(e.target.value)}
+                      placeholder="Why are you interested in this job? Describe your relevant skills..."
+                      className="rounded-xl mt-1.5"
+                      maxLength={1000}
+                    />
+                  </div>
+                  <Button type="submit" disabled={applySubmitting} className="w-full rounded-xl">
+                    <Send className="w-4 h-4 mr-2" />{applySubmitting ? "Applying..." : "Submit Application"}
+                  </Button>
+                </form>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
         {isOwner && responses.length > 0 && (
           <div>
             <h3 className="font-display font-bold text-lg text-foreground mb-4">Responses ({responses.length})</h3>
