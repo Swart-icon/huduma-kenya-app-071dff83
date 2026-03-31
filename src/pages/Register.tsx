@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,15 +20,25 @@ const roles: { value: AppRole; label: string; description: string; icon: React.R
 
 const Register = () => {
   const navigate = useNavigate();
-  const { signUp, setUserRole } = useAuth();
+  const { user, role, loading, signUp, setUserRole } = useAuth();
   const { toast } = useToast();
   const [step, setStep] = useState<Step>("credentials");
+
+  // When user is authenticated (e.g. after Google sign-in) but has no role, show role selection
+  useEffect(() => {
+    if (!loading && user && !role) {
+      setStep("role");
+    }
+    if (!loading && user && role) {
+      navigate("/dashboard");
+    }
+  }, [loading, user, role, navigate]);
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [selectedRole, setSelectedRole] = useState<AppRole | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   const passwordStrength = (() => {
     if (password.length < 6) return { level: 0, label: "Too short", color: "bg-muted" };
@@ -43,9 +53,9 @@ const Register = () => {
       toast({ title: "Please fill all fields", description: "Password must be at least 6 characters", variant: "destructive" });
       return;
     }
-    setLoading(true);
+    setSubmitting(true);
     const { error } = await signUp(email, password, fullName);
-    setLoading(false);
+    setSubmitting(false);
     if (error) {
       toast({ title: "Registration failed", description: error.message, variant: "destructive" });
     } else {
@@ -55,9 +65,9 @@ const Register = () => {
 
   const handleRoleSelect = async () => {
     if (!selectedRole) return;
-    setLoading(true);
+    setSubmitting(true);
     const { error } = await setUserRole(selectedRole);
-    setLoading(false);
+    setSubmitting(false);
     if (error) {
       toast({ title: "Failed to set role", description: error.message, variant: "destructive" });
     } else {
@@ -67,14 +77,14 @@ const Register = () => {
   };
 
   const handleGoogleSignIn = async () => {
-    setLoading(true);
+    setSubmitting(true);
     const result = await lovable.auth.signInWithOAuth("google", {
       redirect_uri: window.location.origin,
     });
     if (result.error) {
       toast({ title: "Google sign-in failed", description: String(result.error), variant: "destructive" });
     }
-    setLoading(false);
+    setSubmitting(false);
   };
 
   if (step === "role") {
@@ -114,11 +124,11 @@ const Register = () => {
           </div>
           <Button
             onClick={handleRoleSelect}
-            disabled={!selectedRole || loading}
+            disabled={!selectedRole || submitting}
             className="w-full h-14 text-lg font-bold rounded-xl"
             size="lg"
           >
-            {loading ? "Setting up..." : "Continue"}
+            {submitting ? "Setting up..." : "Continue"}
           </Button>
         </div>
       </div>
@@ -139,7 +149,7 @@ const Register = () => {
           variant="outline"
           className="w-full h-12 rounded-xl mb-6 border-2 font-semibold"
           onClick={handleGoogleSignIn}
-          disabled={loading}
+          disabled={submitting}
         >
           <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
             <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" />
@@ -194,8 +204,8 @@ const Register = () => {
               </div>
             )}
           </div>
-          <Button type="submit" disabled={loading} className="w-full h-14 text-lg font-bold rounded-xl" size="lg">
-            {loading ? "Creating account..." : "Create Account"}
+          <Button type="submit" disabled={submitting} className="w-full h-14 text-lg font-bold rounded-xl" size="lg">
+            {submitting ? "Creating account..." : "Create Account"}
           </Button>
         </form>
 

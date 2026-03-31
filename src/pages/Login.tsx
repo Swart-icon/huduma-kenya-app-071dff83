@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,12 +10,22 @@ import { useToast } from "@/hooks/use-toast";
 
 const Login = () => {
   const navigate = useNavigate();
-  const { signIn } = useAuth();
+  const { user, role, loading: authLoading, signIn } = useAuth();
   const { toast } = useToast();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (!authLoading && user) {
+      if (role) {
+        navigate("/dashboard");
+      } else {
+        navigate("/register"); // needs role selection
+      }
+    }
+  }, [authLoading, user, role, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,9 +33,9 @@ const Login = () => {
       toast({ title: "Please fill all fields", variant: "destructive" });
       return;
     }
-    setLoading(true);
+    setSubmitting(true);
     const { error } = await signIn(email, password);
-    setLoading(false);
+    setSubmitting(false);
     if (error) {
       toast({ title: "Login failed", description: error.message, variant: "destructive" });
     } else {
@@ -34,14 +44,14 @@ const Login = () => {
   };
 
   const handleGoogleSignIn = async () => {
-    setLoading(true);
+    setSubmitting(true);
     const result = await lovable.auth.signInWithOAuth("google", {
       redirect_uri: window.location.origin,
     });
     if (result.error) {
       toast({ title: "Google sign-in failed", description: String(result.error), variant: "destructive" });
     }
-    setLoading(false);
+    setSubmitting(false);
   };
 
   return (
@@ -58,7 +68,7 @@ const Login = () => {
           variant="outline"
           className="w-full h-12 rounded-xl mb-6 border-2 font-semibold"
           onClick={handleGoogleSignIn}
-          disabled={loading}
+          disabled={submitting}
         >
           <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
             <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" />
@@ -99,8 +109,8 @@ const Login = () => {
               </button>
             </div>
           </div>
-          <Button type="submit" disabled={loading} className="w-full h-14 text-lg font-bold rounded-xl" size="lg">
-            {loading ? "Signing in..." : "Sign In"}
+          <Button type="submit" disabled={submitting} className="w-full h-14 text-lg font-bold rounded-xl" size="lg">
+            {submitting ? "Signing in..." : "Sign In"}
           </Button>
         </form>
 
