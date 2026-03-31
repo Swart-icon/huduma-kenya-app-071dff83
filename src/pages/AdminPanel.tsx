@@ -13,63 +13,9 @@ import {
   BarChart3, Ban, Clock, CheckCircle, XCircle, UserPlus, Trash2,
   Eye, Search, Loader2, TrendingUp, Activity,
 } from "lucide-react";
+import AnalyticsDashboard from "@/components/admin/AnalyticsDashboard";
 
-/* ─── Analytics ─── */
-const AnalyticsTab = () => {
-  const [stats, setStats] = useState({ users: 0, services: 0, bookings: 0, revenue: 0, pendingReports: 0, activeProviders: 0 });
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const load = async () => {
-      const [profilesR, servicesR, bookingsR, paymentsR, reportsR, providersR] = await Promise.all([
-        supabase.from("profiles").select("id", { count: "exact", head: true }),
-        supabase.from("services").select("id", { count: "exact", head: true }),
-        supabase.from("bookings").select("id", { count: "exact", head: true }),
-        supabase.from("payments").select("amount").eq("status", "completed"),
-        supabase.from("user_reports").select("id", { count: "exact", head: true }).eq("status", "pending"),
-        supabase.from("provider_profiles").select("id", { count: "exact", head: true }),
-      ]);
-      const revenue = (paymentsR.data || []).reduce((sum, p) => sum + Number(p.amount), 0);
-      setStats({
-        users: profilesR.count || 0,
-        services: servicesR.count || 0,
-        bookings: bookingsR.count || 0,
-        revenue,
-        pendingReports: reportsR.count || 0,
-        activeProviders: providersR.count || 0,
-      });
-      setLoading(false);
-    };
-    load();
-  }, []);
-
-  if (loading) return <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>;
-
-  const cards = [
-    { label: "Total Users", value: stats.users, icon: Users, color: "text-primary" },
-    { label: "Active Services", value: stats.services, icon: Briefcase, color: "text-primary" },
-    { label: "Total Bookings", value: stats.bookings, icon: Activity, color: "text-primary" },
-    { label: "Revenue", value: `KSh ${stats.revenue.toLocaleString()}`, icon: DollarSign, color: "text-primary" },
-    { label: "Providers", value: stats.activeProviders, icon: TrendingUp, color: "text-primary" },
-    { label: "Pending Reports", value: stats.pendingReports, icon: AlertTriangle, color: "text-destructive" },
-  ];
-
-  return (
-    <div className="grid grid-cols-2 gap-3">
-      {cards.map((c) => (
-        <Card key={c.label}>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <c.icon className={`w-4 h-4 ${c.color}`} />
-              <span className="text-[11px] font-medium text-muted-foreground">{c.label}</span>
-            </div>
-            <p className="text-xl font-bold text-foreground">{c.value}</p>
-          </CardContent>
-        </Card>
-      ))}
-    </div>
-  );
-};
+/* ─── Analytics (extracted to separate component) ─── */
 
 /* ─── Users Management ─── */
 const UsersTab = () => {
@@ -555,7 +501,7 @@ const AdminPanel = () => {
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="analytics"><AnalyticsTab /></TabsContent>
+            <TabsContent value="analytics"><AnalyticsDashboard /></TabsContent>
             <TabsContent value="users"><UsersTab /></TabsContent>
             <TabsContent value="services"><ServicesTab /></TabsContent>
             <TabsContent value="reports"><ReportsTab /></TabsContent>
