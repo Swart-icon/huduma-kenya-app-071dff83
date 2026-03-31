@@ -31,12 +31,18 @@ const Conversations = () => {
 
     const channel = supabase
       .channel("conversations-realtime")
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages" }, () => {
+      .on("postgres_changes", { event: "*", schema: "public", table: "messages" }, () => {
         loadConversations();
       })
       .subscribe();
 
-    return () => { supabase.removeChannel(channel); };
+    const handleFocus = () => loadConversations();
+    window.addEventListener("focus", handleFocus);
+
+    return () => {
+      supabase.removeChannel(channel);
+      window.removeEventListener("focus", handleFocus);
+    };
   }, [user]);
 
   const loadConversations = async () => {
