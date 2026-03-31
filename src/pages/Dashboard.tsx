@@ -38,7 +38,7 @@ const roleConfig: Record<string, { title: string; subtitle: string; icon: React.
 };
 
 const Dashboard = () => {
-  const { user, role, loading, signOut } = useAuth();
+  const { user, role, loading, isSuspended, signOut } = useAuth();
   const navigate = useNavigate();
   const { unreadMessages, unreadNotifications } = useUnreadCount();
 
