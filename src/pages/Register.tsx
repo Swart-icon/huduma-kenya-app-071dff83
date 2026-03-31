@@ -10,7 +10,7 @@ import { ArrowLeft, Briefcase, Search, UserCheck, Eye, EyeOff, Mail } from "luci
 import { useToast } from "@/hooks/use-toast";
 
 type AppRole = "provider" | "job_seeker" | "client";
-type Step = "credentials" | "role";
+type Step = "credentials" | "verify_email" | "role";
 
 const roles: { value: AppRole; label: string; description: string; icon: React.ReactNode }[] = [
   { value: "provider", label: "Service Provider", description: "Offer your skills & services", icon: <Briefcase className="w-7 h-7" /> },
@@ -59,7 +59,7 @@ const Register = () => {
     if (error) {
       toast({ title: "Registration failed", description: error.message, variant: "destructive" });
     } else {
-      setStep("role");
+      setStep("verify_email");
     }
   };
 
@@ -86,6 +86,26 @@ const Register = () => {
     }
     setSubmitting(false);
   };
+
+  if (step === "verify_email") {
+    return (
+      <div className="min-h-screen bg-background px-6 py-8">
+        <div className="max-w-sm mx-auto flex flex-col items-center justify-center min-h-[70vh] text-center">
+          <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-6">
+            <Mail className="w-8 h-8 text-primary" />
+          </div>
+          <h1 className="font-display text-2xl font-bold text-foreground mb-2">Check your email</h1>
+          <p className="text-muted-foreground mb-6">
+            We've sent a verification link to <strong className="text-foreground">{email}</strong>. Please confirm your email to continue.
+          </p>
+          <p className="text-sm text-muted-foreground mb-8">After verifying, come back and sign in to choose your role.</p>
+          <Button onClick={() => navigate("/login")} className="w-full h-14 text-lg font-bold rounded-xl" size="lg">
+            Go to Sign In
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   if (step === "role") {
     return (
