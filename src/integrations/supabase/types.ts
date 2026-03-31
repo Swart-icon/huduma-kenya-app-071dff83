@@ -14,6 +14,144 @@ export type Database = {
   }
   public: {
     Tables: {
+      bookings: {
+        Row: {
+          booking_date: string | null
+          client_id: string
+          created_at: string
+          id: string
+          notes: string | null
+          provider_id: string
+          service_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          booking_date?: string | null
+          client_id: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          provider_id: string
+          service_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          booking_date?: string | null
+          client_id?: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          provider_id?: string
+          service_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bookings_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      job_posts: {
+        Row: {
+          budget: number | null
+          budget_type: string
+          category_id: string
+          city: string | null
+          client_id: string
+          county: string | null
+          created_at: string
+          description: string | null
+          id: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          budget?: number | null
+          budget_type?: string
+          category_id: string
+          city?: string | null
+          client_id: string
+          county?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          budget?: number | null
+          budget_type?: string
+          category_id?: string
+          city?: string | null
+          client_id?: string
+          county?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "job_posts_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "service_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      job_responses: {
+        Row: {
+          created_at: string
+          id: string
+          job_post_id: string
+          message: string | null
+          proposed_price: number | null
+          provider_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          job_post_id: string
+          message?: string | null
+          proposed_price?: number | null
+          provider_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          job_post_id?: string
+          message?: string | null
+          proposed_price?: number | null
+          provider_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "job_responses_job_post_id_fkey"
+            columns: ["job_post_id"]
+            isOneToOne: false
+            referencedRelation: "job_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
