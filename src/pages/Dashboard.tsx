@@ -98,45 +98,17 @@ const AdminSection = () => {
   const handleAddAdmin = async () => {
     if (!newAdminEmail.trim()) return;
     setAdding(true);
-    // Look up user by email from profiles
-    const { data: profileData } = await supabase.from("profiles").select("user_id, full_name").limit(100);
-    // We need to find user by email - check auth metadata isn't accessible, so use a different approach
-    // Query all user_roles to find if already admin, and try inserting by looking up via supabase auth admin
-    // Since we can't query auth.users from client, we'll use an edge function or ask for user ID
-    // For now, let's search by checking if any profile matches
-    
-    // Actually we can use supabase auth admin API isn't available from client
-    // Let's just inform the user we need the user ID, or better - use RPC
-    // Simplest: ask admin to provide exact email, we'll try to find via profiles table
-    // But profiles don't store email... Let's check conversations/bookings or just try direct
-    
-    // Best approach: try to find user via supabase.auth.admin (not available on client)
-    // Alternative: create an edge function. For now, let's use a workaround -
-    // check user_roles table and profiles to find matching users
-    
-    toast({ title: "Looking up user...", description: "Searching by email" });
-    
-    // We'll need to use an RPC or edge function to look up by email
-    // For now, let's create a simple approach using the service role in an edge function
-    // Actually, the simplest workaround: just try to insert and see if it works
-    const { data: allProfiles } = await supabase.from("profiles").select("user_id, full_name");
-    
-    // Since profiles don't have email, we need another way. Let's check provider_profiles for contact_email
-    const { data: providerMatch } = await supabase.from("provider_profiles")
-      .select("user_id")
-      .eq("contact_email", newAdminEmail.trim())
-      .maybeSingle();
-
-    if (providerMatch) {
-      const { error } = await supabase.from("user_roles").insert({ user_id: providerMatch.user_id, role: "admin" as any });
-      setAdding(false);
-      if (error) toast({ title: "Failed to add admin", description: error.message, variant: "destructive" });
-      else { toast({ title: "Admin added!" }); setNewAdminEmail(""); loadData(); }
-      return;
-    }
-    
+    const { data, error } = await supabase.functions.invoke("add-admin", {
+      body: { email: newAdminEmail.trim() },
+    });
     setAdding(false);
-    toast({ title: "User not found", description: "Could not find a user with that email. They must have a provider profile with that contact email, or use the database directly.", variant: "destructive" });
+    if (error || data?.error) {
+      toast({ title: "Failed to add admin", description: data?.error || error?.message, variant: "destructive" });
+    } else {
+      toast({ title: "Admin added!" });
+      setNewAdminEmail("");
+      loadData();
+    }
   };
 
   const handleRemoveAdmin = async (roleId: string, userId: string) => {
