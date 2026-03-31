@@ -17,6 +17,12 @@ import CategoryServices from "./pages/CategoryServices";
 import ServiceDetailPage from "./pages/ServiceDetail";
 import MyServices from "./pages/MyServices";
 import CreateService from "./pages/CreateService";
+import PostJob from "./pages/PostJob";
+import MyJobs from "./pages/MyJobs";
+import JobDetail from "./pages/JobDetail";
+import JobBoard from "./pages/JobBoard";
+import BookService from "./pages/BookService";
+import MyBookings from "./pages/MyBookings";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
