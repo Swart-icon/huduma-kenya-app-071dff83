@@ -1,255 +1,109 @@
 import { useAuth, type AppRole } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
-import { Briefcase, Search, UserCheck, LogOut, User, Shield, List, Grid, FileText, Calendar, ClipboardList, MessageCircle, Bell, Ban, Clock, UserPlus, Trash2, ArrowLeftRight, CheckCircle, XCircle } from "lucide-react";
+import {
+  Briefcase,
+  Search,
+  UserCheck,
+  LogOut,
+  User,
+  Shield,
+  List,
+  Grid,
+  FileText,
+  Calendar,
+  ClipboardList,
+  MessageCircle,
+  Bell,
+  ArrowLeftRight,
+  Star,
+  MapPin,
+  ChevronRight,
+  Settings,
+  PlusCircle,
+  TrendingUp,
+  Eye,
+} from "lucide-react";
 import { useUnreadCount } from "@/hooks/useUnreadCount";
-import { useToast } from "@/hooks/use-toast";
 
-const roleConfig: Record<string, { title: string; subtitle: string; icon: React.ReactNode; color: string; features: string[] }> = {
+/* ────────── Role Config ────────── */
+const roleConfig: Record<
+  string,
+  { title: string; subtitle: string; icon: React.ReactNode; gradient: string }
+> = {
   provider: {
     title: "Service Provider",
     subtitle: "Manage your services & bookings",
-    icon: <Briefcase className="w-6 h-6" />,
-    color: "bg-primary text-primary-foreground",
-    features: ["Create & manage services", "View booking requests", "Track earnings", "Manage your profile"],
+    icon: <Briefcase className="w-5 h-5" />,
+    gradient: "from-primary to-primary/80",
   },
   job_seeker: {
     title: "Job Seeker",
     subtitle: "Find opportunities & grow your career",
-    icon: <Search className="w-6 h-6" />,
-    color: "bg-accent text-accent-foreground",
-    features: ["Browse available jobs", "Upload your CV", "Track applications", "Get job alerts"],
+    icon: <Search className="w-5 h-5" />,
+    gradient: "from-accent to-accent/80",
   },
   client: {
     title: "Client",
     subtitle: "Post jobs & book services",
-    icon: <UserCheck className="w-6 h-6" />,
-    color: "bg-secondary text-secondary-foreground",
-    features: ["Post job listings", "Book services", "Manage orders", "Review providers"],
+    icon: <UserCheck className="w-5 h-5" />,
+    gradient: "from-secondary to-secondary/80",
   },
   admin: {
     title: "Administrator",
-    subtitle: "Manage users & platform",
-    icon: <Shield className="w-6 h-6" />,
-    color: "bg-destructive text-destructive-foreground",
-    features: ["Review user reports", "Manage suspensions", "Monitor login activity", "Platform security"],
+    subtitle: "Manage platform",
+    icon: <Shield className="w-5 h-5" />,
+    gradient: "from-destructive to-destructive/80",
   },
 };
 
-const AdminSection = () => {
-  const { user } = useAuth();
-  const { toast } = useToast();
-  const [reports, setReports] = useState<any[]>([]);
-  const [suspensions, setSuspensions] = useState<any[]>([]);
-  const [admins, setAdmins] = useState<any[]>([]);
-  const [verifications, setVerifications] = useState<any[]>([]);
-  const [newAdminEmail, setNewAdminEmail] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [adding, setAdding] = useState(false);
+/* ────────── Quick Action Card ────────── */
+const QuickAction = ({
+  icon,
+  label,
+  description,
+  onClick,
+  accentClass = "bg-primary/10 text-primary",
+  badge,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  description: string;
+  onClick: () => void;
+  accentClass?: string;
+  badge?: number;
+}) => (
+  <Card
+    className="card-hover cursor-pointer border-0 shadow-sm rounded-2xl"
+    onClick={onClick}
+  >
+    <CardContent className="flex items-center gap-3.5 p-4">
+      <div
+        className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 ${accentClass}`}
+      >
+        {icon}
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-bold text-foreground">{label}</span>
+          {badge !== undefined && badge > 0 && (
+            <Badge variant="destructive" className="text-[10px] px-1.5 py-0 h-4">
+              {badge}
+            </Badge>
+          )}
+        </div>
+        <p className="text-xs text-muted-foreground truncate">{description}</p>
+      </div>
+      <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
+    </CardContent>
+  </Card>
+);
 
-  useEffect(() => { loadData(); }, []);
-
-  const loadData = async () => {
-    setLoading(true);
-    const [reportsRes, suspensionsRes, adminsRes, verifRes] = await Promise.all([
-      supabase.from("user_reports").select("*").order("created_at", { ascending: false }),
-      supabase.from("user_suspensions").select("*").order("created_at", { ascending: false }),
-      supabase.from("user_roles").select("*").eq("role", "admin"),
-      supabase.from("provider_verifications").select("*").order("created_at", { ascending: false }),
-    ]);
-    setReports(reportsRes.data || []);
-    setSuspensions(suspensionsRes.data || []);
-    setAdmins(adminsRes.data || []);
-    setVerifications(verifRes.data || []);
-    setLoading(false);
-  };
-
-  const handleSuspendUser = async (userId: string, type: "temporary" | "permanent") => {
-    if (!user) return;
-    const { error } = await supabase.from("user_suspensions").insert({
-      user_id: userId, suspended_by: user.id, reason: "Admin action", suspension_type: type,
-      suspended_until: type === "temporary" ? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString() : null,
-    });
-    if (error) toast({ title: "Failed", description: error.message, variant: "destructive" });
-    else { toast({ title: type === "permanent" ? "User banned" : "User suspended 7 days" }); loadData(); }
-  };
-
-  const handleResolveReport = async (reportId: string) => {
-    if (!user) return;
-    const { error } = await supabase.from("user_reports")
-      .update({ status: "resolved", resolved_at: new Date().toISOString(), resolved_by: user.id })
-      .eq("id", reportId);
-    if (error) toast({ title: "Failed", description: error.message, variant: "destructive" });
-    else { toast({ title: "Report resolved" }); loadData(); }
-  };
-
-  const handleLiftSuspension = async (suspensionId: string) => {
-    const { error } = await supabase.from("user_suspensions").update({ is_active: false }).eq("id", suspensionId);
-    if (error) toast({ title: "Failed", description: error.message, variant: "destructive" });
-    else { toast({ title: "Suspension lifted" }); loadData(); }
-  };
-
-  const handleAddAdmin = async () => {
-    if (!newAdminEmail.trim()) return;
-    setAdding(true);
-    const { data, error } = await supabase.functions.invoke("add-admin", { body: { email: newAdminEmail.trim() } });
-    setAdding(false);
-    if (error || data?.error) {
-      toast({ title: "Failed to add admin", description: data?.error || error?.message, variant: "destructive" });
-    } else {
-      toast({ title: "Admin added!" }); setNewAdminEmail(""); loadData();
-    }
-  };
-
-  const handleRemoveAdmin = async (roleId: string, userId: string) => {
-    if (userId === user?.id) { toast({ title: "Cannot remove yourself", variant: "destructive" }); return; }
-    const { error } = await supabase.from("user_roles").delete().eq("id", roleId);
-    if (error) toast({ title: "Failed", description: error.message, variant: "destructive" });
-    else { toast({ title: "Admin removed" }); loadData(); }
-  };
-
-  const handleVerification = async (verificationId: string, status: "approved" | "rejected", userId: string) => {
-    if (!user) return;
-    const { error } = await supabase.from("provider_verifications")
-      .update({ status, reviewed_by: user.id, reviewed_at: new Date().toISOString(), admin_notes: status === "approved" ? "Approved by admin" : "Rejected by admin" })
-      .eq("id", verificationId);
-    if (error) { toast({ title: "Failed", description: error.message, variant: "destructive" }); return; }
-
-    // If approved, mark provider as verified
-    if (status === "approved") {
-      await supabase.from("provider_profiles").update({ is_verified: true }).eq("user_id", userId);
-    }
-    toast({ title: status === "approved" ? "Provider verified! ✅" : "Verification rejected" });
-    loadData();
-  };
-
-  return (
-    <div className="space-y-3 mb-6">
-      <h3 className="font-display font-bold text-lg text-foreground flex items-center gap-2">
-        <Shield className="w-5 h-5 text-destructive" /> Admin Tools
-      </h3>
-      <Tabs defaultValue="reports">
-        <TabsList className="w-full mb-3">
-          <TabsTrigger value="reports" className="flex-1 text-xs">
-            Reports ({reports.filter(r => r.status === "pending").length})
-          </TabsTrigger>
-          <TabsTrigger value="verify" className="flex-1 text-xs">
-            Verify ({verifications.filter(v => v.status === "pending").length})
-          </TabsTrigger>
-          <TabsTrigger value="suspensions" className="flex-1 text-xs">
-            Bans ({suspensions.filter(s => s.is_active).length})
-          </TabsTrigger>
-          <TabsTrigger value="admins" className="flex-1 text-xs">
-            Admins
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="reports" className="space-y-3">
-          {loading ? <p className="text-center text-muted-foreground py-4 text-sm">Loading...</p> :
-           reports.length === 0 ? <p className="text-center text-muted-foreground py-4 text-sm">No reports</p> :
-           reports.map((report) => (
-            <Card key={report.id}>
-              <CardContent className="p-3 space-y-2">
-                <div className="flex items-center justify-between">
-                  <Badge variant={report.status === "pending" ? "destructive" : "secondary"} className="text-xs">{report.status}</Badge>
-                  <span className="text-xs text-muted-foreground">{new Date(report.created_at).toLocaleDateString()}</span>
-                </div>
-                <p className="text-sm font-medium text-foreground capitalize">{report.reason.replace("_", " ")}</p>
-                {report.description && <p className="text-xs text-muted-foreground">{report.description}</p>}
-                {report.status === "pending" && (
-                  <div className="flex gap-2 flex-wrap">
-                    <Button size="sm" variant="outline" className="text-xs h-8" onClick={() => handleResolveReport(report.id)}>Resolve</Button>
-                    <Button size="sm" variant="outline" className="text-xs h-8" onClick={() => handleSuspendUser(report.reported_user_id, "temporary")}>
-                      <Clock className="w-3 h-3 mr-1" />7d
-                    </Button>
-                    <Button size="sm" variant="destructive" className="text-xs h-8" onClick={() => handleSuspendUser(report.reported_user_id, "permanent")}>
-                      <Ban className="w-3 h-3 mr-1" />Ban
-                    </Button>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          ))}
-        </TabsContent>
-
-        <TabsContent value="verify" className="space-y-3">
-          {loading ? <p className="text-center text-muted-foreground py-4 text-sm">Loading...</p> :
-           verifications.length === 0 ? <p className="text-center text-muted-foreground py-4 text-sm">No verification requests</p> :
-           verifications.map((v) => (
-            <Card key={v.id}>
-              <CardContent className="p-3 space-y-2">
-                <div className="flex items-center justify-between">
-                  <Badge variant={v.status === "pending" ? "secondary" : v.status === "approved" ? "default" : "destructive"} className="text-xs">{v.status}</Badge>
-                  <span className="text-xs text-muted-foreground">{new Date(v.created_at).toLocaleDateString()}</span>
-                </div>
-                <p className="text-sm font-medium text-foreground capitalize">{v.document_type.replace("_", " ")}</p>
-                <p className="text-xs text-muted-foreground">User: {v.user_id.slice(0, 8)}...</p>
-                <a href={v.document_url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary underline">View Document</a>
-                {v.status === "pending" && (
-                  <div className="flex gap-2">
-                    <Button size="sm" className="text-xs h-8 flex-1" onClick={() => handleVerification(v.id, "approved", v.user_id)}>
-                      <CheckCircle className="w-3 h-3 mr-1" />Approve
-                    </Button>
-                    <Button size="sm" variant="destructive" className="text-xs h-8 flex-1" onClick={() => handleVerification(v.id, "rejected", v.user_id)}>
-                      <XCircle className="w-3 h-3 mr-1" />Reject
-                    </Button>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          ))}
-        </TabsContent>
-
-        <TabsContent value="suspensions" className="space-y-3">
-          {loading ? <p className="text-center text-muted-foreground py-4 text-sm">Loading...</p> :
-           suspensions.length === 0 ? <p className="text-center text-muted-foreground py-4 text-sm">No suspensions</p> :
-           suspensions.map((s) => (
-            <Card key={s.id}>
-              <CardContent className="p-3 space-y-2">
-                <div className="flex items-center justify-between">
-                  <Badge variant={s.is_active ? "destructive" : "secondary"} className="text-xs">
-                    {s.is_active ? (s.suspension_type === "permanent" ? "Banned" : "Suspended") : "Lifted"}
-                  </Badge>
-                  <span className="text-xs text-muted-foreground">{new Date(s.created_at).toLocaleDateString()}</span>
-                </div>
-                <p className="text-xs text-muted-foreground">User: {s.user_id.slice(0, 8)}...</p>
-                {s.is_active && (
-                  <Button size="sm" variant="outline" className="text-xs h-8" onClick={() => handleLiftSuspension(s.id)}>Lift</Button>
-                )}
-              </CardContent>
-            </Card>
-          ))}
-        </TabsContent>
-
-        <TabsContent value="admins" className="space-y-3">
-          {admins.map((a) => (
-            <Card key={a.id}>
-              <CardContent className="p-3 flex items-center justify-between">
-                <span className="text-sm text-foreground">{a.user_id === user?.id ? "You" : a.user_id.slice(0, 12) + "..."}</span>
-                {a.user_id !== user?.id && (
-                  <Button size="sm" variant="ghost" className="text-xs h-8 text-destructive" onClick={() => handleRemoveAdmin(a.id, a.user_id)}>
-                    <Trash2 className="w-3 h-3 mr-1" />Remove
-                  </Button>
-                )}
-              </CardContent>
-            </Card>
-          ))}
-          <div className="flex gap-2">
-            <Input placeholder="User email..." value={newAdminEmail} onChange={(e) => setNewAdminEmail(e.target.value)} className="h-10 rounded-xl text-sm" />
-            <Button size="sm" className="h-10 rounded-xl px-4" onClick={handleAddAdmin} disabled={adding}><UserPlus className="w-4 h-4" /></Button>
-          </div>
-        </TabsContent>
-      </Tabs>
-    </div>
-  );
-};
-
+/* ────────── Role Switcher ────────── */
 const RoleSwitcher = () => {
   const { role, roles, switchRole } = useAuth();
   const nonAdminRoles = roles.filter((r) => r !== "admin");
@@ -257,8 +111,8 @@ const RoleSwitcher = () => {
   if (nonAdminRoles.length <= 1) return null;
 
   return (
-    <div className="mb-6">
-      <p className="text-xs font-semibold text-muted-foreground mb-2 flex items-center gap-1">
+    <div className="mb-5">
+      <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1.5">
         <ArrowLeftRight className="w-3 h-3" /> Switch Role
       </p>
       <div className="flex gap-2">
@@ -269,10 +123,10 @@ const RoleSwitcher = () => {
             <button
               key={r}
               onClick={() => switchRole(r as AppRole)}
-              className={`flex-1 flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+              className={`flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${
                 isActive
                   ? "bg-primary text-primary-foreground shadow-md"
-                  : "bg-muted text-muted-foreground hover:bg-muted/80"
+                  : "bg-card text-muted-foreground hover:bg-muted shadow-sm border border-border"
               }`}
             >
               {cfg?.icon}
@@ -285,6 +139,7 @@ const RoleSwitcher = () => {
   );
 };
 
+/* ────────── Main Dashboard ────────── */
 const Dashboard = () => {
   const { user, role, roles, loading, isAdmin, isSuspended, signOut } = useAuth();
   const navigate = useNavigate();
@@ -306,6 +161,7 @@ const Dashboard = () => {
   }
 
   const config = roleConfig[role] || roleConfig.client;
+  const firstName = user?.user_metadata?.full_name?.split(" ")[0] || "there";
 
   const handleLogout = async () => {
     await signOut();
@@ -313,221 +169,247 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background px-6 py-6">
-      <div className="max-w-sm mx-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
-              <Shield className="w-5 h-5 text-primary-foreground" />
+    <div className="min-h-screen bg-background pb-8">
+      {/* ─── Top Bar ─── */}
+      <div className="sticky top-0 z-30 bg-background/80 backdrop-blur-lg border-b border-border/50">
+        <div className="flex items-center justify-between px-5 py-3 max-w-lg mx-auto">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
+              <Shield className="w-4 h-4 text-primary-foreground" />
             </div>
-            <span className="font-display font-bold text-lg text-foreground">Huduma</span>
+            <span className="font-display font-bold text-base text-foreground">Huduma</span>
           </div>
-          <div className="flex gap-1">
-            <Button variant="ghost" size="icon" onClick={() => navigate("/conversations")} className="rounded-xl relative">
-              <MessageCircle className="w-5 h-5" />
+          <div className="flex gap-0.5">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate("/conversations")}
+              className="rounded-xl h-9 w-9 relative"
+            >
+              <MessageCircle className="w-[18px] h-[18px]" />
               {unreadMessages > 0 && (
-                <span className="absolute -top-1 -right-1 w-4 h-4 text-[10px] font-bold rounded-full bg-destructive text-destructive-foreground flex items-center justify-center">
+                <span className="absolute -top-0.5 -right-0.5 w-4 h-4 text-[9px] font-bold rounded-full bg-destructive text-destructive-foreground flex items-center justify-center">
                   {unreadMessages}
                 </span>
               )}
             </Button>
-            <Button variant="ghost" size="icon" onClick={() => navigate("/notifications")} className="rounded-xl relative">
-              <Bell className="w-5 h-5" />
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate("/notifications")}
+              className="rounded-xl h-9 w-9 relative"
+            >
+              <Bell className="w-[18px] h-[18px]" />
               {unreadNotifications > 0 && (
-                <span className="absolute -top-1 -right-1 w-4 h-4 text-[10px] font-bold rounded-full bg-destructive text-destructive-foreground flex items-center justify-center">
+                <span className="absolute -top-0.5 -right-0.5 w-4 h-4 text-[9px] font-bold rounded-full bg-destructive text-destructive-foreground flex items-center justify-center">
                   {unreadNotifications}
                 </span>
               )}
             </Button>
-            <Button variant="ghost" size="icon" onClick={() => navigate("/profile")} className="rounded-xl">
-              <User className="w-5 h-5" />
-            </Button>
-            <Button variant="ghost" size="icon" onClick={handleLogout} className="rounded-xl">
-              <LogOut className="w-5 h-5" />
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate("/profile")}
+              className="rounded-xl h-9 w-9"
+            >
+              <User className="w-[18px] h-[18px]" />
             </Button>
           </div>
         </div>
+      </div>
 
-        {/* Suspension Warning */}
-        {isSuspended && (
-          <Card className="mb-6 border-destructive bg-destructive/10">
-            <CardContent className="p-4 flex items-center gap-3">
-              <Shield className="w-5 h-5 text-destructive shrink-0" />
-              <div>
-                <p className="font-semibold text-destructive text-sm">Account Suspended</p>
-                <p className="text-xs text-muted-foreground">Your account has been suspended. Some features may be restricted.</p>
+      <div className="px-5 max-w-lg mx-auto pt-5">
+        {/* ─── Welcome Card ─── */}
+        <Card className={`mb-5 border-0 shadow-lg rounded-2xl overflow-hidden`}>
+          <div className={`bg-gradient-to-br ${config.gradient} p-5`}>
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-primary-foreground/20 flex items-center justify-center">
+                  {config.icon}
+                </div>
+                <span className="text-xs font-semibold text-primary-foreground/80">
+                  {config.title}
+                </span>
               </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Welcome Card */}
-        <Card className="mb-6 border-0 shadow-lg overflow-hidden">
-          <div className={`${config.color} p-6`}>
-            <div className="flex items-center gap-3 mb-2">
-              {config.icon}
-              <span className="text-sm font-semibold opacity-90">{config.title}</span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleLogout}
+                className="h-7 px-2 text-primary-foreground/60 hover:text-primary-foreground hover:bg-primary-foreground/10 text-[11px]"
+              >
+                <LogOut className="w-3 h-3 mr-1" /> Logout
+              </Button>
             </div>
-            <h2 className="font-display text-xl font-bold">
-              Karibu, {user?.user_metadata?.full_name?.split(" ")[0] || "there"}! 👋
+            <h2 className="font-display text-xl font-bold text-primary-foreground">
+              Karibu, {firstName}! 👋
             </h2>
-            <p className="text-sm opacity-80 mt-1">{config.subtitle}</p>
+            <p className="text-xs text-primary-foreground/70 mt-0.5">{config.subtitle}</p>
           </div>
         </Card>
 
-        {/* Role Switcher */}
+        {/* ─── Suspension Warning ─── */}
+        {isSuspended && (
+          <Card className="mb-5 border-destructive/40 bg-destructive/5 rounded-2xl">
+            <CardContent className="p-4 flex items-center gap-3">
+              <Shield className="w-5 h-5 text-destructive shrink-0" />
+              <div>
+                <p className="font-bold text-destructive text-sm">Account Suspended</p>
+                <p className="text-xs text-muted-foreground">
+                  Some features may be restricted.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* ─── Role Switcher ─── */}
         <RoleSwitcher />
 
-        {/* Provider-specific actions */}
+        {/* ─── Provider Actions ─── */}
         {role === "provider" && (
-          <div className="space-y-3 mb-6">
-            <h3 className="font-display font-bold text-lg text-foreground">Your Business</h3>
-            <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate("/provider-profile/preview")}>
-              <CardContent className="flex items-center gap-4 p-4">
-                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                  <Briefcase className="w-5 h-5 text-primary" />
-                </div>
-                <div className="flex-1">
-                  <span className="text-sm font-medium text-foreground">Business Profile</span>
-                  <p className="text-xs text-muted-foreground">View & edit your profile</p>
-                </div>
-              </CardContent>
-            </Card>
-            <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate("/my-services")}>
-              <CardContent className="flex items-center gap-4 p-4">
-                <div className="w-10 h-10 rounded-lg bg-accent/20 flex items-center justify-center shrink-0">
-                  <List className="w-5 h-5 text-accent-foreground" />
-                </div>
-                <div className="flex-1">
-                  <span className="text-sm font-medium text-foreground">My Services</span>
-                  <p className="text-xs text-muted-foreground">Manage your service listings</p>
-                </div>
-              </CardContent>
-            </Card>
-            <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate("/job-board")}>
-              <CardContent className="flex items-center gap-4 p-4">
-                <div className="w-10 h-10 rounded-lg bg-secondary/10 flex items-center justify-center shrink-0">
-                  <ClipboardList className="w-5 h-5 text-secondary" />
-                </div>
-                <div className="flex-1">
-                  <span className="text-sm font-medium text-foreground">Job Board</span>
-                  <p className="text-xs text-muted-foreground">Browse open job posts</p>
-                </div>
-              </CardContent>
-            </Card>
-            <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate("/my-bookings")}>
-              <CardContent className="flex items-center gap-4 p-4">
-                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                  <Calendar className="w-5 h-5 text-primary" />
-                </div>
-                <div className="flex-1">
-                  <span className="text-sm font-medium text-foreground">My Bookings</span>
-                  <p className="text-xs text-muted-foreground">View & manage bookings</p>
-                </div>
-              </CardContent>
-            </Card>
+          <div className="space-y-2.5 mb-6">
+            <h3 className="font-display font-bold text-sm text-foreground uppercase tracking-wider mb-1">
+              Your Business
+            </h3>
+            <QuickAction
+              icon={<Eye className="w-5 h-5" />}
+              label="Business Profile"
+              description="View & edit your profile"
+              onClick={() => navigate("/provider-profile/preview")}
+              accentClass="bg-primary/10 text-primary"
+            />
+            <QuickAction
+              icon={<List className="w-5 h-5" />}
+              label="My Services"
+              description="Manage your service listings"
+              onClick={() => navigate("/my-services")}
+              accentClass="bg-accent/15 text-accent-foreground"
+            />
+            <QuickAction
+              icon={<PlusCircle className="w-5 h-5" />}
+              label="Create Service"
+              description="Add a new service listing"
+              onClick={() => navigate("/services/new")}
+              accentClass="bg-primary/10 text-primary"
+            />
+            <QuickAction
+              icon={<ClipboardList className="w-5 h-5" />}
+              label="Job Board"
+              description="Browse open job posts"
+              onClick={() => navigate("/job-board")}
+              accentClass="bg-secondary/10 text-secondary"
+            />
+            <QuickAction
+              icon={<Calendar className="w-5 h-5" />}
+              label="My Bookings"
+              description="View & manage bookings"
+              onClick={() => navigate("/my-bookings")}
+              accentClass="bg-primary/10 text-primary"
+            />
           </div>
         )}
 
-        {/* Client-specific actions */}
+        {/* ─── Client Actions ─── */}
         {role === "client" && (
-          <div className="space-y-3 mb-6">
-            <h3 className="font-display font-bold text-lg text-foreground">Your Activity</h3>
-            <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate("/my-jobs")}>
-              <CardContent className="flex items-center gap-4 p-4">
-                <div className="w-10 h-10 rounded-lg bg-secondary/10 flex items-center justify-center shrink-0">
-                  <FileText className="w-5 h-5 text-secondary" />
-                </div>
-                <div className="flex-1">
-                  <span className="text-sm font-medium text-foreground">My Job Posts</span>
-                  <p className="text-xs text-muted-foreground">Post & manage jobs</p>
-                </div>
-              </CardContent>
-            </Card>
-            <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate("/my-bookings")}>
-              <CardContent className="flex items-center gap-4 p-4">
-                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                  <Calendar className="w-5 h-5 text-primary" />
-                </div>
-                <div className="flex-1">
-                  <span className="text-sm font-medium text-foreground">My Bookings</span>
-                  <p className="text-xs text-muted-foreground">Track service bookings</p>
-                </div>
-              </CardContent>
-            </Card>
+          <div className="space-y-2.5 mb-6">
+            <h3 className="font-display font-bold text-sm text-foreground uppercase tracking-wider mb-1">
+              Your Activity
+            </h3>
+            <QuickAction
+              icon={<FileText className="w-5 h-5" />}
+              label="My Job Posts"
+              description="Post & manage jobs"
+              onClick={() => navigate("/my-jobs")}
+              accentClass="bg-secondary/10 text-secondary"
+            />
+            <QuickAction
+              icon={<PlusCircle className="w-5 h-5" />}
+              label="Post a Job"
+              description="Create a new job listing"
+              onClick={() => navigate("/jobs/new")}
+              accentClass="bg-accent/15 text-accent-foreground"
+            />
+            <QuickAction
+              icon={<Calendar className="w-5 h-5" />}
+              label="My Bookings"
+              description="Track service bookings"
+              onClick={() => navigate("/my-bookings")}
+              accentClass="bg-primary/10 text-primary"
+            />
           </div>
         )}
 
-        {/* Admin Panel link */}
-        {isAdmin && (
-          <Card className="mb-6 hover:shadow-md transition-shadow cursor-pointer border-destructive/30" onClick={() => navigate("/admin")}>
-            <CardContent className="flex items-center gap-4 p-4">
-              <div className="w-10 h-10 rounded-lg bg-destructive/10 flex items-center justify-center shrink-0">
-                <Shield className="w-5 h-5 text-destructive" />
-              </div>
-              <div className="flex-1">
-                <span className="text-sm font-medium text-foreground">Admin Panel</span>
-                <p className="text-xs text-muted-foreground">Manage users, services, reports & analytics</p>
-              </div>
-            </CardContent>
-          </Card>
+        {/* ─── Job Seeker Actions ─── */}
+        {role === "job_seeker" && (
+          <div className="space-y-2.5 mb-6">
+            <h3 className="font-display font-bold text-sm text-foreground uppercase tracking-wider mb-1">
+              Opportunities
+            </h3>
+            <QuickAction
+              icon={<ClipboardList className="w-5 h-5" />}
+              label="Job Board"
+              description="Browse available jobs"
+              onClick={() => navigate("/job-board")}
+              accentClass="bg-accent/15 text-accent-foreground"
+            />
+            <QuickAction
+              icon={<TrendingUp className="w-5 h-5" />}
+              label="My Applications"
+              description="Track your job applications"
+              onClick={() => navigate("/my-jobs")}
+              accentClass="bg-primary/10 text-primary"
+            />
+          </div>
         )}
 
-        {/* Browse & Search - visible to all */}
-        <div className="space-y-3 mb-6">
-          <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate("/search")}>
-            <CardContent className="flex items-center gap-4 p-4">
-              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                <Search className="w-5 h-5 text-primary" />
-              </div>
-              <div className="flex-1">
-                <span className="text-sm font-medium text-foreground">Search Services</span>
-                <p className="text-xs text-muted-foreground">Find services with filters & sorting</p>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate("/categories")}>
-            <CardContent className="flex items-center gap-4 p-4">
-              <div className="w-10 h-10 rounded-lg bg-secondary/10 flex items-center justify-center shrink-0">
-                <Grid className="w-5 h-5 text-secondary" />
-              </div>
-              <div className="flex-1">
-                <span className="text-sm font-medium text-foreground">Browse Categories</span>
-                <p className="text-xs text-muted-foreground">Explore by category</p>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate("/security")}>
-            <CardContent className="flex items-center gap-4 p-4">
-              <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center shrink-0">
-                <Shield className="w-5 h-5 text-muted-foreground" />
-              </div>
-              <div className="flex-1">
-                <span className="text-sm font-medium text-foreground">Security Settings</span>
-                <p className="text-xs text-muted-foreground">Manage sessions & password</p>
-              </div>
-            </CardContent>
-          </Card>
+        {/* ─── Admin Link ─── */}
+        {isAdmin && (
+          <QuickAction
+            icon={<Shield className="w-5 h-5" />}
+            label="Admin Panel"
+            description="Manage users, services & analytics"
+            onClick={() => navigate("/admin")}
+            accentClass="bg-destructive/10 text-destructive"
+          />
+        )}
+
+        {/* ─── Explore Section ─── */}
+        <div className="space-y-2.5 mt-6 mb-6">
+          <h3 className="font-display font-bold text-sm text-foreground uppercase tracking-wider mb-1">
+            Explore
+          </h3>
+          <QuickAction
+            icon={<Search className="w-5 h-5" />}
+            label="Search Services"
+            description="Find services with filters & sorting"
+            onClick={() => navigate("/search")}
+            accentClass="bg-primary/10 text-primary"
+          />
+          <QuickAction
+            icon={<Grid className="w-5 h-5" />}
+            label="Browse Categories"
+            description="Explore services by category"
+            onClick={() => navigate("/categories")}
+            accentClass="bg-accent/15 text-accent-foreground"
+          />
         </div>
 
-        {/* Features */}
-        <h3 className="font-display font-bold text-lg text-foreground mb-4">What you can do</h3>
-        <div className="space-y-3">
-          {config.features.map((feature, i) => (
-            <Card key={i} className="hover:shadow-md transition-shadow cursor-pointer">
-              <CardContent className="flex items-center gap-4 p-4">
-                <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center shrink-0">
-                  <div className="w-2 h-2 rounded-full bg-primary" />
-                </div>
-                <span className="text-sm font-medium text-foreground">{feature}</span>
-              </CardContent>
-            </Card>
-          ))}
+        {/* ─── Settings ─── */}
+        <div className="space-y-2.5 mb-4">
+          <h3 className="font-display font-bold text-sm text-foreground uppercase tracking-wider mb-1">
+            Settings
+          </h3>
+          <QuickAction
+            icon={<Settings className="w-5 h-5" />}
+            label="Security"
+            description="Manage sessions & password"
+            onClick={() => navigate("/security")}
+            accentClass="bg-muted text-muted-foreground"
+          />
         </div>
 
-        <p className="text-center text-xs text-muted-foreground mt-8">
-          More features coming soon 🚀
+        <p className="text-center text-[11px] text-muted-foreground mt-8 mb-2">
+          Huduma — Kenya's Service Marketplace 🇰🇪
         </p>
       </div>
     </div>

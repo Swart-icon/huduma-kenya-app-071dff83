@@ -95,3 +95,42 @@
     @apply bg-background text-foreground font-sans;
   }
 }
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .glass {
+    @apply bg-card/80 backdrop-blur-md border border-border/50;
+  }
+
+  .card-hover {
+    @apply transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 active:scale-[0.98];
+  }
+
+  .gradient-hero {
+    background: linear-gradient(
+      to bottom,
+      hsla(145, 63%, 20%, 0.85) 0%,
+      hsla(145, 63%, 15%, 0.92) 50%,
+      hsl(20, 15%, 8%) 100%
+    );
+  }
+
+  .gradient-card {
+    background: linear-gradient(
+      135deg,
+      hsl(var(--card)) 0%,
+      hsl(var(--muted)) 100%
+    );
+  }
+
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+}
