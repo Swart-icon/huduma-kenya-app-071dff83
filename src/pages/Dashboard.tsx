@@ -218,15 +218,52 @@ const AdminSection = () => {
   );
 };
 
+const RoleSwitcher = () => {
+  const { role, roles, switchRole } = useAuth();
+  const nonAdminRoles = roles.filter((r) => r !== "admin");
+
+  if (nonAdminRoles.length <= 1) return null;
+
+  return (
+    <div className="mb-6">
+      <p className="text-xs font-semibold text-muted-foreground mb-2 flex items-center gap-1">
+        <ArrowLeftRight className="w-3 h-3" /> Switch Role
+      </p>
+      <div className="flex gap-2">
+        {nonAdminRoles.map((r) => {
+          const cfg = roleConfig[r];
+          const isActive = r === role;
+          return (
+            <button
+              key={r}
+              onClick={() => switchRole(r as AppRole)}
+              className={`flex-1 flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+                isActive
+                  ? "bg-primary text-primary-foreground shadow-md"
+                  : "bg-muted text-muted-foreground hover:bg-muted/80"
+              }`}
+            >
+              {cfg?.icon}
+              <span className="truncate">{cfg?.title?.split(" ")[0]}</span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
 const Dashboard = () => {
-  const { user, role, loading, isAdmin, isSuspended, signOut } = useAuth();
+  const { user, role, roles, loading, isAdmin, isSuspended, signOut } = useAuth();
   const navigate = useNavigate();
   const { unreadMessages, unreadNotifications } = useUnreadCount();
 
+  const hasNonAdminRole = roles.filter((r) => r !== "admin").length > 0;
+
   useEffect(() => {
     if (!loading && !user) navigate("/welcome");
-    if (!loading && user && !role) navigate("/register");
-  }, [loading, user, role, navigate]);
+    if (!loading && user && !hasNonAdminRole) navigate("/register");
+  }, [loading, user, hasNonAdminRole, navigate]);
 
   if (loading || !role) {
     return (
