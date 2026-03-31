@@ -10,12 +10,22 @@ import { useToast } from "@/hooks/use-toast";
 
 const Login = () => {
   const navigate = useNavigate();
-  const { signIn } = useAuth();
+  const { user, role, loading: authLoading, signIn } = useAuth();
   const { toast } = useToast();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (!authLoading && user) {
+      if (role) {
+        navigate("/dashboard");
+      } else {
+        navigate("/register"); // needs role selection
+      }
+    }
+  }, [authLoading, user, role, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
