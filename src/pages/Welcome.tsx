@@ -44,19 +44,12 @@ type FeaturedProvider = {
 
 const Welcome = () => {
   const navigate = useNavigate();
-  const [categories, setCategories] = useState<Category[]>([]);
+  const { data: categories = [], isLoading: categoriesLoading } = useCategories();
   const [providers, setProviders] = useState<FeaturedProvider[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [stats, setStats] = useState({ users: 0, services: 0 });
 
   useEffect(() => {
-    // Load categories
-    supabase
-      .from("service_categories")
-      .select("*")
-      .order("sort_order")
-      .limit(8)
-      .then(({ data }) => setCategories(data || []));
 
     // Load featured providers
     supabase
