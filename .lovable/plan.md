@@ -1,24 +1,44 @@
 
 
-## Fix: Duplicate Role Error on Sign-In
+## Replace Emoji Category Icons with Lucide Icons
 
 ### Problem
-The user `mwirigievans17@gmail.com` already has an `admin` role (inserted via migration). When signing in and landing on `/register`, the role selection screen appears briefly before the redirect fires, and clicking "Continue" tries to INSERT a second role row, violating the unique constraint.
+Categories currently display emoji characters (🏗️, 🚗, etc.) as icons. The user wants real icons instead.
 
-### Root Cause
-`setUserRole` in `AuthContext.tsx` does a raw `insert` without checking if a role already exists. Additionally, the Register page shows the role selector momentarily even when a role is already assigned.
+### Approach
+Replace the emoji-based rendering with **Lucide React icons** mapped to each category slug. Lucide is already installed and used throughout the app. This avoids needing to source/host separate image files while giving a clean, consistent icon style.
 
-### Fix (2 changes)
+### Categories to Map (15 total)
 
-**1. `src/contexts/AuthContext.tsx` — Make `setUserRole` handle existing roles**
-- Change from `.insert()` to `.upsert()` (or check existing role first and skip insert)
-- This prevents the duplicate key error
+| Slug | Lucide Icon |
+|------|-------------|
+| construction | HardHat |
+| automotive | Car |
+| electronics | Cpu |
+| it-services | Monitor |
+| home-services | Home |
+| business-services | Briefcase |
+| education | GraduationCap |
+| health-wellness | HeartPulse |
+| hospitality | UtensilsCrossed |
+| security-logistics | ShieldCheck |
+| agriculture | Wheat |
+| beauty-lifestyle | Sparkles |
+| media-creative | Clapperboard |
+| transport | Truck |
+| retail-trade | ShoppingCart |
 
-**2. `src/pages/Register.tsx` — Don't show role selection if role is loading**
-- Add a loading guard so the role picker doesn't flash while `fetchRole` is still running
-- The existing `useEffect` already redirects when `user && role` — just need to prevent interaction during the loading window
+### Files to Change
 
-### Technical Details
-- In `setUserRole`: use `supabase.from("user_roles").upsert({ user_id: user.id, role: selectedRole }, { onConflict: "user_id,role" })` or first check if role exists
-- In Register: show a spinner/loading state while `loading` is true instead of immediately rendering the role picker
+1. **`src/pages/Welcome.tsx`**
+   - Expand `categoryIcons` map to cover all 15 slugs with Lucide icons
+   - Change the render logic: always use `categoryIcons[cat.slug]` instead of showing `cat.icon` (emoji)
+   - Style icons with `text-primary` color for consistency
+
+2. **`src/pages/Categories.tsx`**
+   - Import the same icon map (or define inline) instead of rendering `{cat.icon}` emoji
+   - Replace `<span className="text-3xl">{cat.icon}</span>` with the corresponding Lucide icon
+
+### Result
+All category icons will be clean, vector Lucide icons matching the app's design system — no emojis anywhere.
 
