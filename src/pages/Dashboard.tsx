@@ -55,7 +55,7 @@ const Dashboard = () => {
     );
   }
 
-  const config = roleConfig[role];
+  const config = roleConfig[role] || roleConfig.client;
 
   const handleLogout = async () => {
     await signOut();
