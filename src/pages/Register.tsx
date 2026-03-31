@@ -20,9 +20,19 @@ const roles: { value: AppRole; label: string; description: string; icon: React.R
 
 const Register = () => {
   const navigate = useNavigate();
-  const { signUp, setUserRole } = useAuth();
+  const { user, role, loading, signUp, setUserRole } = useAuth();
   const { toast } = useToast();
   const [step, setStep] = useState<Step>("credentials");
+
+  // When user is authenticated (e.g. after Google sign-in) but has no role, show role selection
+  useEffect(() => {
+    if (!loading && user && !role) {
+      setStep("role");
+    }
+    if (!loading && user && role) {
+      navigate("/dashboard");
+    }
+  }, [loading, user, role, navigate]);
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
