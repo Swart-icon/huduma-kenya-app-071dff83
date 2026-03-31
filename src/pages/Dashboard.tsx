@@ -7,7 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
-import { Briefcase, Search, UserCheck, LogOut, User, Shield, List, Grid, FileText, Calendar, ClipboardList, MessageCircle, Bell, Ban, Clock, UserPlus, Trash2, ArrowLeftRight } from "lucide-react";
+import { Briefcase, Search, UserCheck, LogOut, User, Shield, List, Grid, FileText, Calendar, ClipboardList, MessageCircle, Bell, Ban, Clock, UserPlus, Trash2, ArrowLeftRight, CheckCircle, XCircle } from "lucide-react";
 import { useUnreadCount } from "@/hooks/useUnreadCount";
 import { useToast } from "@/hooks/use-toast";
 
