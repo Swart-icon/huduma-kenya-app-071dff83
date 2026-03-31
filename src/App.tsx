@@ -27,6 +27,9 @@ import Conversations from "./pages/Conversations";
 import Chat from "./pages/Chat";
 import Notifications from "./pages/Notifications";
 import NotFound from "./pages/NotFound";
+import PaymentScreen from "./pages/PaymentScreen";
+import ReviewForm from "./pages/ReviewForm";
+import ProviderReviews from "./pages/ProviderReviews";
 
 const queryClient = new QueryClient();
 
