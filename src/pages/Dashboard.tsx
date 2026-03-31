@@ -88,6 +88,24 @@ const Dashboard = () => {
           </div>
         </Card>
 
+        {/* Provider-specific actions */}
+        {role === "provider" && (
+          <div className="space-y-3 mb-6">
+            <h3 className="font-display font-bold text-lg text-foreground">Your Business</h3>
+            <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate("/provider-profile/preview")}>
+              <CardContent className="flex items-center gap-4 p-4">
+                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                  <Briefcase className="w-5 h-5 text-primary" />
+                </div>
+                <div className="flex-1">
+                  <span className="text-sm font-medium text-foreground">Business Profile</span>
+                  <p className="text-xs text-muted-foreground">View & edit your profile</p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
         {/* Features */}
         <h3 className="font-display font-bold text-lg text-foreground mb-4">What you can do</h3>
         <div className="space-y-3">
