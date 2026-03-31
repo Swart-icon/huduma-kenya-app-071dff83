@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ArrowLeft, Search } from "lucide-react";
+import { getCategoryIcon } from "@/lib/categoryIcons";
 
 type Category = {
   id: string;

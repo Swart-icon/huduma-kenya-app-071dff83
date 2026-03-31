@@ -14,14 +14,10 @@ import {
   CheckCircle,
   ArrowRight,
   Briefcase,
-  Wrench,
-  Zap,
-  Home,
-  Truck,
-  Paintbrush,
   ChevronRight,
   BadgeCheck,
 } from "lucide-react";
+import { getCategoryIcon } from "@/lib/categoryIcons";
 import heroImage from "@/assets/hero-services.jpg";
 
 type Category = {
