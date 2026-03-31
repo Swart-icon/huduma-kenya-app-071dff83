@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowLeft, MapPin, Phone, Mail, User, Tag } from "lucide-react";
+import { ArrowLeft, MapPin, Phone, Mail, User, Tag, Calendar } from "lucide-react";
 
 type ServiceDetail = {
   id: string;
@@ -37,6 +38,17 @@ const priceLabel = (price: number | null, type: string) => {
   if (type === "starting_from") return `From ${formatted}`;
   if (type === "negotiable") return `${formatted} (negotiable)`;
   return formatted;
+};
+
+const BookButton = ({ serviceId }: { serviceId: string }) => {
+  const { role } = useAuth();
+  const navigate = useNavigate();
+  if (role !== "client") return null;
+  return (
+    <Button onClick={() => navigate(`/book/${serviceId}`)} className="w-full h-14 text-lg font-bold rounded-xl" size="lg">
+      <Calendar className="w-5 h-5 mr-2" /> Book This Service
+    </Button>
+  );
 };
 
 const ServiceDetailPage = () => {
@@ -164,15 +176,18 @@ const ServiceDetailPage = () => {
           </Card>
         )}
 
-        {/* Contact CTA */}
-        {provider?.contact_phone && (
-          <Button asChild className="w-full h-14 text-lg font-bold rounded-xl" size="lg">
-            <a href={`tel:${provider.contact_phone}`}>
-              <Phone className="w-5 h-5 mr-2" />
-              Call Provider
-            </a>
-          </Button>
-        )}
+        {/* Book & Contact CTAs */}
+        <div className="space-y-3">
+          <BookButton serviceId={service.id} />
+          {provider?.contact_phone && (
+            <Button asChild variant="outline" className="w-full h-14 text-lg font-bold rounded-xl" size="lg">
+              <a href={`tel:${provider.contact_phone}`}>
+                <Phone className="w-5 h-5 mr-2" />
+                Call Provider
+              </a>
+            </Button>
+          )}
+        </div>
       </div>
     </div>
   );
