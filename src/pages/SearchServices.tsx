@@ -68,7 +68,7 @@ const SearchServices = () => {
   const [minRating, setMinRating] = useState(0);
   const [showFilters, setShowFilters] = useState(false);
 
-  const [categories, setCategories] = useState<Category[]>([]);
+  const { data: categories = [] } = useCategories();
   const [counties, setCounties] = useState<string[]>([]);
   const [services, setServices] = useState<Service[]>([]);
   const [providers, setProviders] = useState<Map<string, ProviderInfo>>(new Map());
@@ -78,11 +78,8 @@ const SearchServices = () => {
   const [hasMore, setHasMore] = useState(true);
   const [totalHint, setTotalHint] = useState(0);
 
-  // Load categories & counties once
+  // Load counties once
   useEffect(() => {
-    supabase.from("service_categories").select("id,name,slug,icon").order("sort_order").then(({ data }) => {
-      setCategories(data || []);
-    });
     supabase.from("services").select("county").neq("county", null).then(({ data }) => {
       const unique = [...new Set((data || []).map((d) => d.county).filter(Boolean))] as string[];
       setCounties(unique.sort());
