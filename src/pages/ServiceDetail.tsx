@@ -4,7 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowLeft, MapPin, Phone, Mail, User, Tag, Calendar } from "lucide-react";
+import { ArrowLeft, MapPin, Phone, Mail, User, Tag, Calendar, MessageCircle } from "lucide-react";
+import { getOrCreateConversation } from "@/lib/conversations";
 
 type ServiceDetail = {
   id: string;
