@@ -1,47 +1,24 @@
 
 
-## Payment & Review System
+## Fix: Duplicate Role Error on Sign-In
 
-### Database Changes (1 migration)
+### Problem
+The user `mwirigievans17@gmail.com` already has an `admin` role (inserted via migration). When signing in and landing on `/register`, the role selection screen appears briefly before the redirect fires, and clicking "Continue" tries to INSERT a second role row, violating the unique constraint.
 
-**`reviews` table:**
-- `id`, `booking_id` (unique FK to bookings), `client_id`, `provider_id`, `rating` (1-5 integer), `comment` (text, nullable), timestamps
-- RLS: clients can insert only for their own completed bookings (one review per booking); everyone can read; no update/delete
+### Root Cause
+`setUserRole` in `AuthContext.tsx` does a raw `insert` without checking if a role already exists. Additionally, the Register page shows the role selector momentarily even when a role is already assigned.
 
-**`payments` table:**
-- `id`, `booking_id` (unique FK to bookings), `client_id`, `provider_id`, `amount` (numeric), `status` (pending/completed/failed), `payment_method` (text), timestamps
-- RLS: clients can insert for own bookings; both parties can view their own payments; no delete
+### Fix (2 changes)
 
-**Validation:**
-- Review insert trigger: verify booking status = 'completed' and client_id matches booking's client_id
-- One review per booking enforced via unique constraint on `booking_id`
+**1. `src/contexts/AuthContext.tsx` — Make `setUserRole` handle existing roles**
+- Change from `.insert()` to `.upsert()` (or check existing role first and skip insert)
+- This prevents the duplicate key error
 
-### New Pages
-
-1. **`src/pages/PaymentScreen.tsx`** — Client pays for a booking
-   - Shows booking summary, amount, simple payment confirmation (simulated for now — no real payment gateway yet)
-   - Creates payment record linked to booking
-   - Updates booking with payment reference
-
-2. **`src/pages/ReviewForm.tsx`** — Client reviews a completed booking
-   - Star rating (1-5), comment textarea
-   - Only accessible for completed bookings without existing review
-   - Submits to `reviews` table
-
-3. **`src/pages/ProviderReviews.tsx`** — Public view of a provider's reviews
-   - Average rating display, review list with client names
-
-### Existing Page Updates
-
-- **`MyBookings.tsx`** — Add "Pay" button for accepted bookings (clients), "Leave Review" button for completed bookings without a review
-- **`ServiceDetail.tsx`** — Show provider's average rating and review count; link to full reviews
-- **`ProviderProfilePreview.tsx`** — Display reviews section
-- **`App.tsx`** — Add routes: `/payment/:bookingId`, `/review/:bookingId`, `/provider/:providerId/reviews`
+**2. `src/pages/Register.tsx` — Don't show role selection if role is loading**
+- Add a loading guard so the role picker doesn't flash while `fetchRole` is still running
+- The existing `useEffect` already redirects when `user && role` — just need to prevent interaction during the loading window
 
 ### Technical Details
-
-- Reviews query uses a join to `profiles` for client names
-- Average rating computed client-side from reviews array (or a DB function if performance matters later)
-- Payment is simulated (record-keeping only) — ready for Stripe integration later
-- Star rating component built inline with interactive touch targets
+- In `setUserRole`: use `supabase.from("user_roles").upsert({ user_id: user.id, role: selectedRole }, { onConflict: "user_id,role" })` or first check if role exists
+- In Register: show a spinner/loading state while `loading` is true instead of immediately rendering the role picker
 
