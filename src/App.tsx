@@ -116,6 +116,8 @@ const App = () => (
             <Route path="/report/:userId" element={<ReportUser />} />
             <Route path="/admin" element={<AdminPanel />} />
             <Route path="/security" element={<SessionManagement />} />
+            <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+            <Route path="/terms-of-service" element={<TermsOfService />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
