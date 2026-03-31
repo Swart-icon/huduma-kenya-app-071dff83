@@ -12,6 +12,11 @@ import Dashboard from "./pages/Dashboard";
 import Profile from "./pages/Profile";
 import ProviderProfileEdit from "./pages/ProviderProfileEdit";
 import ProviderProfilePreview from "./pages/ProviderProfilePreview";
+import Categories from "./pages/Categories";
+import CategoryServices from "./pages/CategoryServices";
+import ServiceDetailPage from "./pages/ServiceDetail";
+import MyServices from "./pages/MyServices";
+import CreateService from "./pages/CreateService";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -32,6 +37,11 @@ const App = () => (
             <Route path="/profile" element={<Profile />} />
             <Route path="/provider-profile/edit" element={<ProviderProfileEdit />} />
             <Route path="/provider-profile/preview" element={<ProviderProfilePreview />} />
+            <Route path="/categories" element={<Categories />} />
+            <Route path="/categories/:slug" element={<CategoryServices />} />
+            <Route path="/services/:id" element={<ServiceDetailPage />} />
+            <Route path="/my-services" element={<MyServices />} />
+            <Route path="/services/new" element={<CreateService />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
