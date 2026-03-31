@@ -29,6 +29,7 @@ import {
   Eye,
 } from "lucide-react";
 import { useUnreadCount } from "@/hooks/useUnreadCount";
+import { InstallBanner } from "@/components/InstallBanner";
 
 /* ────────── Role Config ────────── */
 const roleConfig: Record<
