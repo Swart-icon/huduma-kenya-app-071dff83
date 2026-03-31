@@ -80,6 +80,8 @@ const ServiceDetailPage = () => {
   const [provider, setProvider] = useState<ProviderInfo | null>(null);
   const [category, setCategory] = useState<CategoryInfo | null>(null);
   const [loading, setLoading] = useState(true);
+  const [avgRating, setAvgRating] = useState<number | null>(null);
+  const [reviewCount, setReviewCount] = useState(0);
 
   useEffect(() => {
     const fetch = async () => {
@@ -92,14 +94,20 @@ const ServiceDetailPage = () => {
       if (!svc) { setLoading(false); return; }
       setService(svc);
 
-      // Fetch provider and category in parallel
-      const [provRes, catRes] = await Promise.all([
+      const [provRes, catRes, revRes] = await Promise.all([
         supabase.from("provider_profiles").select("business_name, profile_image_url, contact_phone, contact_email, availability_status").eq("user_id", svc.provider_id).maybeSingle(),
         supabase.from("service_categories").select("name, icon").eq("id", svc.category_id).maybeSingle(),
+        supabase.from("reviews").select("rating").eq("provider_id", svc.provider_id),
       ]);
 
       setProvider(provRes.data);
       setCategory(catRes.data);
+      
+      const reviews = revRes.data || [];
+      if (reviews.length > 0) {
+        setAvgRating(reviews.reduce((s, r) => s + r.rating, 0) / reviews.length);
+        setReviewCount(reviews.length);
+      }
       setLoading(false);
     };
     fetch();
