@@ -39,13 +39,6 @@ type FeaturedProvider = {
   review_count: number;
 };
 
-const categoryIcons: Record<string, React.ReactNode> = {
-  plumbing: <Wrench className="w-5 h-5" />,
-  electrical: <Zap className="w-5 h-5" />,
-  cleaning: <Home className="w-5 h-5" />,
-  moving: <Truck className="w-5 h-5" />,
-  painting: <Paintbrush className="w-5 h-5" />,
-};
 
 const Welcome = () => {
   const navigate = useNavigate();
