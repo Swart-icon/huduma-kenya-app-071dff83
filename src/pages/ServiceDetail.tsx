@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowLeft, MapPin, Phone, Mail, User, Tag } from "lucide-react";
+import { ArrowLeft, MapPin, Phone, Mail, User, Tag, Calendar } from "lucide-react";
 
 type ServiceDetail = {
   id: string;
