@@ -62,6 +62,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(session?.user ?? null);
       if (session?.user) {
         fetchRole(session.user.id);
+        checkSuspension(session.user.id);
       }
       setLoading(false);
     });
