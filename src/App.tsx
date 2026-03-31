@@ -33,7 +33,6 @@ import ProviderReviews from "./pages/ProviderReviews";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import ReportUser from "./pages/ReportUser";
-import AdminPanel from "./pages/AdminPanel";
 import SessionManagement from "./pages/SessionManagement";
 
 const queryClient = new QueryClient();
@@ -74,7 +73,6 @@ const App = () => (
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/report/:userId" element={<ReportUser />} />
-            <Route path="/admin" element={<AdminPanel />} />
             <Route path="/security" element={<SessionManagement />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
