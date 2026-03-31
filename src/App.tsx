@@ -10,6 +10,8 @@ import Register from "./pages/Register";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Profile from "./pages/Profile";
+import ProviderProfileEdit from "./pages/ProviderProfileEdit";
+import ProviderProfilePreview from "./pages/ProviderProfilePreview";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
