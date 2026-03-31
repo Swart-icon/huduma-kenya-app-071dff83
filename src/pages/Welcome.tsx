@@ -315,6 +315,17 @@ const Welcome = () => {
           </CardContent>
         </Card>
       </section>
+
+      {/* ─── Legal Links ─── */}
+      <div className="flex items-center justify-center gap-4 py-6">
+        <button onClick={() => navigate("/privacy-policy")} className="text-[11px] text-muted-foreground underline">
+          Privacy Policy
+        </button>
+        <span className="text-muted-foreground/40">•</span>
+        <button onClick={() => navigate("/terms-of-service")} className="text-[11px] text-muted-foreground underline">
+          Terms of Service
+        </button>
+      </div>
     </div>
   );
 };
