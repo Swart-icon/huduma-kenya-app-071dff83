@@ -203,11 +203,7 @@ const Welcome = () => {
                   className="flex flex-col items-center gap-1.5 p-2 rounded-xl hover:bg-muted transition-colors active:scale-95"
                 >
                   <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center">
-                    {cat.icon ? (
-                      <span className="text-xl">{cat.icon}</span>
-                    ) : (
-                      categoryIcons[cat.slug] || <Briefcase className="w-5 h-5 text-primary" />
-                    )}
+                    {getCategoryIcon(cat.slug)}
                   </div>
                   <span className="text-[11px] font-semibold text-foreground text-center leading-tight line-clamp-2">
                     {cat.name}

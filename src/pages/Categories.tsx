@@ -72,7 +72,7 @@ const Categories = () => {
               onClick={() => navigate(`/categories/${cat.slug}`)}
             >
               <CardContent className="p-4 text-center">
-                <span className="text-3xl block mb-2">{cat.icon}</span>
+                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center mb-2">{getCategoryIcon(cat.slug)}</div>
                 <p className="text-sm font-semibold text-foreground leading-tight">{cat.name}</p>
               </CardContent>
             </Card>
