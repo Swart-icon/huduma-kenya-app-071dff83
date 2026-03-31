@@ -23,6 +23,10 @@ const Conversations = () => {
 
   useEffect(() => {
     if (!authLoading && !user) navigate("/welcome");
+    if (user) {
+      setLoading(true);
+      loadConversations();
+    }
   }, [authLoading, user, navigate]);
 
   useEffect(() => {
