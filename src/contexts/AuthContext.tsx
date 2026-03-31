@@ -24,7 +24,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [role, setRole] = useState<AppRole | null>(null);
+  const [isSuspended, setIsSuspended] = useState(false);
 
+  const checkSuspension = async (userId: string) => {
+    const { data } = await supabase.rpc("is_user_suspended", { _user_id: userId });
+    setIsSuspended(!!data);
+  };
   const fetchRole = async (userId: string) => {
     const { data } = await supabase
       .from("user_roles")
