@@ -38,6 +38,8 @@ import ReportUser from "./pages/ReportUser";
 import SessionManagement from "./pages/SessionManagement";
 import SearchServices from "./pages/SearchServices";
 import AdminPanel from "./pages/AdminPanel";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import TermsOfService from "./pages/TermsOfService";
 import { OfflineBanner } from "@/components/OfflineBanner";
 
 // Keep React Query's online status in sync with browser events
