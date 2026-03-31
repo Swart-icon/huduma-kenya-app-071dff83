@@ -19,6 +19,8 @@ type Booking = {
   created_at: string;
   service_title?: string;
   other_name?: string;
+  has_payment?: boolean;
+  has_review?: boolean;
 };
 
 const statusConfig: Record<string, { color: string; icon: React.ReactNode }> = {
