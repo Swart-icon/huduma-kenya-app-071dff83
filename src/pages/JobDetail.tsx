@@ -198,11 +198,18 @@ const JobDetail = () => {
 
         {/* Job Header */}
         <div className="mb-6">
-          <div className="flex items-center gap-2 mb-3">
-            <Badge variant="outline" className={job.status === "open" ? "bg-primary/10 text-primary border-primary/20" : "bg-muted text-muted-foreground"}>
-              {job.status}
-            </Badge>
-            {category && <span className="text-sm text-muted-foreground">{category.icon} {category.name}</span>}
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <Badge variant="outline" className={job.status === "open" ? "bg-primary/10 text-primary border-primary/20" : "bg-muted text-muted-foreground"}>
+                {job.status}
+              </Badge>
+              {category && <span className="text-sm text-muted-foreground">{category.name}</span>}
+            </div>
+            {user && !isOwner && (
+              <button onClick={handleToggleSave} className="p-1.5">
+                {isSaved ? <BookmarkCheck className="w-5 h-5 text-primary" /> : <Bookmark className="w-5 h-5 text-muted-foreground" />}
+              </button>
+            )}
           </div>
           <h1 className="font-display text-2xl font-bold text-foreground mb-2">{job.title}</h1>
           {job.description && <p className="text-muted-foreground">{job.description}</p>}
