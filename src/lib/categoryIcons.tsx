@@ -1,26 +1,50 @@
-import {
-  HardHat, Car, Cpu, Monitor, Home, Briefcase,
-  GraduationCap, HeartPulse, UtensilsCrossed, ShieldCheck,
-  Wheat, Sparkles, Clapperboard, Truck, ShoppingCart, Wrench,
-} from "lucide-react";
+import constructionImg from "@/assets/categories/construction.png";
+import automotiveImg from "@/assets/categories/automotive.png";
+import electronicsImg from "@/assets/categories/electronics.png";
+import itServicesImg from "@/assets/categories/it-services.png";
+import homeServicesImg from "@/assets/categories/home-services.png";
+import businessServicesImg from "@/assets/categories/business-services.png";
+import educationImg from "@/assets/categories/education.png";
+import healthWellnessImg from "@/assets/categories/health-wellness.png";
+import hospitalityImg from "@/assets/categories/hospitality.png";
+import securityLogisticsImg from "@/assets/categories/security-logistics.png";
+import agricultureImg from "@/assets/categories/agriculture.png";
+import beautyLifestyleImg from "@/assets/categories/beauty-lifestyle.png";
+import mediaCreativeImg from "@/assets/categories/media-creative.png";
+import transportImg from "@/assets/categories/transport.png";
+import retailTradeImg from "@/assets/categories/retail-trade.png";
 
-export const categoryIcons: Record<string, React.ReactNode> = {
-  construction: <HardHat className="w-5 h-5 text-primary" />,
-  automotive: <Car className="w-5 h-5 text-primary" />,
-  electronics: <Cpu className="w-5 h-5 text-primary" />,
-  "it-services": <Monitor className="w-5 h-5 text-primary" />,
-  "home-services": <Home className="w-5 h-5 text-primary" />,
-  "business-services": <Briefcase className="w-5 h-5 text-primary" />,
-  education: <GraduationCap className="w-5 h-5 text-primary" />,
-  "health-wellness": <HeartPulse className="w-5 h-5 text-primary" />,
-  hospitality: <UtensilsCrossed className="w-5 h-5 text-primary" />,
-  "security-logistics": <ShieldCheck className="w-5 h-5 text-primary" />,
-  agriculture: <Wheat className="w-5 h-5 text-primary" />,
-  "beauty-lifestyle": <Sparkles className="w-5 h-5 text-primary" />,
-  "media-creative": <Clapperboard className="w-5 h-5 text-primary" />,
-  transport: <Truck className="w-5 h-5 text-primary" />,
-  "retail-trade": <ShoppingCart className="w-5 h-5 text-primary" />,
+const categoryImages: Record<string, string> = {
+  construction: constructionImg,
+  automotive: automotiveImg,
+  electronics: electronicsImg,
+  "it-services": itServicesImg,
+  "home-services": homeServicesImg,
+  "business-services": businessServicesImg,
+  education: educationImg,
+  "health-wellness": healthWellnessImg,
+  hospitality: hospitalityImg,
+  "security-logistics": securityLogisticsImg,
+  agriculture: agricultureImg,
+  "beauty-lifestyle": beautyLifestyleImg,
+  "media-creative": mediaCreativeImg,
+  transport: transportImg,
+  "retail-trade": retailTradeImg,
 };
 
-export const getCategoryIcon = (slug: string) =>
-  categoryIcons[slug] || <Wrench className="w-5 h-5 text-primary" />;
+export const getCategoryIcon = (slug: string, size = 28) => {
+  const src = categoryImages[slug];
+  if (src) {
+    return (
+      <img
+        src={src}
+        alt={slug}
+        width={size}
+        height={size}
+        loading="lazy"
+        className="object-contain"
+      />
+    );
+  }
+  return <span className="text-xl">📦</span>;
+};
