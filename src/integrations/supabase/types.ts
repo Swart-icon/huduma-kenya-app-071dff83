@@ -47,6 +47,51 @@ export type Database = {
         }
         Relationships: []
       }
+      provider_profiles: {
+        Row: {
+          availability_status: string
+          business_name: string
+          city: string | null
+          contact_email: string | null
+          contact_phone: string | null
+          county: string | null
+          created_at: string
+          description: string | null
+          id: string
+          profile_image_url: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          availability_status?: string
+          business_name: string
+          city?: string | null
+          contact_email?: string | null
+          contact_phone?: string | null
+          county?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          profile_image_url?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          availability_status?: string
+          business_name?: string
+          city?: string | null
+          contact_email?: string | null
+          contact_phone?: string | null
+          county?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          profile_image_url?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string

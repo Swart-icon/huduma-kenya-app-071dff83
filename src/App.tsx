@@ -10,6 +10,8 @@ import Register from "./pages/Register";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Profile from "./pages/Profile";
+import ProviderProfileEdit from "./pages/ProviderProfileEdit";
+import ProviderProfilePreview from "./pages/ProviderProfilePreview";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -28,6 +30,8 @@ const App = () => (
             <Route path="/login" element={<Login />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/profile" element={<Profile />} />
+            <Route path="/provider-profile/edit" element={<ProviderProfileEdit />} />
+            <Route path="/provider-profile/preview" element={<ProviderProfilePreview />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
