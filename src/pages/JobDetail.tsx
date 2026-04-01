@@ -8,7 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, MapPin, DollarSign, Clock, Send, CheckCircle, XCircle, Bookmark, BookmarkCheck } from "lucide-react";
+import { ArrowLeft, MapPin, DollarSign, Clock, Send, CheckCircle, XCircle, Bookmark, BookmarkCheck, User, MessageSquare, Phone } from "lucide-react";
+import { getOrCreateConversation } from "@/lib/conversations";
 import { useToast } from "@/hooks/use-toast";
 
 type JobPost = {
