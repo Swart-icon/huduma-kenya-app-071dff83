@@ -100,13 +100,17 @@ const JobDetail = () => {
     // If client owns this job, fetch responses
     if (user && jobData.client_id === user.id) {
       const { data: resps } = await supabase.from("job_responses").select("*").eq("job_post_id", id!).order("created_at", { ascending: false });
-      // Fetch provider names
       const providerIds = (resps || []).map((r: JobResponse) => r.provider_id);
       if (providerIds.length > 0) {
-        const { data: profiles } = await supabase.from("provider_profiles").select("user_id, business_name").in("user_id", providerIds);
-        const nameMap: Record<string, string> = {};
-        (profiles || []).forEach((p: { user_id: string; business_name: string }) => { nameMap[p.user_id] = p.business_name; });
-        setResponses((resps || []).map((r: JobResponse) => ({ ...r, provider_name: nameMap[r.provider_id] || "Provider" })));
+        const { data: profiles } = await supabase.from("provider_profiles").select("user_id, business_name, contact_phone, profile_image_url").in("user_id", providerIds);
+        const profileMap: Record<string, { name: string; phone: string | null; image: string | null }> = {};
+        (profiles || []).forEach((p: any) => { profileMap[p.user_id] = { name: p.business_name, phone: p.contact_phone, image: p.profile_image_url }; });
+        setResponses((resps || []).map((r: JobResponse) => ({
+          ...r,
+          provider_name: profileMap[r.provider_id]?.name || "Provider",
+          provider_phone: profileMap[r.provider_id]?.phone || null,
+          provider_image: profileMap[r.provider_id]?.image || null,
+        })));
       } else {
         setResponses([]);
       }
