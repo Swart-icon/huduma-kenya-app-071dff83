@@ -44,6 +44,7 @@ import JobSeekerDashboard from "./pages/JobSeekerDashboard";
 import JobSeekerProfile from "./pages/JobSeekerProfile";
 import MyApplications from "./pages/MyApplications";
 import SavedJobs from "./pages/SavedJobs";
+import ProviderPublicProfile from "./pages/ProviderPublicProfile";
 import { OfflineBanner } from "@/components/OfflineBanner";
 
 // Keep React Query's online status in sync with browser events
@@ -119,6 +120,7 @@ const App = () => (
             <Route path="/payment/:bookingId" element={<PaymentScreen />} />
             <Route path="/review/:bookingId" element={<ReviewForm />} />
             <Route path="/provider/:providerId/reviews" element={<ProviderReviews />} />
+            <Route path="/provider/:providerId" element={<ProviderPublicProfile />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/report/:userId" element={<ReportUser />} />

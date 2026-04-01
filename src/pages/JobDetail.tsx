@@ -8,7 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, MapPin, DollarSign, Clock, Send, CheckCircle, XCircle, Bookmark, BookmarkCheck } from "lucide-react";
+import { ArrowLeft, MapPin, DollarSign, Clock, Send, CheckCircle, XCircle, Bookmark, BookmarkCheck, User, MessageSquare, Phone } from "lucide-react";
+import { getOrCreateConversation } from "@/lib/conversations";
 import { useToast } from "@/hooks/use-toast";
 
 type JobPost = {
@@ -33,6 +34,8 @@ type JobResponse = {
   status: string;
   created_at: string;
   provider_name?: string;
+  provider_phone?: string | null;
+  provider_image?: string | null;
 };
 
 type Category = { id: string; name: string; icon: string | null };
@@ -97,13 +100,17 @@ const JobDetail = () => {
     // If client owns this job, fetch responses
     if (user && jobData.client_id === user.id) {
       const { data: resps } = await supabase.from("job_responses").select("*").eq("job_post_id", id!).order("created_at", { ascending: false });
-      // Fetch provider names
       const providerIds = (resps || []).map((r: JobResponse) => r.provider_id);
       if (providerIds.length > 0) {
-        const { data: profiles } = await supabase.from("provider_profiles").select("user_id, business_name").in("user_id", providerIds);
-        const nameMap: Record<string, string> = {};
-        (profiles || []).forEach((p: { user_id: string; business_name: string }) => { nameMap[p.user_id] = p.business_name; });
-        setResponses((resps || []).map((r: JobResponse) => ({ ...r, provider_name: nameMap[r.provider_id] || "Provider" })));
+        const { data: profiles } = await supabase.from("provider_profiles").select("user_id, business_name, contact_phone, profile_image_url").in("user_id", providerIds);
+        const profileMap: Record<string, { name: string; phone: string | null; image: string | null }> = {};
+        (profiles || []).forEach((p: any) => { profileMap[p.user_id] = { name: p.business_name, phone: p.contact_phone, image: p.profile_image_url }; });
+        setResponses((resps || []).map((r: JobResponse) => ({
+          ...r,
+          provider_name: profileMap[r.provider_id]?.name || "Provider",
+          provider_phone: profileMap[r.provider_id]?.phone || null,
+          provider_image: profileMap[r.provider_id]?.image || null,
+        })));
       } else {
         setResponses([]);
       }
@@ -168,8 +175,14 @@ const JobDetail = () => {
     }
   };
 
+  const handleMessageProvider = async (providerId: string) => {
+    if (!user) return;
+    const convId = await getOrCreateConversation(user.id, providerId);
+    if (convId) navigate(`/chat/${convId}`);
+    else toast({ title: "Could not start conversation", variant: "destructive" });
+  };
+
   const handleAcceptResponse = async (responseId: string, providerId: string) => {
-    // Accept the response and close the job
     await supabase.from("job_responses").update({ status: "accepted" }).eq("id", responseId);
     await supabase.from("job_posts").update({ status: "in_progress" }).eq("id", id!);
     toast({ title: "Response accepted! 🎉" });
@@ -307,17 +320,47 @@ const JobDetail = () => {
               {responses.map((r) => (
                 <Card key={r.id}>
                   <CardContent className="p-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="font-semibold text-foreground">{r.provider_name}</span>
+                    <div className="flex items-center gap-3 mb-3">
+                      <div
+                        className="w-10 h-10 rounded-full bg-muted overflow-hidden shrink-0 cursor-pointer"
+                        onClick={() => navigate(`/provider/${r.provider_id}`)}
+                      >
+                        {r.provider_image ? (
+                          <img src={r.provider_image} alt={r.provider_name} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center"><User className="w-5 h-5 text-muted-foreground" /></div>
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <span
+                          className="font-semibold text-foreground cursor-pointer hover:underline"
+                          onClick={() => navigate(`/provider/${r.provider_id}`)}
+                        >
+                          {r.provider_name}
+                        </span>
+                      </div>
                       <Badge variant="outline" className={r.status === "accepted" ? "bg-primary/10 text-primary" : ""}>{r.status}</Badge>
                     </div>
                     {r.message && <p className="text-sm text-muted-foreground mb-2">{r.message}</p>}
                     {r.proposed_price && <p className="text-sm font-semibold text-foreground mb-3">Quote: KSh {r.proposed_price.toLocaleString()}</p>}
-                    {r.status === "pending" && job.status === "open" && (
-                      <Button size="sm" className="rounded-xl" onClick={() => handleAcceptResponse(r.id, r.provider_id)}>
-                        <CheckCircle className="w-4 h-4 mr-1" /> Accept
+                    <div className="flex items-center gap-2">
+                      <Button size="sm" variant="outline" className="rounded-xl gap-1.5" onClick={() => navigate(`/provider/${r.provider_id}`)}>
+                        <User className="w-3.5 h-3.5" /> Profile
                       </Button>
-                    )}
+                      <Button size="sm" variant="outline" className="rounded-xl gap-1.5" onClick={() => handleMessageProvider(r.provider_id)}>
+                        <MessageSquare className="w-3.5 h-3.5" /> Message
+                      </Button>
+                      {r.provider_phone && (
+                        <Button size="sm" variant="outline" className="rounded-xl gap-1.5" asChild>
+                          <a href={`tel:${r.provider_phone}`}><Phone className="w-3.5 h-3.5" /> Call</a>
+                        </Button>
+                      )}
+                      {r.status === "pending" && job.status === "open" && (
+                        <Button size="sm" className="rounded-xl gap-1.5 ml-auto" onClick={() => handleAcceptResponse(r.id, r.provider_id)}>
+                          <CheckCircle className="w-3.5 h-3.5" /> Accept
+                        </Button>
+                      )}
+                    </div>
                   </CardContent>
                 </Card>
               ))}
