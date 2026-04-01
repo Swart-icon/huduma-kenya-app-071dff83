@@ -242,8 +242,12 @@ const Chat = () => {
       setRecording(true);
       setRecordingDuration(0);
       timerRef.current = setInterval(() => setRecordingDuration((d) => d + 1), 1000);
-    } catch {
-      toast({ title: "Microphone not available", description: "Please allow microphone access when prompted.", variant: "default" });
+    } catch (err: any) {
+      if (err?.name === "NotAllowedError" || err?.name === "PermissionDeniedError") {
+        toast({ title: "Microphone Permission Required", description: "Please go to your device Settings → App Permissions and enable Microphone for this app, then try again.", variant: "destructive" });
+      } else {
+        toast({ title: "Microphone not available", description: "Could not access the microphone. Please check your device settings.", variant: "destructive" });
+      }
     }
   };
 
