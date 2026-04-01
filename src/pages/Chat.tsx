@@ -191,6 +191,25 @@ const Chat = () => {
   // Voice recording
   const startRecording = async () => {
     try {
+      // Check if mediaDevices is available (not available in some sandboxed environments)
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        toast({ title: "Voice notes unavailable", description: "Voice recording is supported on the published app. Try it after publishing!", variant: "default" });
+        return;
+      }
+
+      // Check existing permission state if available
+      if (navigator.permissions) {
+        try {
+          const permResult = await navigator.permissions.query({ name: "microphone" as PermissionName });
+          if (permResult.state === "denied") {
+            toast({ title: "Microphone blocked", description: "Enable microphone in your browser settings to send voice notes.", variant: "default" });
+            return;
+          }
+        } catch {
+          // permissions.query may not support microphone in all browsers, continue
+        }
+      }
+
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const mediaRecorder = new MediaRecorder(stream, { mimeType: MediaRecorder.isTypeSupported("audio/webm") ? "audio/webm" : "audio/mp4" });
       mediaRecorderRef.current = mediaRecorder;
@@ -201,7 +220,7 @@ const Chat = () => {
         stream.getTracks().forEach((t) => t.stop());
         if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
         const blob = new Blob(chunksRef.current, { type: mediaRecorder.mimeType });
-        if (blob.size < 1000) { setRecording(false); setRecordingDuration(0); return; } // too short
+        if (blob.size < 1000) { setRecording(false); setRecordingDuration(0); return; }
         await uploadAndSendFile(blob, `voice_${Date.now()}.webm`, mediaRecorder.mimeType, "voice");
         setRecording(false);
         setRecordingDuration(0);
@@ -212,7 +231,7 @@ const Chat = () => {
       setRecordingDuration(0);
       timerRef.current = setInterval(() => setRecordingDuration((d) => d + 1), 1000);
     } catch {
-      toast({ title: "Microphone access denied", description: "Please allow microphone access to record voice notes.", variant: "destructive" });
+      toast({ title: "Microphone not available", description: "Allow microphone access in your browser to record voice notes.", variant: "default" });
     }
   };
 
