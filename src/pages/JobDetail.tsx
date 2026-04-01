@@ -34,6 +34,8 @@ type JobResponse = {
   status: string;
   created_at: string;
   provider_name?: string;
+  provider_phone?: string | null;
+  provider_image?: string | null;
 };
 
 type Category = { id: string; name: string; icon: string | null };
