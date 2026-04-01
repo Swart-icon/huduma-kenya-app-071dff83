@@ -120,6 +120,7 @@ const App = () => (
             <Route path="/payment/:bookingId" element={<PaymentScreen />} />
             <Route path="/review/:bookingId" element={<ReviewForm />} />
             <Route path="/provider/:providerId/reviews" element={<ProviderReviews />} />
+            <Route path="/provider/:providerId" element={<ProviderPublicProfile />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/report/:userId" element={<ReportUser />} />
