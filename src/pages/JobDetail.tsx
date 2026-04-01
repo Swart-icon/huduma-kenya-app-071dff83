@@ -320,17 +320,47 @@ const JobDetail = () => {
               {responses.map((r) => (
                 <Card key={r.id}>
                   <CardContent className="p-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="font-semibold text-foreground">{r.provider_name}</span>
+                    <div className="flex items-center gap-3 mb-3">
+                      <div
+                        className="w-10 h-10 rounded-full bg-muted overflow-hidden shrink-0 cursor-pointer"
+                        onClick={() => navigate(`/provider/${r.provider_id}`)}
+                      >
+                        {r.provider_image ? (
+                          <img src={r.provider_image} alt={r.provider_name} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center"><User className="w-5 h-5 text-muted-foreground" /></div>
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <span
+                          className="font-semibold text-foreground cursor-pointer hover:underline"
+                          onClick={() => navigate(`/provider/${r.provider_id}`)}
+                        >
+                          {r.provider_name}
+                        </span>
+                      </div>
                       <Badge variant="outline" className={r.status === "accepted" ? "bg-primary/10 text-primary" : ""}>{r.status}</Badge>
                     </div>
                     {r.message && <p className="text-sm text-muted-foreground mb-2">{r.message}</p>}
                     {r.proposed_price && <p className="text-sm font-semibold text-foreground mb-3">Quote: KSh {r.proposed_price.toLocaleString()}</p>}
-                    {r.status === "pending" && job.status === "open" && (
-                      <Button size="sm" className="rounded-xl" onClick={() => handleAcceptResponse(r.id, r.provider_id)}>
-                        <CheckCircle className="w-4 h-4 mr-1" /> Accept
+                    <div className="flex items-center gap-2">
+                      <Button size="sm" variant="outline" className="rounded-xl gap-1.5" onClick={() => navigate(`/provider/${r.provider_id}`)}>
+                        <User className="w-3.5 h-3.5" /> Profile
                       </Button>
-                    )}
+                      <Button size="sm" variant="outline" className="rounded-xl gap-1.5" onClick={() => handleMessageProvider(r.provider_id)}>
+                        <MessageSquare className="w-3.5 h-3.5" /> Message
+                      </Button>
+                      {r.provider_phone && (
+                        <Button size="sm" variant="outline" className="rounded-xl gap-1.5" asChild>
+                          <a href={`tel:${r.provider_phone}`}><Phone className="w-3.5 h-3.5" /> Call</a>
+                        </Button>
+                      )}
+                      {r.status === "pending" && job.status === "open" && (
+                        <Button size="sm" className="rounded-xl gap-1.5 ml-auto" onClick={() => handleAcceptResponse(r.id, r.provider_id)}>
+                          <CheckCircle className="w-3.5 h-3.5" /> Accept
+                        </Button>
+                      )}
+                    </div>
                   </CardContent>
                 </Card>
               ))}
