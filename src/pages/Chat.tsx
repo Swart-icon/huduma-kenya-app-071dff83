@@ -1,13 +1,16 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate, useParams } from "react-router-dom";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, lazy, Suspense } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, Send, Mic, Square, Paperclip, FileText, Image as ImageIcon, Play, Pause, Download } from "lucide-react";
+import { ArrowLeft, Send, Mic, Square, Paperclip, FileText, Image as ImageIcon, Play, Pause, Download, Video } from "lucide-react";
 import { format } from "date-fns";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
+import { useNotificationSound } from "@/hooks/useNotificationSound";
+
+const VideoCall = lazy(() => import("@/components/chat/VideoCall"));
 
 interface Message {
   id: string;
@@ -91,12 +94,18 @@ const Chat = () => {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { playSound } = useNotificationSound();
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [otherUserName, setOtherUserName] = useState("Chat");
   const [sending, setSending] = useState(false);
   const [loading, setLoading] = useState(true);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Video call
+  const [showVideoCall, setShowVideoCall] = useState(false);
+  const [incomingCall, setIncomingCall] = useState(false);
+  const [incomingOffer, setIncomingOffer] = useState<RTCSessionDescriptionInit | undefined>();
 
   // Voice recording
   const [recording, setRecording] = useState(false);
@@ -124,19 +133,41 @@ const Chat = () => {
         (payload) => {
           const msg = payload.new as Message;
           setMessages((prev) => prev.some((e) => e.id === msg.id) ? prev : [...prev, msg]);
-          if (msg.sender_id !== user.id) void markConversationAsRead();
+          if (msg.sender_id !== user.id) {
+            playSound();
+            void markConversationAsRead();
+          }
         }
       )
       .subscribe();
 
-    return () => { supabase.removeChannel(channel); };
+    // Listen for incoming video calls
+    const callChannel = supabase.channel(`videocall-${conversationId}`, {
+      config: { broadcast: { self: false } },
+    });
+    callChannel.on("broadcast", { event: "call-invite" }, ({ payload }) => {
+      if (payload.from !== user.id) {
+        setIncomingCall(true);
+      }
+    });
+    callChannel.on("broadcast", { event: "offer" }, ({ payload }) => {
+      if (payload.from !== user.id) {
+        setIncomingOffer(payload.offer);
+        setIncomingCall(true);
+      }
+    });
+    callChannel.subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+      supabase.removeChannel(callChannel);
+    };
   }, [user, conversationId]);
 
   useEffect(() => {
     scrollRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Cleanup recording on unmount
   useEffect(() => {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
@@ -188,28 +219,9 @@ const Chat = () => {
     if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); }
   };
 
-  // Voice recording
+  // Voice recording - directly request mic, browser handles permission prompt
   const startRecording = async () => {
     try {
-      // Check if mediaDevices is available (not available in some sandboxed environments)
-      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        toast({ title: "Voice notes unavailable", description: "Voice recording is supported on the published app. Try it after publishing!", variant: "default" });
-        return;
-      }
-
-      // Check existing permission state if available
-      if (navigator.permissions) {
-        try {
-          const permResult = await navigator.permissions.query({ name: "microphone" as PermissionName });
-          if (permResult.state === "denied") {
-            toast({ title: "Microphone blocked", description: "Enable microphone in your browser settings to send voice notes.", variant: "default" });
-            return;
-          }
-        } catch {
-          // permissions.query may not support microphone in all browsers, continue
-        }
-      }
-
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const mediaRecorder = new MediaRecorder(stream, { mimeType: MediaRecorder.isTypeSupported("audio/webm") ? "audio/webm" : "audio/mp4" });
       mediaRecorderRef.current = mediaRecorder;
@@ -231,7 +243,7 @@ const Chat = () => {
       setRecordingDuration(0);
       timerRef.current = setInterval(() => setRecordingDuration((d) => d + 1), 1000);
     } catch {
-      toast({ title: "Microphone not available", description: "Allow microphone access in your browser to record voice notes.", variant: "default" });
+      toast({ title: "Microphone not available", description: "Please allow microphone access when prompted.", variant: "default" });
     }
   };
 
@@ -239,7 +251,6 @@ const Chat = () => {
     if (mediaRecorderRef.current?.state === "recording") mediaRecorderRef.current.stop();
   };
 
-  // File upload
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -306,6 +317,21 @@ const Chat = () => {
     }
   };
 
+  const handleStartVideoCall = () => {
+    setShowVideoCall(true);
+    setIncomingCall(false);
+  };
+
+  const handleAnswerCall = () => {
+    setShowVideoCall(true);
+    setIncomingCall(false);
+  };
+
+  const handleDeclineCall = () => {
+    setIncomingCall(false);
+    setIncomingOffer(undefined);
+  };
+
   if (authLoading || loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -316,6 +342,39 @@ const Chat = () => {
 
   return (
     <div className="h-screen bg-background flex flex-col">
+      {/* Video Call */}
+      {showVideoCall && user && conversationId && (
+        <Suspense fallback={<div className="fixed inset-0 z-50 bg-black flex items-center justify-center text-white">Loading...</div>}>
+          <VideoCall
+            conversationId={conversationId}
+            currentUserId={user.id}
+            otherUserName={otherUserName}
+            onClose={() => { setShowVideoCall(false); setIncomingOffer(undefined); }}
+            isIncoming={!!incomingOffer}
+            offer={incomingOffer}
+          />
+        </Suspense>
+      )}
+
+      {/* Incoming call banner */}
+      {incomingCall && !showVideoCall && (
+        <div className="absolute top-16 left-4 right-4 z-40 bg-card border border-border rounded-2xl p-4 shadow-lg flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+            <Video className="w-5 h-5 text-primary" />
+          </div>
+          <div className="flex-1">
+            <p className="font-semibold text-foreground text-sm">{otherUserName}</p>
+            <p className="text-xs text-muted-foreground">Incoming video call...</p>
+          </div>
+          <Button size="sm" variant="destructive" className="rounded-full" onClick={handleDeclineCall}>
+            Decline
+          </Button>
+          <Button size="sm" className="rounded-full bg-green-600 hover:bg-green-700 text-white" onClick={handleAnswerCall}>
+            Answer
+          </Button>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-center gap-3 px-4 py-3 border-b bg-card">
         <Button variant="ghost" size="icon" onClick={() => navigate("/conversations")} className="rounded-xl shrink-0">
@@ -324,7 +383,10 @@ const Chat = () => {
         <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
           <span className="text-xs font-bold text-primary">{otherUserName.charAt(0).toUpperCase()}</span>
         </div>
-        <span className="font-display font-bold text-foreground truncate">{otherUserName}</span>
+        <span className="font-display font-bold text-foreground truncate flex-1">{otherUserName}</span>
+        <Button variant="ghost" size="icon" className="rounded-xl shrink-0" onClick={handleStartVideoCall}>
+          <Video className="w-5 h-5 text-primary" />
+        </Button>
       </div>
 
       {/* Messages */}
@@ -354,7 +416,6 @@ const Chat = () => {
       {/* Input */}
       <div className="px-4 py-3 border-t bg-card">
         <div className="flex items-center gap-2 max-w-sm mx-auto">
-          {/* File attach */}
           <input ref={fileInputRef} type="file" className="hidden" onChange={handleFileSelect} accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.txt,.csv,.zip" />
           <Button variant="ghost" size="icon" className="rounded-full shrink-0" onClick={() => fileInputRef.current?.click()} disabled={uploading || recording}>
             <Paperclip className="w-5 h-5 text-muted-foreground" />
