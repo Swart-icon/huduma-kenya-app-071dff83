@@ -175,8 +175,14 @@ const JobDetail = () => {
     }
   };
 
+  const handleMessageProvider = async (providerId: string) => {
+    if (!user) return;
+    const convId = await getOrCreateConversation(user.id, providerId);
+    if (convId) navigate(`/chat/${convId}`);
+    else toast({ title: "Could not start conversation", variant: "destructive" });
+  };
+
   const handleAcceptResponse = async (responseId: string, providerId: string) => {
-    // Accept the response and close the job
     await supabase.from("job_responses").update({ status: "accepted" }).eq("id", responseId);
     await supabase.from("job_posts").update({ status: "in_progress" }).eq("id", id!);
     toast({ title: "Response accepted! 🎉" });
