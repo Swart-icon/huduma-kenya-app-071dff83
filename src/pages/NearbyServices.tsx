@@ -12,6 +12,7 @@ import {
   MapPin,
   Star,
   Navigation,
+  Calendar,
   Loader2,
   SlidersHorizontal,
   X,
