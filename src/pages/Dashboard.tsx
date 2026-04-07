@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import hudumaLogo from "@/assets/hudumahub-logo-transparent.png";
 import {
   Briefcase,
+  Map as MapIcon,
   Search,
   UserCheck,
   LogOut,
