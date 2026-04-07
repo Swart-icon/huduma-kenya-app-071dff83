@@ -96,7 +96,7 @@ const SearchServices = () => {
 
     let q = supabase
       .from("services")
-      .select("*", { count: "exact" })
+      .select("*,latitude,longitude", { count: "exact" })
       .eq("is_active", true);
 
     // Keyword search
