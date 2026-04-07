@@ -9,8 +9,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Camera, Save, Eye, Plus, Trash2, Upload, CheckCircle, Clock, XCircle, Image } from "lucide-react";
+import { ArrowLeft, Camera, Save, Eye, Plus, Trash2, Upload, CheckCircle, Clock, XCircle, Image, Navigation, Loader2, MapPin } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { KENYAN_LOCATIONS, getCoordinatesForCounty } from "@/lib/kenyanLocations";
 
 const kenyanCounties = [
   "Baringo", "Bomet", "Bungoma", "Busia", "Elgeyo-Marakwet", "Embu", "Garissa",
@@ -36,6 +37,8 @@ type ProviderProfile = {
   years_experience: number;
   skills: string[];
   service_radius_km: number;
+  latitude: number | null;
+  longitude: number | null;
 };
 
 type PortfolioItem = {
