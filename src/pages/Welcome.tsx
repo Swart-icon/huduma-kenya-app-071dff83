@@ -127,8 +127,10 @@ const Welcome = () => {
 
         <div className="relative z-10 px-5 pb-8 pt-16">
           {/* Logo */}
-          <div className="flex items-center gap-2 mb-8">
-            <img src={hudumaLogo} alt="HudumaHub.ke" className="h-20 w-auto drop-shadow-lg" />
+          <div className="mb-8">
+            <div className="inline-block bg-white/95 rounded-2xl px-5 py-3 shadow-lg">
+              <img src={hudumaLogo} alt="HudumaHub.ke" className="h-16 w-auto" />
+            </div>
           </div>
 
           <h1 className="font-display text-3xl font-bold text-primary-foreground leading-tight mb-2">
