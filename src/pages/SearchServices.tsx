@@ -371,6 +371,7 @@ const SearchServices = () => {
                   <SelectItem value="price_low">Lowest price</SelectItem>
                   <SelectItem value="price_high">Highest price</SelectItem>
                   <SelectItem value="top_rated">Top rated</SelectItem>
+                  {userLocation && <SelectItem value="nearby">Nearest first</SelectItem>}
                 </SelectContent>
               </Select>
             </div>
