@@ -9,12 +9,15 @@ type ProviderStory = {
   user_id: string;
   business_name: string;
   profile_image_url: string | null;
+  isBoosted: boolean;
   statuses: {
     id: string;
     image_url: string | null;
     text_content: string | null;
     created_at: string;
     view_count: number;
+    isBoosted: boolean;
+    boostTier: string | null;
   }[];
 };
 
@@ -39,6 +42,20 @@ export const StoryBar = () => {
       return;
     }
 
+    // Fetch active boosts
+    const statusIds = statuses.map((s) => s.id);
+    const { data: boosts } = await supabase
+      .from("status_boosts")
+      .select("status_id, boost_tier")
+      .in("status_id", statusIds)
+      .eq("is_active", true)
+      .eq("payment_status", "completed")
+      .gt("boost_end", new Date().toISOString());
+
+    const boostMap = new Map(
+      (boosts || []).map((b) => [b.status_id, b.boost_tier])
+    );
+
     const userIds = [...new Set(statuses.map((s) => s.user_id))];
     const { data: profiles } = await supabase
       .from("provider_profiles")
@@ -51,30 +68,38 @@ export const StoryBar = () => {
 
     const groups: ProviderStory[] = userIds.map((uid) => {
       const prof = profileMap.get(uid);
+      const userStatuses = statuses.filter((s) => s.user_id === uid);
+      const hasBoosted = userStatuses.some((s) => boostMap.has(s.id));
       return {
         user_id: uid,
         business_name: prof?.business_name || "Provider",
         profile_image_url: prof?.profile_image_url || null,
-        statuses: statuses
-          .filter((s) => s.user_id === uid)
-          .map((s) => ({
-            id: s.id,
-            image_url: s.image_url,
-            text_content: s.text_content,
-            created_at: s.created_at,
-            view_count: s.view_count,
-          })),
+        isBoosted: hasBoosted,
+        statuses: userStatuses.map((s) => ({
+          id: s.id,
+          image_url: s.image_url,
+          text_content: s.text_content,
+          created_at: s.created_at,
+          view_count: s.view_count,
+          isBoosted: boostMap.has(s.id),
+          boostTier: boostMap.get(s.id) || null,
+        })),
       };
     });
 
-    // Put current user's story first
-    if (user) {
-      const myIdx = groups.findIndex((g) => g.user_id === user.id);
-      if (myIdx > 0) {
-        const [mine] = groups.splice(myIdx, 1);
-        groups.unshift(mine);
-      }
-    }
+    // Sort: current user first, then boosted (high > moderate), then rest
+    groups.sort((a, b) => {
+      if (user && a.user_id === user.id) return -1;
+      if (user && b.user_id === user.id) return 1;
+      if (a.isBoosted && !b.isBoosted) return -1;
+      if (!a.isBoosted && b.isBoosted) return 1;
+      // High boost before moderate
+      const aHigh = a.statuses.some((s) => s.boostTier === "high");
+      const bHigh = b.statuses.some((s) => s.boostTier === "high");
+      if (aHigh && !bHigh) return -1;
+      if (!aHigh && bHigh) return 1;
+      return 0;
+    });
 
     setGrouped(groups);
     setLoading(false);
@@ -119,9 +144,13 @@ export const StoryBar = () => {
             <button
               key={group.user_id}
               onClick={() => openViewer(idx)}
-              className="flex flex-col items-center gap-1.5 shrink-0"
+              className="flex flex-col items-center gap-1.5 shrink-0 relative"
             >
-              <div className="w-16 h-16 rounded-full p-[3px] bg-gradient-to-br from-primary to-accent">
+              <div className={`w-16 h-16 rounded-full p-[3px] ${
+                group.isBoosted
+                  ? "bg-gradient-to-br from-yellow-400 via-orange-500 to-red-500"
+                  : "bg-gradient-to-br from-primary to-accent"
+              }`}>
                 <div className="w-full h-full rounded-full overflow-hidden bg-background border-2 border-background">
                   {group.profile_image_url ? (
                     <img
@@ -136,6 +165,11 @@ export const StoryBar = () => {
                   )}
                 </div>
               </div>
+              {group.isBoosted && (
+                <span className="absolute -top-1 -right-1 text-[9px] bg-yellow-500 text-white font-bold rounded-full px-1.5 py-0.5">
+                  ⚡
+                </span>
+              )}
               <span className="text-[10px] font-semibold text-foreground w-16 text-center truncate">
                 {user?.id === group.user_id ? "You" : group.business_name.split(" ")[0]}
               </span>
@@ -150,6 +184,7 @@ export const StoryBar = () => {
           initialIndex={viewerIndex}
           onClose={() => setViewerOpen(false)}
           currentUserId={user?.id || null}
+          onRefresh={fetchStories}
         />
       )}
 
