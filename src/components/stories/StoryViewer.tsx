@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { getOrCreateConversation } from "@/lib/conversations";
 import { X, Heart, Send, Eye, Zap, MessageCircle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -161,19 +162,44 @@ export const StoryViewer = ({ stories, initialIndex, onClose, currentUserId, onR
   };
 
   const sendReply = async () => {
-    if (!reply.trim() || !status || !currentUserId) return;
+    if (!reply.trim() || !status || !currentUserId || !group) return;
+    const replyText = reply.trim();
+
+    // Save as status reply
     const { error } = await supabase.from("status_replies").insert({
       status_id: status.id,
       user_id: currentUserId,
-      content: reply.trim(),
+      content: replyText,
     });
     if (error) {
       toast({ title: "Failed to send reply", variant: "destructive" });
-    } else {
-      toast({ title: "Reply sent!" });
-      setReply("");
-      setReplyFocused(false);
+      return;
     }
+
+    // Also send as a chat message to the provider
+    try {
+      const conversationId = await getOrCreateConversation(currentUserId, group.user_id);
+      if (conversationId) {
+        const storyLabel = status.text_content
+          ? `📖 Story reply: "${replyText}"`
+          : `📖 Replied to your story: "${replyText}"`;
+
+        await supabase.from("messages").insert({
+          conversation_id: conversationId,
+          sender_id: currentUserId,
+          content: storyLabel,
+        });
+
+        // Update conversation last_message_at
+        await supabase.from("conversations").update({ last_message_at: new Date().toISOString() }).eq("id", conversationId);
+      }
+    } catch (e) {
+      console.error("Failed to send story reply to messenger:", e);
+    }
+
+    toast({ title: "Reply sent!" });
+    setReply("");
+    setReplyFocused(false);
   };
 
   const openViewers = async () => {
