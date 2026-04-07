@@ -30,6 +30,7 @@ import {
 } from "lucide-react";
 import { useUnreadCount } from "@/hooks/useUnreadCount";
 import { InstallBanner } from "@/components/InstallBanner";
+import { StoryBar } from "@/components/stories/StoryBar";
 
 /* ────────── Role Config ────────── */
 const roleConfig: Record<
