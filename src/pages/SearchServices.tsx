@@ -476,6 +476,14 @@ const SearchServices = () => {
                       </span>
 
                       <div className="flex items-center gap-2">
+                        {sortBy === "nearby" && userLocation && (svc as any).latitude && (svc as any).longitude && (
+                          <Badge variant="secondary" className="text-[10px]">
+                            {(() => {
+                              const d = getDistanceKm(userLocation.latitude, userLocation.longitude, (svc as any).latitude, (svc as any).longitude);
+                              return d < 1 ? `${Math.round(d * 1000)}m` : `${d.toFixed(1)}km`;
+                            })()}
+                          </Badge>
+                        )}
                         {review && (
                           <span className="text-xs text-amber-600 flex items-center gap-0.5">
                             <Star className="w-3 h-3 fill-amber-500 text-amber-500" />
