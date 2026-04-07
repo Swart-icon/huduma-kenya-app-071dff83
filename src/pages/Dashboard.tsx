@@ -403,7 +403,7 @@ const Dashboard = () => {
                 Explore
               </h3>
               <QuickAction
-                icon={<Navigation className="w-5 h-5" />}
+                icon={<NavigationIcon className="w-5 h-5" />}
                 label="Nearby Services"
                 description="Discover services close to you"
                 onClick={() => navigate("/nearby")}
