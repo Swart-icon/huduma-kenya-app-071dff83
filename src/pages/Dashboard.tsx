@@ -29,6 +29,7 @@ import {
   PlusCircle,
   TrendingUp,
   Eye,
+  Navigation as NavigationIcon,
 } from "lucide-react";
 import { useUnreadCount } from "@/hooks/useUnreadCount";
 import { InstallBanner } from "@/components/InstallBanner";
