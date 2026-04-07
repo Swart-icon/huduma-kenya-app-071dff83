@@ -5,9 +5,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, MapPin, Phone, Mail, Briefcase, Star, MessageSquare, Award, Ruler, CheckCircle, Clock as ClockIcon } from "lucide-react";
+import { ArrowLeft, MapPin, Phone, Mail, Briefcase, Star, MessageSquare, Award, Ruler, CheckCircle, Clock as ClockIcon, Eye, Heart } from "lucide-react";
 import { getOrCreateConversation } from "@/lib/conversations";
 import { useToast } from "@/hooks/use-toast";
+import { StoryViewer } from "@/components/stories/StoryViewer";
 
 const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
