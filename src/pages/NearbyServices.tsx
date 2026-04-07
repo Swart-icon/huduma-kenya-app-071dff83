@@ -12,6 +12,7 @@ import {
   MapPin,
   Star,
   Navigation,
+  Calendar,
   Loader2,
   SlidersHorizontal,
   X,
@@ -433,6 +434,19 @@ const NearbyServices = () => {
                           </Badge>
                         </div>
                       </div>
+
+                      {/* Quick book button */}
+                      <Button
+                        size="sm"
+                        className="w-full mt-2 h-8 rounded-lg text-xs gap-1"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/book/${svc.service_id}`);
+                        }}
+                      >
+                        <Calendar className="w-3 h-3" />
+                        Book Now
+                      </Button>
                     </div>
                   </div>
                 </CardContent>

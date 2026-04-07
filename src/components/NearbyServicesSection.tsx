@@ -110,30 +110,44 @@ const NearbyServicesSection = () => {
             className="cursor-pointer hover:shadow-md transition-shadow active:scale-[0.98]"
             onClick={() => navigate(`/services/${svc.service_id}`)}
           >
-            <CardContent className="p-3 flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg overflow-hidden bg-muted shrink-0 flex items-center justify-center">
-                {svc.profile_image_url ? (
-                  <img src={svc.profile_image_url} alt="" className="w-full h-full object-cover" loading="lazy" />
-                ) : (
-                  <User className="w-4 h-4 text-muted-foreground" />
-                )}
-              </div>
-              <div className="min-w-0 flex-1">
-                <h3 className="text-sm font-semibold text-foreground truncate">{svc.title}</h3>
-                <div className="flex items-center gap-2 mt-0.5">
-                  <span className="text-[11px] text-muted-foreground truncate">{svc.business_name}</span>
-                  {svc.avg_rating > 0 && (
-                    <span className="text-[11px] text-amber-600 flex items-center gap-0.5 shrink-0">
-                      <Star className="w-2.5 h-2.5 fill-amber-500 text-amber-500" />
-                      {svc.avg_rating.toFixed(1)}
-                    </span>
+            <CardContent className="p-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg overflow-hidden bg-muted shrink-0 flex items-center justify-center">
+                  {svc.profile_image_url ? (
+                    <img src={svc.profile_image_url} alt="" className="w-full h-full object-cover" loading="lazy" />
+                  ) : (
+                    <User className="w-4 h-4 text-muted-foreground" />
                   )}
                 </div>
+                <div className="min-w-0 flex-1">
+                  <h3 className="text-sm font-semibold text-foreground truncate">{svc.title}</h3>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <span className="text-[11px] text-muted-foreground truncate">{svc.business_name}</span>
+                    {svc.avg_rating > 0 && (
+                      <span className="text-[11px] text-amber-600 flex items-center gap-0.5 shrink-0">
+                        <Star className="w-2.5 h-2.5 fill-amber-500 text-amber-500" />
+                        {svc.avg_rating.toFixed(1)}
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <div className="flex flex-col items-end gap-1 shrink-0">
+                  <Badge variant="secondary" className="text-[10px] gap-0.5">
+                    <MapPin className="w-2.5 h-2.5" />
+                    {formatDistance(svc.distance_km)}
+                  </Badge>
+                  <Button
+                    size="sm"
+                    className="h-6 px-2 text-[10px] rounded-lg"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate(`/book/${svc.service_id}`);
+                    }}
+                  >
+                    Book
+                  </Button>
+                </div>
               </div>
-              <Badge variant="secondary" className="text-[10px] shrink-0 gap-0.5">
-                <MapPin className="w-2.5 h-2.5" />
-                {formatDistance(svc.distance_km)}
-              </Badge>
             </CardContent>
           </Card>
         ))}

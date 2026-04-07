@@ -266,7 +266,29 @@ const Dashboard = () => {
           </Card>
         )}
 
-        {/* ─── Role Switcher ─── */}
+        {/* ─── Quick Book CTA (Client only) ─── */}
+        {role === "client" && (
+          <Card
+            className="mb-5 border-0 shadow-md rounded-2xl overflow-hidden cursor-pointer hover:shadow-lg transition-shadow active:scale-[0.98]"
+            onClick={() => navigate("/nearby")}
+          >
+            <div className="bg-gradient-to-r from-primary/10 to-accent/10 p-4 flex items-center gap-3">
+              <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center shrink-0">
+                <MapPin className="w-6 h-6 text-primary" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-display font-bold text-sm text-foreground">
+                  Find Services Near Me 📍
+                </h3>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Discover & book providers close to you in 2 taps
+                </p>
+              </div>
+              <ChevronRight className="w-5 h-5 text-primary shrink-0" />
+            </div>
+          </Card>
+        )}
+
         <RoleSwitcher />
 
         {/* ─── Story Bar ─── */}
