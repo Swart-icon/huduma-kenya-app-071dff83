@@ -57,7 +57,7 @@ export const InstallBanner = () => {
     <div className="sticky top-0 z-50 bg-primary text-primary-foreground px-4 py-2.5 flex items-center gap-3 shadow-md">
       <Download className="w-5 h-5 shrink-0" />
       <div className="flex-1 min-w-0">
-        <p className="text-xs font-bold leading-tight">Install Huduma</p>
+        <p className="text-xs font-bold leading-tight">Install HudumaHub</p>
         <p className="text-[10px] opacity-80 leading-tight">Get the full app experience</p>
       </div>
       <Button
