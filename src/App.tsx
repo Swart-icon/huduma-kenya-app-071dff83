@@ -9,6 +9,7 @@ import { LocationProvider } from "@/contexts/LocationContext";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { showErrorToast } from "@/lib/errorHandler";
 import Index from "./pages/Index";
+import Onboarding from "./pages/Onboarding";
 import Welcome from "./pages/Welcome";
 import Register from "./pages/Register";
 import Login from "./pages/Login";
@@ -98,6 +99,7 @@ const App = () => (
           <OfflineBanner />
           <Routes>
             <Route path="/" element={<Index />} />
+            <Route path="/onboarding" element={<Onboarding />} />
             <Route path="/welcome" element={<Welcome />} />
             <Route path="/register" element={<Register />} />
             <Route path="/login" element={<Login />} />
