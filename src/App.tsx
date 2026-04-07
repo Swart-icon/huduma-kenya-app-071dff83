@@ -40,6 +40,7 @@ import SessionManagement from "./pages/SessionManagement";
 import SearchServices from "./pages/SearchServices";
 import AdminPanel from "./pages/AdminPanel";
 import ServiceMap from "./pages/ServiceMap";
+import NearbyServices from "./pages/NearbyServices";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 import JobSeekerDashboard from "./pages/JobSeekerDashboard";
