@@ -13,8 +13,25 @@ interface ConversationItem {
   other_user_id: string;
   other_user_name: string;
   last_message_at: string;
+  last_message_preview: string;
   unread_count: number;
 }
+
+const getMessagePreview = (content: string | null) => {
+  if (!content) return "Open chat";
+
+  try {
+    const parsed = JSON.parse(content);
+
+    if (parsed?.type === "voice") return "🎤 Voice note";
+    if (parsed?.type === "image") return "🖼️ Photo";
+    if (parsed?.type === "file") return `📎 ${parsed.fileName || "Attachment"}`;
+  } catch {
+    // plain text message
+  }
+
+  return content;
+};
 
 const Conversations = () => {
   const { user, loading: authLoading } = useAuth();
@@ -38,7 +55,7 @@ const Conversations = () => {
     );
     const convoIds = convos.map((c) => c.id);
 
-    const [profilesRes, unreadRes] = await Promise.all([
+    const [profilesRes, unreadRes, messagesRes] = await Promise.all([
       otherIds.length > 0
         ? supabase.from("profiles").select("user_id, full_name").in("user_id", otherIds)
         : Promise.resolve({ data: [] }),
@@ -49,6 +66,13 @@ const Conversations = () => {
             .in("conversation_id", convoIds)
             .eq("read", false)
             .neq("sender_id", user.id)
+        : Promise.resolve({ data: [] }),
+      convoIds.length > 0
+        ? supabase
+            .from("messages")
+            .select("conversation_id, content, created_at")
+            .in("conversation_id", convoIds)
+            .order("created_at", { ascending: false })
         : Promise.resolve({ data: [] }),
     ]);
 
@@ -61,6 +85,13 @@ const Conversations = () => {
       unreadMap.set(m.conversation_id, (unreadMap.get(m.conversation_id) || 0) + 1);
     });
 
+    const latestMessageMap = new Map<string, string>();
+    (messagesRes.data || []).forEach((message) => {
+      if (!latestMessageMap.has(message.conversation_id)) {
+        latestMessageMap.set(message.conversation_id, getMessagePreview(message.content));
+      }
+    });
+
     const items: ConversationItem[] = convos.map((c) => {
       const otherId = c.participant_one === user.id ? c.participant_two : c.participant_one;
       return {
@@ -68,6 +99,7 @@ const Conversations = () => {
         other_user_id: otherId,
         other_user_name: profileMap.get(otherId) || "User",
         last_message_at: c.last_message_at || c.created_at,
+        last_message_preview: latestMessageMap.get(c.id) || "Open chat",
         unread_count: unreadMap.get(c.id) || 0,
       };
     });
@@ -138,11 +170,14 @@ const Conversations = () => {
                         {format(new Date(c.last_message_at), "MMM d")}
                       </span>
                     </div>
-                    {c.unread_count > 0 && (
-                      <span className="inline-flex items-center justify-center w-5 h-5 text-xs font-bold rounded-full bg-primary text-primary-foreground mt-1">
-                        {c.unread_count}
-                      </span>
-                    )}
+                    <div className="flex items-center justify-between gap-3 mt-1">
+                      <p className="text-xs text-muted-foreground truncate">{c.last_message_preview}</p>
+                      {c.unread_count > 0 && (
+                        <span className="inline-flex items-center justify-center w-5 h-5 text-xs font-bold rounded-full bg-primary text-primary-foreground shrink-0">
+                          {c.unread_count}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </CardContent>
               </Card>

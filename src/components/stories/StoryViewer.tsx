@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { getOrCreateConversation } from "@/lib/conversations";
 import { X, Heart, Send, Eye, Zap, MessageCircle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -174,27 +173,6 @@ export const StoryViewer = ({ stories, initialIndex, onClose, currentUserId, onR
     if (error) {
       toast({ title: "Failed to send reply", variant: "destructive" });
       return;
-    }
-
-    // Also send as a chat message to the provider
-    try {
-      const conversationId = await getOrCreateConversation(currentUserId, group.user_id);
-      if (conversationId) {
-        const storyLabel = status.text_content
-          ? `📖 Story reply: "${replyText}"`
-          : `📖 Replied to your story: "${replyText}"`;
-
-        await supabase.from("messages").insert({
-          conversation_id: conversationId,
-          sender_id: currentUserId,
-          content: storyLabel,
-        });
-
-        // Update conversation last_message_at
-        await supabase.from("conversations").update({ last_message_at: new Date().toISOString() }).eq("id", conversationId);
-      }
-    } catch (e) {
-      console.error("Failed to send story reply to messenger:", e);
     }
 
     toast({ title: "Reply sent!" });
