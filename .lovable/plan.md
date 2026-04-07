@@ -1,42 +1,49 @@
 
 
-## Plan: Add Location Detection to Provider Profile & Service Creation
+## Plan: First-Time User Onboarding Walkthrough
 
-### Problem
-Providers currently enter city/county text but no latitude/longitude coordinates are saved on their profile or services. The map and nearby discovery features rely on these coordinates, so providers don't appear on the map.
+### Overview
+Add a swipeable full-screen onboarding experience that shows once for new visitors before the Welcome page. Uses `localStorage` to track completion so it never shows again.
 
-### What We'll Build
-A reusable "Location Section" in both the Provider Profile Edit and Create Service forms that lets providers either auto-detect their GPS location or manually pick a Kenyan city. The coordinates get saved to the database alongside the existing city/county fields.
+### Flow
+1. User opens app for the first time → `Index.tsx` checks `localStorage` for `huduma-onboarded` flag
+2. If not onboarded → redirect to `/onboarding`
+3. User swipes through 4 slides, can skip or tap "Get Started" on the last slide
+4. On completion → set `huduma-onboarded = true` in localStorage → navigate to `/welcome`
 
-### Technical Approach
+### Onboarding Slides (4 screens)
+1. **Find Services** — "Discover trusted professionals near you" (Search/MapPin icon)
+2. **Hire or Get Hired** — "Post jobs or apply as a skilled professional" (Briefcase icon)
+3. **Share Your Work** — "Post videos and stories to showcase your skills" (Video icon)
+4. **Secure Payments** — "Book and pay with confidence" (Shield icon)
 
-**1. Update ProviderProfile type and save logic** (`src/pages/ProviderProfileEdit.tsx`)
-- Add `latitude` and `longitude` to the local `ProviderProfile` type
-- Load existing lat/lng from the database on fetch
-- Add a "Location" section in the form UI with:
-  - "Detect My Location" button (uses `navigator.geolocation`)
-  - Manual city picker dropdown (reuse the `KENYAN_LOCATIONS` list from `LocationPicker.tsx`)
-  - Display detected coordinates with a confirmation message
-- Include lat/lng in the save payload to `provider_profiles` table
+### UI Design
+- Full-screen slides with large centered icon, bold heading, short subtitle
+- Dot indicators at the bottom showing current slide
+- "Skip" link top-right on all slides except the last
+- "Next" button on slides 1-3, "Get Started" button on slide 4
+- Swipe gesture support via touch events
+- Mobile-first, dark/light theme compatible
 
-**2. Update CreateService page** (`src/pages/CreateService.tsx`)
-- Add `latitude` and `longitude` state fields
-- Add the same location detection UI (detect button + manual city fallback)
-- Include lat/lng in the insert payload to `services` table
-- When a provider selects a county/city manually from the existing dropdowns, auto-populate approximate coordinates from the known city list
+### Technical Details
 
-**3. Auto-populate coordinates from city selection**
-- Use the same `KENYAN_LOCATIONS` array (with lat/lng for 15 major cities) already defined in `LocationPicker.tsx`
-- Extract it into a shared constant file or import it
-- When a provider selects a county in the existing dropdown, attempt to match and pre-fill coordinates
+**New file:** `src/pages/Onboarding.tsx`
+- Swipeable carousel using touch event handlers (no extra dependency)
+- Each slide is a full-viewport div with icon, title, subtitle
+- Dot pagination + Next/Skip/Get Started buttons
+- On complete: `localStorage.setItem("huduma-onboarded", "true")` then navigate to `/welcome`
 
-**4. No database changes needed**
-- `provider_profiles` already has `latitude` and `longitude` columns
-- `services` already has `latitude` and `longitude` columns
-- Both are nullable doubles, ready to use
+**Edit:** `src/pages/Index.tsx`
+- Before redirecting to `/welcome`, check if `localStorage.getItem("huduma-onboarded")` is falsy
+- If not onboarded → navigate to `/onboarding` instead
 
-### Files to Change
-- `src/pages/ProviderProfileEdit.tsx` — Add location detection section and save lat/lng
-- `src/pages/CreateService.tsx` — Add location detection and save lat/lng
-- `src/lib/kenyanLocations.ts` (new) — Shared city coordinates constant
+**Edit:** `src/App.tsx`
+- Add route: `<Route path="/onboarding" element={<Onboarding />} />`
+
+### Files Changed
+| File | Action |
+|------|--------|
+| `src/pages/Onboarding.tsx` | Create |
+| `src/pages/Index.tsx` | Edit redirect logic |
+| `src/App.tsx` | Add route |
 
