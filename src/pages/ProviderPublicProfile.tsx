@@ -118,7 +118,11 @@ const ProviderPublicProfile = () => {
 
       <div className="px-6 -mt-16">
         <div className="max-w-sm mx-auto">
-          <div className="w-28 h-28 rounded-2xl bg-card border-4 border-background overflow-hidden shadow-lg mb-4 relative">
+          {/* Profile image with story ring */}
+          <button
+            onClick={() => providerStories.length > 0 && setViewerOpen(true)}
+            className={`w-28 h-28 rounded-2xl bg-card border-4 ${providerStories.length > 0 ? 'border-primary' : 'border-background'} overflow-hidden shadow-lg mb-4 relative`}
+          >
             {profile.profile_image_url ? (
               <img src={profile.profile_image_url} alt={profile.business_name} className="w-full h-full object-cover" />
             ) : (
@@ -131,7 +135,12 @@ const ProviderPublicProfile = () => {
                 <CheckCircle className="w-5 h-5 text-primary-foreground" />
               </div>
             )}
-          </div>
+            {providerStories.length > 0 && (
+              <div className="absolute top-1 left-1 bg-primary rounded-full px-1.5 py-0.5 text-[9px] font-bold text-primary-foreground">
+                {providerStories[0].statuses.length}
+              </div>
+            )}
+          </button>
 
           <div className="flex items-center gap-2 mb-1">
             <h1 className="font-display text-2xl font-bold text-foreground">{profile.business_name}</h1>
