@@ -32,6 +32,7 @@ import {
 import { useUnreadCount } from "@/hooks/useUnreadCount";
 import { InstallBanner } from "@/components/InstallBanner";
 import { StoryBar } from "@/components/stories/StoryBar";
+import NearbyServicesSection from "@/components/NearbyServicesSection";
 
 /* ────────── Role Config ────────── */
 const roleConfig: Record<
@@ -393,25 +394,28 @@ const Dashboard = () => {
 
         {/* ─── Client Explore Section ─── */}
         {role === "client" && (
-          <div className="space-y-2.5 mt-6 mb-6">
-            <h3 className="font-display font-bold text-sm text-foreground uppercase tracking-wider mb-1">
-              Explore
-            </h3>
-            <QuickAction
-              icon={<Search className="w-5 h-5" />}
-              label="Search Services"
-              description="Find services with filters & sorting"
-              onClick={() => navigate("/search")}
-              accentClass="bg-primary/10 text-primary"
-            />
-            <QuickAction
-              icon={<Grid className="w-5 h-5" />}
-              label="Browse Categories"
-              description="Explore services by category"
-              onClick={() => navigate("/categories")}
-              accentClass="bg-accent/15 text-accent-foreground"
-            />
-          </div>
+          <>
+            <NearbyServicesSection />
+            <div className="space-y-2.5 mt-6 mb-6">
+              <h3 className="font-display font-bold text-sm text-foreground uppercase tracking-wider mb-1">
+                Explore
+              </h3>
+              <QuickAction
+                icon={<Search className="w-5 h-5" />}
+                label="Search Services"
+                description="Find services with filters & sorting"
+                onClick={() => navigate("/search")}
+                accentClass="bg-primary/10 text-primary"
+              />
+              <QuickAction
+                icon={<Grid className="w-5 h-5" />}
+                label="Browse Categories"
+                description="Explore services by category"
+                onClick={() => navigate("/categories")}
+                accentClass="bg-accent/15 text-accent-foreground"
+              />
+            </div>
+          </>
         )}
 
         {/* ─── Provider Explore Section ─── */}

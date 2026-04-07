@@ -7,9 +7,12 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
-import { ArrowLeft, Search, MapPin, Star, SlidersHorizontal, X, ChevronDown, Loader2 } from "lucide-react";
+import { ArrowLeft, Search, MapPin, Star, SlidersHorizontal, X, ChevronDown, Loader2, Navigation } from "lucide-react";
 import { useCategories } from "@/hooks/useCategories";
 import { ServiceCardSkeleton, ListSkeletons } from "@/components/Skeletons";
+import { useLocation } from "@/contexts/LocationContext";
+import { getDistanceKm } from "@/hooks/useGeolocation";
+import LocationPicker from "@/components/LocationPicker";
 
 type Service = {
   id: string;
@@ -58,6 +61,7 @@ const priceLabel = (price: number | null, type: string) => {
 const SearchServices = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  const { location: userLocation, status: locationStatus } = useLocation();
 
   // State
   const [query, setQuery] = useState(searchParams.get("q") || "");
@@ -92,7 +96,7 @@ const SearchServices = () => {
 
     let q = supabase
       .from("services")
-      .select("*", { count: "exact" })
+      .select("*,latitude,longitude", { count: "exact" })
       .eq("is_active", true);
 
     // Keyword search
@@ -227,13 +231,28 @@ const SearchServices = () => {
     minRating > 0,
   ].filter(Boolean).length;
 
-  // Filter by rating client-side
-  const filteredServices = minRating > 0
-    ? services.filter((s) => {
-        const agg = reviewAggs.get(s.provider_id);
-        return agg && agg.avg_rating >= minRating;
-      })
-    : services;
+  // Filter by rating client-side & sort by distance if nearby
+  const filteredServices = (() => {
+    let result = minRating > 0
+      ? services.filter((s) => {
+          const agg = reviewAggs.get(s.provider_id);
+          return agg && agg.avg_rating >= minRating;
+        })
+      : services;
+
+    if (sortBy === "nearby" && userLocation) {
+      result = [...result].sort((a, b) => {
+        const distA = (a as any).latitude && (a as any).longitude
+          ? getDistanceKm(userLocation.latitude, userLocation.longitude, (a as any).latitude, (a as any).longitude)
+          : Infinity;
+        const distB = (b as any).latitude && (b as any).longitude
+          ? getDistanceKm(userLocation.latitude, userLocation.longitude, (b as any).latitude, (b as any).longitude)
+          : Infinity;
+        return distA - distB;
+      });
+    }
+    return result;
+  })();
 
   return (
     <div className="min-h-screen bg-background">
@@ -367,9 +386,20 @@ const SearchServices = () => {
                   <SelectItem value="price_low">Lowest price</SelectItem>
                   <SelectItem value="price_high">Highest price</SelectItem>
                   <SelectItem value="top_rated">Top rated</SelectItem>
+                  {userLocation && <SelectItem value="nearby">Nearest first</SelectItem>}
                 </SelectContent>
               </Select>
             </div>
+
+            {/* Location for nearby */}
+            {!userLocation && (
+              <div>
+                <label className="text-xs font-medium text-muted-foreground mb-2 block flex items-center gap-1">
+                  <Navigation className="w-3 h-3" /> Your Location (for nearby sort)
+                </label>
+                <LocationPicker compact={false} />
+              </div>
+            )}
 
             <Button onClick={() => setShowFilters(false)} className="w-full rounded-xl h-10">
               Show results ({totalHint})
@@ -446,6 +476,14 @@ const SearchServices = () => {
                       </span>
 
                       <div className="flex items-center gap-2">
+                        {sortBy === "nearby" && userLocation && (svc as any).latitude && (svc as any).longitude && (
+                          <Badge variant="secondary" className="text-[10px]">
+                            {(() => {
+                              const d = getDistanceKm(userLocation.latitude, userLocation.longitude, (svc as any).latitude, (svc as any).longitude);
+                              return d < 1 ? `${Math.round(d * 1000)}m` : `${d.toFixed(1)}km`;
+                            })()}
+                          </Badge>
+                        )}
                         {review && (
                           <span className="text-xs text-amber-600 flex items-center gap-0.5">
                             <Star className="w-3 h-3 fill-amber-500 text-amber-500" />
