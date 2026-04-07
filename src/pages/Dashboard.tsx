@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
+import hudumaLogo from "@/assets/hudumahub-logo-transparent.png";
 import {
   Briefcase,
   Search,
