@@ -1,12 +1,11 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { X, Heart, Send, Eye, Zap } from "lucide-react";
+import { X, Heart, Send, Eye, Zap, MessageCircle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { formatDistanceToNow } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { BoostStatusDialog } from "./BoostStatusDialog";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 type Status = {
@@ -40,9 +39,11 @@ type Viewer = {
   full_name: string | null;
   avatar_url: string | null;
   viewed_at: string;
+  type: "like" | "reply";
+  reply_content?: string;
 };
 
-const STORY_DURATION_MS = 30000; // 30 seconds
+const STORY_DURATION_MS = 30000;
 const TICK_INTERVAL_MS = 100;
 const PROGRESS_INCREMENT = (TICK_INTERVAL_MS / STORY_DURATION_MS) * 100;
 
@@ -58,6 +59,8 @@ export const StoryViewer = ({ stories, initialIndex, onClose, currentUserId, onR
   const [viewersOpen, setViewersOpen] = useState(false);
   const [viewers, setViewers] = useState<Viewer[]>([]);
   const [viewersLoading, setViewersLoading] = useState(false);
+  const [replyFocused, setReplyFocused] = useState(false);
+  const [liveViewCount, setLiveViewCount] = useState(0);
 
   const group = stories[groupIdx];
   const status = group?.statuses[statusIdx];
@@ -72,24 +75,36 @@ export const StoryViewer = ({ stories, initialIndex, onClose, currentUserId, onR
     setLikeCount(counts.count || 0);
   }, [status?.id, currentUserId]);
 
+  // Fetch fresh view count from DB
+  const fetchViewCount = useCallback(async () => {
+    if (!status) return;
+    const { data } = await supabase
+      .from("provider_statuses")
+      .select("view_count")
+      .eq("id", status.id)
+      .maybeSingle();
+    if (data) setLiveViewCount(data.view_count);
+  }, [status?.id]);
+
   useEffect(() => {
     fetchLikeState();
+    fetchViewCount();
     setProgress(0);
-  }, [fetchLikeState]);
+  }, [fetchLikeState, fetchViewCount]);
 
   // Record view for non-own stories
   useEffect(() => {
     if (!status || !currentUserId || !group) return;
     if (currentUserId === group.user_id) return;
-    supabase.rpc("increment_view_count" as any, { status_id: status.id }).then(() => {});
+    supabase.rpc("increment_view_count", { status_id: status.id }).then(() => {});
   }, [status?.id, currentUserId, group?.user_id]);
 
-  // Use ref to track if we should advance
   const shouldAdvanceRef = useRef(false);
+  const isPaused = boostOpen || viewersOpen || replyFocused;
 
-  // Auto-advance timer (pause when boost dialog or viewers dialog is open)
+  // Auto-advance timer — pauses when any dialog is open or reply input is focused
   useEffect(() => {
-    if (boostOpen || viewersOpen) return;
+    if (isPaused) return;
     const interval = setInterval(() => {
       setProgress((prev) => {
         const next = prev + PROGRESS_INCREMENT;
@@ -101,7 +116,7 @@ export const StoryViewer = ({ stories, initialIndex, onClose, currentUserId, onR
       });
     }, TICK_INTERVAL_MS);
     return () => clearInterval(interval);
-  }, [groupIdx, statusIdx, stories.length, boostOpen, viewersOpen]);
+  }, [groupIdx, statusIdx, stories.length, isPaused]);
 
   // Handle advance in a separate effect
   useEffect(() => {
@@ -157,6 +172,7 @@ export const StoryViewer = ({ stories, initialIndex, onClose, currentUserId, onR
     } else {
       toast({ title: "Reply sent!" });
       setReply("");
+      setReplyFocused(false);
     }
   };
 
@@ -165,45 +181,68 @@ export const StoryViewer = ({ stories, initialIndex, onClose, currentUserId, onR
     setViewersOpen(true);
     setViewersLoading(true);
 
-    // Fetch users who liked this status as a proxy for "viewers"
-    // Plus fetch replies to get engaged users
+    // Fetch fresh view count
+    fetchViewCount();
+
+    // Fetch likes and replies with content
     const [likesRes, repliesRes] = await Promise.all([
       supabase.from("status_likes").select("user_id, created_at").eq("status_id", status.id),
-      supabase.from("status_replies").select("user_id, created_at").eq("status_id", status.id),
+      supabase.from("status_replies").select("user_id, created_at, content").eq("status_id", status.id).order("created_at", { ascending: false }),
     ]);
 
-    const userMap = new Map<string, string>();
-    (likesRes.data || []).forEach((l) => userMap.set(l.user_id, l.created_at));
+    const viewerList: Viewer[] = [];
+    const seenUsers = new Set<string>();
+
+    // Add replies first (more engagement)
     (repliesRes.data || []).forEach((r) => {
-      if (!userMap.has(r.user_id)) userMap.set(r.user_id, r.created_at);
+      viewerList.push({
+        user_id: r.user_id,
+        full_name: null,
+        avatar_url: null,
+        viewed_at: r.created_at,
+        type: "reply",
+        reply_content: r.content,
+      });
+      seenUsers.add(r.user_id);
     });
 
-    const userIds = [...userMap.keys()];
+    // Add likes (skip if user already has a reply)
+    (likesRes.data || []).forEach((l) => {
+      if (!seenUsers.has(l.user_id)) {
+        viewerList.push({
+          user_id: l.user_id,
+          full_name: null,
+          avatar_url: null,
+          viewed_at: l.created_at,
+          type: "like",
+        });
+        seenUsers.add(l.user_id);
+      }
+    });
+
+    // Fetch profiles
+    const userIds = [...seenUsers];
     if (userIds.length > 0) {
       const { data: profiles } = await supabase
         .from("profiles")
         .select("user_id, full_name, avatar_url")
         .in("user_id", userIds);
 
-      const viewerList: Viewer[] = userIds.map((uid) => {
-        const prof = (profiles || []).find((p) => p.user_id === uid);
-        return {
-          user_id: uid,
-          full_name: prof?.full_name || "User",
-          avatar_url: prof?.avatar_url || null,
-          viewed_at: userMap.get(uid) || "",
-        };
+      viewerList.forEach((v) => {
+        const prof = (profiles || []).find((p) => p.user_id === v.user_id);
+        v.full_name = prof?.full_name || "User";
+        v.avatar_url = prof?.avatar_url || null;
       });
-      setViewers(viewerList);
-    } else {
-      setViewers([]);
     }
+
+    setViewers(viewerList);
     setViewersLoading(false);
   };
 
   if (!group || !status) return null;
 
   const isOwn = currentUserId === group.user_id;
+  const displayViewCount = liveViewCount || status.view_count;
 
   return (
     <div className="fixed inset-0 z-[100] bg-black flex flex-col">
@@ -283,7 +322,7 @@ export const StoryViewer = ({ stories, initialIndex, onClose, currentUserId, onR
           </div>
         )}
 
-        {/* View count — clickable for own stories */}
+        {/* View count */}
         <div className="absolute top-3 right-3 flex items-center gap-2">
           {status.isBoosted && (
             <span className="bg-yellow-500/80 text-white text-[10px] font-bold rounded-full px-2 py-0.5">
@@ -295,9 +334,16 @@ export const StoryViewer = ({ stories, initialIndex, onClose, currentUserId, onR
             className={`flex items-center gap-1 bg-black/40 rounded-full px-2.5 py-1 ${isOwn ? "cursor-pointer active:bg-black/60" : "cursor-default"}`}
           >
             <Eye className="w-3.5 h-3.5 text-white/70" />
-            <span className="text-[11px] text-white/70">{status.view_count}</span>
+            <span className="text-[11px] text-white/70">{displayViewCount}</span>
           </button>
         </div>
+
+        {/* Paused indicator */}
+        {replyFocused && (
+          <div className="absolute top-3 left-3 bg-black/40 rounded-full px-2.5 py-1">
+            <span className="text-[10px] text-white/70">⏸ Paused</span>
+          </div>
+        )}
       </div>
 
       {/* Bottom interaction bar */}
@@ -307,7 +353,15 @@ export const StoryViewer = ({ stories, initialIndex, onClose, currentUserId, onR
             <Input
               value={reply}
               onChange={(e) => setReply(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && sendReply()}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  sendReply();
+                }
+              }}
+              onFocus={() => setReplyFocused(true)}
+              onBlur={() => {
+                if (!reply.trim()) setReplyFocused(false);
+              }}
               placeholder="Reply to story..."
               className="h-10 rounded-full bg-white/10 border-white/20 text-white placeholder:text-white/40 pr-10"
             />
@@ -324,7 +378,7 @@ export const StoryViewer = ({ stories, initialIndex, onClose, currentUserId, onR
         </div>
       )}
 
-      {/* Own story bottom bar with view count */}
+      {/* Own story bottom bar */}
       {currentUserId && isOwn && (
         <div className="px-4 py-3 flex items-center justify-center">
           <button
@@ -332,12 +386,12 @@ export const StoryViewer = ({ stories, initialIndex, onClose, currentUserId, onR
             className="flex items-center gap-2 bg-white/10 rounded-full px-4 py-2 active:bg-white/20"
           >
             <Eye className="w-4 h-4 text-white/70" />
-            <span className="text-white/70 text-sm">{status.view_count} views</span>
+            <span className="text-white/70 text-sm">{displayViewCount} views</span>
           </button>
         </div>
       )}
 
-      {/* Viewers dialog */}
+      {/* Viewers/Engagement dialog */}
       {viewersOpen && (
         <div className="fixed inset-0 z-[110] flex items-end justify-center">
           <div className="absolute inset-0 bg-black/60" onClick={() => setViewersOpen(false)} />
@@ -349,7 +403,7 @@ export const StoryViewer = ({ stories, initialIndex, onClose, currentUserId, onR
               </button>
             </div>
             <div className="text-center mb-4 pb-3 border-b">
-              <p className="text-2xl font-bold text-foreground">{status.view_count}</p>
+              <p className="text-2xl font-bold text-foreground">{displayViewCount}</p>
               <p className="text-xs text-muted-foreground">Total views</p>
             </div>
             {viewersLoading ? (
@@ -365,9 +419,9 @@ export const StoryViewer = ({ stories, initialIndex, onClose, currentUserId, onR
             ) : (
               <ScrollArea className="flex-1">
                 <div className="space-y-3">
-                  {viewers.map((v) => (
-                    <div key={v.user_id} className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-full overflow-hidden bg-muted shrink-0">
+                  {viewers.map((v, idx) => (
+                    <div key={`${v.user_id}-${idx}`} className="flex items-start gap-3">
+                      <div className="w-9 h-9 rounded-full overflow-hidden bg-muted shrink-0 mt-0.5">
                         {v.avatar_url ? (
                           <img src={v.avatar_url} alt="" className="w-full h-full object-cover" />
                         ) : (
@@ -378,11 +432,20 @@ export const StoryViewer = ({ stories, initialIndex, onClose, currentUserId, onR
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-foreground truncate">{v.full_name}</p>
-                        <p className="text-[10px] text-muted-foreground">
+                        {v.type === "reply" && v.reply_content && (
+                          <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
+                            💬 {v.reply_content}
+                          </p>
+                        )}
+                        <p className="text-[10px] text-muted-foreground mt-0.5">
                           {formatDistanceToNow(new Date(v.viewed_at), { addSuffix: true })}
                         </p>
                       </div>
-                      <Heart className="w-4 h-4 text-red-400 fill-red-400 shrink-0" />
+                      {v.type === "like" ? (
+                        <Heart className="w-4 h-4 text-red-400 fill-red-400 shrink-0 mt-1" />
+                      ) : (
+                        <MessageCircle className="w-4 h-4 text-primary shrink-0 mt-1" />
+                      )}
                     </div>
                   ))}
                 </div>
@@ -392,7 +455,7 @@ export const StoryViewer = ({ stories, initialIndex, onClose, currentUserId, onR
         </div>
       )}
 
-      {/* Boost dialog — rendered inside a portal-like wrapper with higher z-index */}
+      {/* Boost dialog */}
       {boostOpen && status && (
         <div className="fixed inset-0 z-[110]">
           <BoostStatusDialog
