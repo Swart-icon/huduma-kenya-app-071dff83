@@ -511,6 +511,8 @@ export type Database = {
           description: string | null
           id: string
           is_verified: boolean | null
+          latitude: number | null
+          longitude: number | null
           profile_image_url: string | null
           service_radius_km: number | null
           skills: string[] | null
@@ -529,6 +531,8 @@ export type Database = {
           description?: string | null
           id?: string
           is_verified?: boolean | null
+          latitude?: number | null
+          longitude?: number | null
           profile_image_url?: string | null
           service_radius_km?: number | null
           skills?: string[] | null
@@ -547,6 +551,8 @@ export type Database = {
           description?: string | null
           id?: string
           is_verified?: boolean | null
+          latitude?: number | null
+          longitude?: number | null
           profile_image_url?: string | null
           service_radius_km?: number | null
           skills?: string[] | null
@@ -725,6 +731,8 @@ export type Database = {
           description: string | null
           id: string
           is_active: boolean
+          latitude: number | null
+          longitude: number | null
           price: number | null
           price_type: string
           provider_id: string
@@ -739,6 +747,8 @@ export type Database = {
           description?: string | null
           id?: string
           is_active?: boolean
+          latitude?: number | null
+          longitude?: number | null
           price?: number | null
           price_type?: string
           provider_id: string
@@ -753,6 +763,8 @@ export type Database = {
           description?: string | null
           id?: string
           is_active?: boolean
+          latitude?: number | null
+          longitude?: number | null
           price?: number | null
           price_type?: string
           provider_id?: string
