@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import hudumaLogo from "@/assets/hudumahub-logo-transparent.png";
 import {
   Briefcase,
+  HelpCircle,
   Map as MapIcon,
   Search,
   UserCheck,
@@ -533,6 +534,13 @@ const Dashboard = () => {
               </div>
             </CardContent>
           </Card>
+          <QuickAction
+            icon={<HelpCircle className="w-5 h-5" />}
+            label="Help Center"
+            description="FAQs, guides & support"
+            onClick={() => navigate("/help")}
+            accentClass="bg-primary/10 text-primary"
+          />
           <QuickAction
             icon={<Settings className="w-5 h-5" />}
             label="Security"
