@@ -3,9 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Zap, Check, Loader2, Phone, Sparkles } from "lucide-react";
+import { Zap, Check, Loader2, Phone, Sparkles, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 
@@ -62,7 +61,6 @@ export const BoostStatusDialog = ({ open, onClose, statusId, onBoosted }: Props)
     setStep("processing");
     setProcessing(true);
 
-    // Simulate M-Pesa STK push delay
     await new Promise((r) => setTimeout(r, 2500));
 
     const boostEnd = new Date();
@@ -106,14 +104,21 @@ export const BoostStatusDialog = ({ open, onClose, statusId, onBoosted }: Props)
     onClose();
   };
 
+  if (!open) return null;
+
   return (
-    <Dialog open={open} onOpenChange={(v) => !v && resetAndClose()}>
-      <DialogContent className="max-w-sm rounded-2xl z-[200]" style={{ zIndex: 200 }}>
-        <DialogHeader>
-          <DialogTitle className="font-display flex items-center gap-2">
+    <div className="fixed inset-0 z-[200] flex items-center justify-center">
+      <div className="absolute inset-0 bg-black/60" onClick={resetAndClose} />
+      <div className="relative w-full max-w-sm mx-4 bg-card rounded-2xl p-6 shadow-lg animate-in zoom-in-95 fade-in">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="font-display text-lg font-semibold flex items-center gap-2">
             <Zap className="w-5 h-5 text-primary" /> Boost Status
-          </DialogTitle>
-        </DialogHeader>
+          </h2>
+          <button onClick={resetAndClose} className="rounded-sm opacity-70 hover:opacity-100">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
 
         {step === "select" && (
           <div className="space-y-4">
@@ -235,7 +240,7 @@ export const BoostStatusDialog = ({ open, onClose, statusId, onBoosted }: Props)
             </Button>
           </div>
         )}
-      </DialogContent>
-    </Dialog>
+      </div>
+    </div>
   );
 };
