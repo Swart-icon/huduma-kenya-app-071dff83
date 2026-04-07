@@ -994,6 +994,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      increment_view_count: { Args: { status_id: string }; Returns: undefined }
       is_conversation_member: {
         Args: { _conversation_id: string; _user_id: string }
         Returns: boolean
