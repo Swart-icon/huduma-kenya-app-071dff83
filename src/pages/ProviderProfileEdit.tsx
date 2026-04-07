@@ -101,7 +101,7 @@ const ProviderProfileEdit = () => {
   const [verifications, setVerifications] = useState<Verification[]>([]);
   const [verifyDocType, setVerifyDocType] = useState("national_id");
   const [uploadingVerify, setUploadingVerify] = useState(false);
-
+  const [detectingLocation, setDetectingLocation] = useState(false);
   useEffect(() => {
     if (!authLoading && (!user || role !== "provider")) {
       navigate("/dashboard");
@@ -267,6 +267,8 @@ const ProviderProfileEdit = () => {
       years_experience: profile.years_experience,
       skills: profile.skills,
       service_radius_km: profile.service_radius_km,
+      latitude: profile.latitude,
+      longitude: profile.longitude,
     };
 
     const { error } = isNew
