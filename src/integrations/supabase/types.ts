@@ -1011,12 +1011,75 @@ export type Database = {
         }
         Relationships: []
       }
+      video_comments: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          user_id: string
+          video_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          user_id: string
+          video_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+          video_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "video_comments_video_id_fkey"
+            columns: ["video_id"]
+            isOneToOne: false
+            referencedRelation: "videos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      video_likes: {
+        Row: {
+          created_at: string
+          id: string
+          user_id: string
+          video_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          user_id: string
+          video_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          user_id?: string
+          video_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "video_likes_video_id_fkey"
+            columns: ["video_id"]
+            isOneToOne: false
+            referencedRelation: "videos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       videos: {
         Row: {
           category_id: string | null
+          comment_count: number
           created_at: string
           duration_seconds: number | null
           id: string
+          like_count: number
           status: string
           thumbnail_url: string | null
           title: string
@@ -1027,9 +1090,11 @@ export type Database = {
         }
         Insert: {
           category_id?: string | null
+          comment_count?: number
           created_at?: string
           duration_seconds?: number | null
           id?: string
+          like_count?: number
           status?: string
           thumbnail_url?: string | null
           title?: string
@@ -1040,9 +1105,11 @@ export type Database = {
         }
         Update: {
           category_id?: string | null
+          comment_count?: number
           created_at?: string
           duration_seconds?: number | null
           id?: string
+          like_count?: number
           status?: string
           thumbnail_url?: string | null
           title?: string
