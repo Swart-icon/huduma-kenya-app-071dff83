@@ -241,6 +241,43 @@ const ProviderProfileEdit = () => {
     setAvailability(availability.map((a) => a.day_of_week === dayIndex ? { ...a, [field]: value } : a));
   };
 
+  const handleDetectLocation = () => {
+    if (!navigator.geolocation) {
+      toast({ title: "Geolocation not supported", variant: "destructive" });
+      return;
+    }
+    setDetectingLocation(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setProfile((p) => ({ ...p, latitude: pos.coords.latitude, longitude: pos.coords.longitude }));
+        setDetectingLocation(false);
+        toast({ title: "Location detected! 📍" });
+      },
+      () => {
+        setDetectingLocation(false);
+        toast({ title: "Could not detect location", description: "Please select a city manually", variant: "destructive" });
+      },
+      { enableHighAccuracy: false, timeout: 10000 }
+    );
+  };
+
+  const handleCountyChange = (county: string) => {
+    const coords = getCoordinatesForCounty(county);
+    setProfile((p) => ({
+      ...p,
+      county,
+      latitude: p.latitude ?? coords?.lat ?? null,
+      longitude: p.longitude ?? coords?.lng ?? null,
+    }));
+  };
+
+  const handleManualCitySelect = (cityName: string) => {
+    const city = KENYAN_LOCATIONS.find((c) => c.name === cityName);
+    if (city) {
+      setProfile((p) => ({ ...p, city: city.name, county: city.county, latitude: city.lat, longitude: city.lng }));
+    }
+  };
+
   const handleSave = async () => {
     if (!user) return;
     if (!profile.business_name.trim()) {
