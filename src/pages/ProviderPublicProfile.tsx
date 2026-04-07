@@ -39,12 +39,13 @@ const ProviderPublicProfile = () => {
   }, [providerId]);
 
   const fetchAll = async () => {
-    const [profRes, revRes, portRes, availRes, svcRes] = await Promise.all([
+    const [profRes, revRes, portRes, availRes, svcRes, statusRes] = await Promise.all([
       supabase.from("provider_profiles").select("*").eq("user_id", providerId!).maybeSingle(),
       supabase.from("reviews").select("rating").eq("provider_id", providerId!),
       supabase.from("portfolio_items").select("*").eq("user_id", providerId!).order("created_at", { ascending: false }),
       supabase.from("provider_availability").select("*").eq("user_id", providerId!).order("day_of_week"),
       supabase.from("services").select("*").eq("provider_id", providerId!).eq("is_active", true),
+      supabase.from("provider_statuses").select("*").eq("user_id", providerId!).gt("expires_at", new Date().toISOString()).order("created_at", { ascending: false }),
     ]);
     setProfile(profRes.data);
     const reviews = revRes.data || [];
@@ -55,6 +56,23 @@ const ProviderPublicProfile = () => {
     setPortfolio(portRes.data || []);
     setAvailability(availRes.data || []);
     setServices(svcRes.data || []);
+
+    // Build story data for viewer
+    if (statusRes.data && statusRes.data.length > 0 && profRes.data) {
+      setProviderStories([{
+        user_id: providerId!,
+        business_name: profRes.data.business_name,
+        profile_image_url: profRes.data.profile_image_url,
+        statuses: statusRes.data.map((s: any) => ({
+          id: s.id,
+          image_url: s.image_url,
+          text_content: s.text_content,
+          created_at: s.created_at,
+          view_count: s.view_count,
+        })),
+      }]);
+    }
+
     setLoading(false);
   };
 
