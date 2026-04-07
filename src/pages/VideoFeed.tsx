@@ -262,6 +262,7 @@ const VideoSlide = memo(({
   onToggleMute: () => void; onOpenComments: (id: string) => void; globalIndex: number;
 }) => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const videoRef = useRef<HTMLVideoElement>(null);
   const [paused, setPaused] = useState(false);
@@ -342,7 +343,7 @@ const VideoSlide = memo(({
       {/* Right action bar */}
       <div className="absolute right-3 bottom-32 flex flex-col items-center gap-5">
         {/* Profile pic */}
-        <div className="relative mb-2">
+        <button onClick={() => navigate(`/provider/${video.user_id}`)} className="relative mb-2">
           <div className="w-11 h-11 rounded-full border-2 border-white overflow-hidden bg-primary/20">
             {video.profile?.avatar_url ? (
               <img src={video.profile.avatar_url} className="w-full h-full object-cover" alt="" />
@@ -350,7 +351,7 @@ const VideoSlide = memo(({
               <div className="w-full h-full flex items-center justify-center"><User className="w-5 h-5 text-white" /></div>
             )}
           </div>
-        </div>
+        </button>
 
         {/* Like */}
         <button onClick={toggleLike} className="flex flex-col items-center">
@@ -415,7 +416,7 @@ const VideoFeed = () => {
   const [uploadOpen, setUploadOpen] = useState(false);
   const [commentVideoId, setCommentVideoId] = useState<string | null>(null);
   const [commentsOpen, setCommentsOpen] = useState(false);
-  const [isMuted, setIsMuted] = useState(true);
+  const [isMuted, setIsMuted] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
 
