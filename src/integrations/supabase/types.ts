@@ -999,6 +999,38 @@ export type Database = {
         Returns: boolean
       }
       is_user_suspended: { Args: { _user_id: string }; Returns: boolean }
+      nearby_services: {
+        Args: {
+          _category_id?: string
+          _lat: number
+          _limit_count?: number
+          _lng: number
+          _min_rating?: number
+          _offset_count?: number
+          _radius_km?: number
+        }
+        Returns: {
+          avg_rating: number
+          business_name: string
+          category_icon: string
+          category_id: string
+          category_name: string
+          city: string
+          county: string
+          description: string
+          distance_km: number
+          is_verified: boolean
+          latitude: number
+          longitude: number
+          price: number
+          price_type: string
+          profile_image_url: string
+          provider_id: string
+          review_count: number
+          service_id: string
+          title: string
+        }[]
+      }
     }
     Enums: {
       app_role: "provider" | "job_seeker" | "client" | "admin"
