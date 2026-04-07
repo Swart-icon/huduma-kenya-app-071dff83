@@ -21,12 +21,14 @@ interface Message {
 }
 
 type ParsedContent = {
-  type: "text" | "voice" | "file" | "image";
+  type: "text" | "voice" | "file" | "image" | "story_reply";
   text?: string;
   url?: string;
   fileName?: string;
   mimeType?: string;
   duration?: number;
+  storyImageUrl?: string;
+  storyText?: string;
 };
 
 const parseMessageContent = (content: string): ParsedContent => {
@@ -315,6 +317,35 @@ const Chat = () => {
             </div>
             <Download className="w-4 h-4 shrink-0 opacity-60" />
           </a>
+        );
+      case "story_reply":
+        return (
+          <div>
+            {/* Quoted story context */}
+            <div className={`rounded-lg overflow-hidden mb-1.5 ${isMe ? "bg-primary-foreground/10" : "bg-background/60"} border-l-4 ${isMe ? "border-primary-foreground/40" : "border-primary/40"}`}>
+              <div className="flex items-start gap-2 p-2">
+                {parsed.storyImageUrl && (
+                  <img
+                    src={parsed.storyImageUrl}
+                    alt="Story"
+                    className="w-12 h-12 rounded object-cover shrink-0"
+                  />
+                )}
+                <div className="flex-1 min-w-0">
+                  <p className={`text-[10px] font-semibold ${isMe ? "text-primary-foreground/70" : "text-primary/70"}`}>
+                    Replied to story
+                  </p>
+                  {parsed.storyText && (
+                    <p className={`text-xs line-clamp-2 ${isMe ? "text-primary-foreground/60" : "text-muted-foreground"}`}>
+                      {parsed.storyText}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+            {/* Reply text */}
+            <p className="text-sm break-words">{parsed.text}</p>
+          </div>
         );
       default:
         return <p className="text-sm break-words">{parsed.text}</p>;
