@@ -108,7 +108,7 @@ export const BoostStatusDialog = ({ open, onClose, statusId, onBoosted }: Props)
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && resetAndClose()}>
-      <DialogContent className="max-w-sm rounded-2xl">
+      <DialogContent className="max-w-sm rounded-2xl z-[200]" style={{ zIndex: 200 }}>
         <DialogHeader>
           <DialogTitle className="font-display flex items-center gap-2">
             <Zap className="w-5 h-5 text-primary" /> Boost Status
