@@ -178,10 +178,7 @@ const Dashboard = () => {
       <div className="sticky top-0 z-30 bg-background/80 backdrop-blur-lg border-b border-border/50">
         <div className="flex items-center justify-between px-5 py-3 max-w-lg mx-auto">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-              <Shield className="w-4 h-4 text-primary-foreground" />
-            </div>
-            <span className="font-display font-bold text-base text-foreground">Huduma</span>
+            <img src={hudumaLogo} alt="HudumaHub.ke" className="h-8 w-auto" />
           </div>
           <div className="flex gap-0.5">
             <Button
