@@ -9,8 +9,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Camera, Save, Eye, Plus, Trash2, Upload, CheckCircle, Clock, XCircle, Image } from "lucide-react";
+import { ArrowLeft, Camera, Save, Eye, Plus, Trash2, Upload, CheckCircle, Clock, XCircle, Image, Navigation, Loader2, MapPin } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { KENYAN_LOCATIONS, getCoordinatesForCounty } from "@/lib/kenyanLocations";
 
 const kenyanCounties = [
   "Baringo", "Bomet", "Bungoma", "Busia", "Elgeyo-Marakwet", "Embu", "Garissa",
@@ -36,6 +37,8 @@ type ProviderProfile = {
   years_experience: number;
   skills: string[];
   service_radius_km: number;
+  latitude: number | null;
+  longitude: number | null;
 };
 
 type PortfolioItem = {
@@ -64,6 +67,7 @@ const emptyProfile: ProviderProfile = {
   business_name: "", description: "", city: "", county: "",
   contact_phone: "", contact_email: "", profile_image_url: "",
   availability_status: "available", years_experience: 0, skills: [], service_radius_km: 10,
+  latitude: null, longitude: null,
 };
 
 const ProviderProfileEdit = () => {
@@ -97,7 +101,7 @@ const ProviderProfileEdit = () => {
   const [verifications, setVerifications] = useState<Verification[]>([]);
   const [verifyDocType, setVerifyDocType] = useState("national_id");
   const [uploadingVerify, setUploadingVerify] = useState(false);
-
+  const [detectingLocation, setDetectingLocation] = useState(false);
   useEffect(() => {
     if (!authLoading && (!user || role !== "provider")) {
       navigate("/dashboard");
@@ -127,6 +131,8 @@ const ProviderProfileEdit = () => {
         years_experience: profRes.data.years_experience ?? 0,
         skills: profRes.data.skills ?? [],
         service_radius_km: profRes.data.service_radius_km ?? 10,
+        latitude: profRes.data.latitude ?? null,
+        longitude: profRes.data.longitude ?? null,
       });
       setIsNew(false);
     }
@@ -235,6 +241,43 @@ const ProviderProfileEdit = () => {
     setAvailability(availability.map((a) => a.day_of_week === dayIndex ? { ...a, [field]: value } : a));
   };
 
+  const handleDetectLocation = () => {
+    if (!navigator.geolocation) {
+      toast({ title: "Geolocation not supported", variant: "destructive" });
+      return;
+    }
+    setDetectingLocation(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setProfile((p) => ({ ...p, latitude: pos.coords.latitude, longitude: pos.coords.longitude }));
+        setDetectingLocation(false);
+        toast({ title: "Location detected! 📍" });
+      },
+      () => {
+        setDetectingLocation(false);
+        toast({ title: "Could not detect location", description: "Please select a city manually", variant: "destructive" });
+      },
+      { enableHighAccuracy: false, timeout: 10000 }
+    );
+  };
+
+  const handleCountyChange = (county: string) => {
+    const coords = getCoordinatesForCounty(county);
+    setProfile((p) => ({
+      ...p,
+      county,
+      latitude: p.latitude ?? coords?.lat ?? null,
+      longitude: p.longitude ?? coords?.lng ?? null,
+    }));
+  };
+
+  const handleManualCitySelect = (cityName: string) => {
+    const city = KENYAN_LOCATIONS.find((c) => c.name === cityName);
+    if (city) {
+      setProfile((p) => ({ ...p, city: city.name, county: city.county, latitude: city.lat, longitude: city.lng }));
+    }
+  };
+
   const handleSave = async () => {
     if (!user) return;
     if (!profile.business_name.trim()) {
@@ -261,6 +304,8 @@ const ProviderProfileEdit = () => {
       years_experience: profile.years_experience,
       skills: profile.skills,
       service_radius_km: profile.service_radius_km,
+      latitude: profile.latitude,
+      longitude: profile.longitude,
     };
 
     const { error } = isNew
@@ -362,7 +407,7 @@ const ProviderProfileEdit = () => {
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label className="text-sm font-semibold">County *</Label>
-              <Select value={profile.county} onValueChange={(v) => setProfile({ ...profile, county: v })}>
+              <Select value={profile.county} onValueChange={handleCountyChange}>
                 <SelectTrigger className="h-12 rounded-xl mt-1.5"><SelectValue placeholder="Select" /></SelectTrigger>
                 <SelectContent>
                   {kenyanCounties.map((c) => (<SelectItem key={c} value={c}>{c}</SelectItem>))}
@@ -374,6 +419,65 @@ const ProviderProfileEdit = () => {
               <Input value={profile.city} onChange={(e) => setProfile({ ...profile, city: e.target.value })} placeholder="e.g. Westlands" className="h-12 rounded-xl mt-1.5" />
             </div>
           </div>
+
+          {/* Location Detection */}
+          <Card className="border-dashed">
+            <CardContent className="p-4 space-y-3">
+              <Label className="text-sm font-semibold flex items-center gap-1.5">
+                <MapPin className="w-4 h-4 text-primary" />
+                Pin Your Location
+              </Label>
+              <p className="text-xs text-muted-foreground">
+                Set your GPS coordinates so clients can find you on the map.
+              </p>
+              <Button
+                type="button"
+                variant={profile.latitude ? "secondary" : "default"}
+                className="w-full rounded-xl h-11 gap-2"
+                onClick={handleDetectLocation}
+                disabled={detectingLocation}
+              >
+                {detectingLocation ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Navigation className="w-4 h-4" />
+                )}
+                {detectingLocation
+                  ? "Detecting..."
+                  : profile.latitude
+                  ? "Location set ✓ — Re-detect"
+                  : "Detect My Location"}
+              </Button>
+
+              <div className="flex items-center gap-3">
+                <div className="h-px flex-1 bg-border" />
+                <span className="text-xs text-muted-foreground">or pick a city</span>
+                <div className="h-px flex-1 bg-border" />
+              </div>
+
+              <Select onValueChange={handleManualCitySelect}>
+                <SelectTrigger className="h-11 rounded-xl text-sm">
+                  <SelectValue placeholder="Choose a major city" />
+                </SelectTrigger>
+                <SelectContent>
+                  {KENYAN_LOCATIONS.map((city) => (
+                    <SelectItem key={city.name} value={city.name}>
+                      <span className="flex items-center gap-2">
+                        <MapPin className="w-3 h-3 text-muted-foreground" />
+                        {city.name}, {city.county}
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              {profile.latitude && profile.longitude && (
+                <p className="text-[11px] text-muted-foreground text-center">
+                  📍 Coordinates: {profile.latitude.toFixed(4)}, {profile.longitude.toFixed(4)}
+                </p>
+              )}
+            </CardContent>
+          </Card>
 
           <div>
             <Label className="text-sm font-semibold">Phone</Label>
