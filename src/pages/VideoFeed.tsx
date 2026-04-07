@@ -352,23 +352,31 @@ const VideoFeed = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("videos")
-        .select("*, profiles!videos_user_id_fkey(full_name, avatar_url), service_categories(name, icon)")
+        .select("*, service_categories(name, icon)")
         .eq("status", "active")
         .order("created_at", { ascending: false })
         .limit(50);
 
-      if (error) {
-        // Fallback without join if fkey name doesn't match
-        const { data: fallback, error: err2 } = await supabase
-          .from("videos")
-          .select("*")
-          .eq("status", "active")
-          .order("created_at", { ascending: false })
-          .limit(50);
-        if (err2) throw err2;
-        return (fallback || []) as VideoItem[];
+      if (error) throw error;
+      const items = (data || []) as any[];
+
+      // Fetch profiles for all unique user_ids
+      const userIds = [...new Set(items.map((v) => v.user_id))];
+      if (userIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from("profiles")
+          .select("user_id, full_name, avatar_url")
+          .in("user_id", userIds);
+        const profileMap = new Map(
+          (profiles || []).map((p) => [p.user_id, p])
+        );
+        return items.map((v) => ({
+          ...v,
+          profiles: profileMap.get(v.user_id) || null,
+        })) as VideoItem[];
       }
-      return (data || []) as VideoItem[];
+
+      return items as VideoItem[];
     },
     staleTime: 1000 * 60 * 2,
   });
