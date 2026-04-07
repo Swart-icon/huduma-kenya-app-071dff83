@@ -6,6 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { formatDistanceToNow } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { BoostStatusDialog } from "./BoostStatusDialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 type Status = {
   id: string;
@@ -33,6 +35,17 @@ interface Props {
   onRefresh?: () => void;
 }
 
+type Viewer = {
+  user_id: string;
+  full_name: string | null;
+  avatar_url: string | null;
+  viewed_at: string;
+};
+
+const STORY_DURATION_MS = 30000; // 30 seconds
+const TICK_INTERVAL_MS = 100;
+const PROGRESS_INCREMENT = (TICK_INTERVAL_MS / STORY_DURATION_MS) * 100;
+
 export const StoryViewer = ({ stories, initialIndex, onClose, currentUserId, onRefresh }: Props) => {
   const { toast } = useToast();
   const [groupIdx, setGroupIdx] = useState(initialIndex);
@@ -42,6 +55,9 @@ export const StoryViewer = ({ stories, initialIndex, onClose, currentUserId, onR
   const [reply, setReply] = useState("");
   const [progress, setProgress] = useState(0);
   const [boostOpen, setBoostOpen] = useState(false);
+  const [viewersOpen, setViewersOpen] = useState(false);
+  const [viewers, setViewers] = useState<Viewer[]>([]);
+  const [viewersLoading, setViewersLoading] = useState(false);
 
   const group = stories[groupIdx];
   const status = group?.statuses[statusIdx];
@@ -61,20 +77,27 @@ export const StoryViewer = ({ stories, initialIndex, onClose, currentUserId, onR
     setProgress(0);
   }, [fetchLikeState]);
 
-  // Auto-advance timer (pause when boost dialog is open)
+  // Record view for non-own stories
   useEffect(() => {
-    if (boostOpen) return;
+    if (!status || !currentUserId || !group) return;
+    if (currentUserId === group.user_id) return;
+    supabase.rpc("increment_view_count" as any, { status_id: status.id }).then(() => {});
+  }, [status?.id, currentUserId, group?.user_id]);
+
+  // Auto-advance timer (pause when boost dialog or viewers dialog is open)
+  useEffect(() => {
+    if (boostOpen || viewersOpen) return;
     const interval = setInterval(() => {
       setProgress((prev) => {
         if (prev >= 100) {
           goNext();
           return 0;
         }
-        return prev + 2;
+        return prev + PROGRESS_INCREMENT;
       });
-    }, 100);
+    }, TICK_INTERVAL_MS);
     return () => clearInterval(interval);
-  }, [groupIdx, statusIdx, stories.length, boostOpen]);
+  }, [groupIdx, statusIdx, stories.length, boostOpen, viewersOpen]);
 
   const goNext = () => {
     if (!group) return;
@@ -125,6 +148,47 @@ export const StoryViewer = ({ stories, initialIndex, onClose, currentUserId, onR
     }
   };
 
+  const openViewers = async () => {
+    if (!status) return;
+    setViewersOpen(true);
+    setViewersLoading(true);
+
+    // Fetch users who liked this status as a proxy for "viewers"
+    // Plus fetch replies to get engaged users
+    const [likesRes, repliesRes] = await Promise.all([
+      supabase.from("status_likes").select("user_id, created_at").eq("status_id", status.id),
+      supabase.from("status_replies").select("user_id, created_at").eq("status_id", status.id),
+    ]);
+
+    const userMap = new Map<string, string>();
+    (likesRes.data || []).forEach((l) => userMap.set(l.user_id, l.created_at));
+    (repliesRes.data || []).forEach((r) => {
+      if (!userMap.has(r.user_id)) userMap.set(r.user_id, r.created_at);
+    });
+
+    const userIds = [...userMap.keys()];
+    if (userIds.length > 0) {
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("user_id, full_name, avatar_url")
+        .in("user_id", userIds);
+
+      const viewerList: Viewer[] = userIds.map((uid) => {
+        const prof = (profiles || []).find((p) => p.user_id === uid);
+        return {
+          user_id: uid,
+          full_name: prof?.full_name || "User",
+          avatar_url: prof?.avatar_url || null,
+          viewed_at: userMap.get(uid) || "",
+        };
+      });
+      setViewers(viewerList);
+    } else {
+      setViewers([]);
+    }
+    setViewersLoading(false);
+  };
+
   if (!group || !status) return null;
 
   const isOwn = currentUserId === group.user_id;
@@ -172,7 +236,6 @@ export const StoryViewer = ({ stories, initialIndex, onClose, currentUserId, onR
           </div>
         </div>
         <div className="flex items-center gap-2">
-          {/* Boost button for own non-boosted stories */}
           {isOwn && !status.isBoosted && (
             <button
               onClick={() => setBoostOpen(true)}
@@ -208,17 +271,20 @@ export const StoryViewer = ({ stories, initialIndex, onClose, currentUserId, onR
           </div>
         )}
 
-        {/* View count + sponsored tag */}
+        {/* View count — clickable for own stories */}
         <div className="absolute top-3 right-3 flex items-center gap-2">
           {status.isBoosted && (
             <span className="bg-yellow-500/80 text-white text-[10px] font-bold rounded-full px-2 py-0.5">
               ⚡ {status.boostTier === "high" ? "High Boost" : "Boosted"}
             </span>
           )}
-          <div className="flex items-center gap-1 bg-black/40 rounded-full px-2.5 py-1">
+          <button
+            onClick={isOwn ? openViewers : undefined}
+            className={`flex items-center gap-1 bg-black/40 rounded-full px-2.5 py-1 ${isOwn ? "cursor-pointer active:bg-black/60" : "cursor-default"}`}
+          >
             <Eye className="w-3.5 h-3.5 text-white/70" />
             <span className="text-[11px] text-white/70">{status.view_count}</span>
-          </div>
+          </button>
         </div>
       </div>
 
@@ -246,17 +312,87 @@ export const StoryViewer = ({ stories, initialIndex, onClose, currentUserId, onR
         </div>
       )}
 
-      {/* Boost dialog */}
+      {/* Own story bottom bar with view count */}
+      {currentUserId && isOwn && (
+        <div className="px-4 py-3 flex items-center justify-center">
+          <button
+            onClick={openViewers}
+            className="flex items-center gap-2 bg-white/10 rounded-full px-4 py-2 active:bg-white/20"
+          >
+            <Eye className="w-4 h-4 text-white/70" />
+            <span className="text-white/70 text-sm">{status.view_count} views</span>
+          </button>
+        </div>
+      )}
+
+      {/* Viewers dialog */}
+      {viewersOpen && (
+        <div className="fixed inset-0 z-[110] flex items-end justify-center">
+          <div className="absolute inset-0 bg-black/60" onClick={() => setViewersOpen(false)} />
+          <div className="relative w-full max-w-sm bg-card rounded-t-2xl p-5 pb-8 max-h-[60vh] flex flex-col animate-in slide-in-from-bottom">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-bold text-foreground">Story Engagement</h3>
+              <button onClick={() => setViewersOpen(false)}>
+                <X className="w-5 h-5 text-muted-foreground" />
+              </button>
+            </div>
+            <div className="text-center mb-4 pb-3 border-b">
+              <p className="text-2xl font-bold text-foreground">{status.view_count}</p>
+              <p className="text-xs text-muted-foreground">Total views</p>
+            </div>
+            {viewersLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+              </div>
+            ) : viewers.length === 0 ? (
+              <div className="text-center py-6">
+                <Eye className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
+                <p className="text-sm text-muted-foreground">No interactions yet</p>
+                <p className="text-xs text-muted-foreground mt-1">Users who like or reply will appear here</p>
+              </div>
+            ) : (
+              <ScrollArea className="flex-1">
+                <div className="space-y-3">
+                  {viewers.map((v) => (
+                    <div key={v.user_id} className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-full overflow-hidden bg-muted shrink-0">
+                        {v.avatar_url ? (
+                          <img src={v.avatar_url} alt="" className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-xs font-bold text-muted-foreground">
+                            {(v.full_name || "U").charAt(0)}
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-foreground truncate">{v.full_name}</p>
+                        <p className="text-[10px] text-muted-foreground">
+                          {formatDistanceToNow(new Date(v.viewed_at), { addSuffix: true })}
+                        </p>
+                      </div>
+                      <Heart className="w-4 h-4 text-red-400 fill-red-400 shrink-0" />
+                    </div>
+                  ))}
+                </div>
+              </ScrollArea>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Boost dialog — rendered inside a portal-like wrapper with higher z-index */}
       {boostOpen && status && (
-        <BoostStatusDialog
-          open={boostOpen}
-          onClose={() => setBoostOpen(false)}
-          statusId={status.id}
-          onBoosted={() => {
-            setBoostOpen(false);
-            onRefresh?.();
-          }}
-        />
+        <div className="fixed inset-0 z-[110]">
+          <BoostStatusDialog
+            open={boostOpen}
+            onClose={() => setBoostOpen(false)}
+            statusId={status.id}
+            onBoosted={() => {
+              setBoostOpen(false);
+              onRefresh?.();
+            }}
+          />
+        </div>
       )}
     </div>
   );
