@@ -37,6 +37,7 @@ import { InstallBanner } from "@/components/InstallBanner";
 import { StoryBar } from "@/components/stories/StoryBar";
 import NearbyServicesSection from "@/components/NearbyServicesSection";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { FeatureTooltip } from "@/components/FeatureTooltip";
 
 /* ────────── Role Config ────────── */
 const roleConfig: Record<
