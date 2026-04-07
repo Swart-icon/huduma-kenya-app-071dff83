@@ -415,6 +415,13 @@ const Dashboard = () => {
                 onClick={() => navigate("/categories")}
                 accentClass="bg-accent/15 text-accent-foreground"
               />
+              <QuickAction
+                icon={<MapIcon className="w-5 h-5" />}
+                label="Service Map"
+                description="Find providers near you on a map"
+                onClick={() => navigate("/map")}
+                accentClass="bg-primary/10 text-primary"
+              />
             </div>
           </>
         )}
