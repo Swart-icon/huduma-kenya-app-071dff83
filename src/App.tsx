@@ -132,6 +132,7 @@ const App = () => (
             <Route path="/terms-of-service" element={<TermsOfService />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
+        </LocationProvider>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
