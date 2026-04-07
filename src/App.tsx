@@ -102,6 +102,7 @@ const App = () => (
             <Route path="/provider-profile/edit" element={<ProviderProfileEdit />} />
             <Route path="/provider-profile/preview" element={<ProviderProfilePreview />} />
             <Route path="/search" element={<SearchServices />} />
+            <Route path="/map" element={<ServiceMap />} />
             <Route path="/categories" element={<Categories />} />
             <Route path="/categories/:slug" element={<CategoryServices />} />
             <Route path="/services/:id" element={<ServiceDetailPage />} />
