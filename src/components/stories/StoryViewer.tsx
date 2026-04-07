@@ -1,9 +1,11 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { X, Heart, Send, ChevronLeft, ChevronRight, Eye } from "lucide-react";
+import { X, Heart, Send, Eye, Zap } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import { formatDistanceToNow } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
+import { BoostStatusDialog } from "./BoostStatusDialog";
 
 type Status = {
   id: string;
@@ -11,12 +13,15 @@ type Status = {
   text_content: string | null;
   created_at: string;
   view_count: number;
+  isBoosted?: boolean;
+  boostTier?: string | null;
 };
 
 type ProviderStory = {
   user_id: string;
   business_name: string;
   profile_image_url: string | null;
+  isBoosted?: boolean;
   statuses: Status[];
 };
 
@@ -25,9 +30,10 @@ interface Props {
   initialIndex: number;
   onClose: () => void;
   currentUserId: string | null;
+  onRefresh?: () => void;
 }
 
-export const StoryViewer = ({ stories, initialIndex, onClose, currentUserId }: Props) => {
+export const StoryViewer = ({ stories, initialIndex, onClose, currentUserId, onRefresh }: Props) => {
   const { toast } = useToast();
   const [groupIdx, setGroupIdx] = useState(initialIndex);
   const [statusIdx, setStatusIdx] = useState(0);
@@ -35,6 +41,7 @@ export const StoryViewer = ({ stories, initialIndex, onClose, currentUserId }: P
   const [likeCount, setLikeCount] = useState(0);
   const [reply, setReply] = useState("");
   const [progress, setProgress] = useState(0);
+  const [boostOpen, setBoostOpen] = useState(false);
 
   const group = stories[groupIdx];
   const status = group?.statuses[statusIdx];
@@ -54,8 +61,9 @@ export const StoryViewer = ({ stories, initialIndex, onClose, currentUserId }: P
     setProgress(0);
   }, [fetchLikeState]);
 
-  // Auto-advance timer
+  // Auto-advance timer (pause when boost dialog is open)
   useEffect(() => {
+    if (boostOpen) return;
     const interval = setInterval(() => {
       setProgress((prev) => {
         if (prev >= 100) {
@@ -66,7 +74,7 @@ export const StoryViewer = ({ stories, initialIndex, onClose, currentUserId }: P
       });
     }, 100);
     return () => clearInterval(interval);
-  }, [groupIdx, statusIdx, stories.length]);
+  }, [groupIdx, statusIdx, stories.length, boostOpen]);
 
   const goNext = () => {
     if (!group) return;
@@ -119,6 +127,8 @@ export const StoryViewer = ({ stories, initialIndex, onClose, currentUserId }: P
 
   if (!group || !status) return null;
 
+  const isOwn = currentUserId === group.user_id;
+
   return (
     <div className="fixed inset-0 z-[100] bg-black flex flex-col">
       {/* Progress bars */}
@@ -148,15 +158,33 @@ export const StoryViewer = ({ stories, initialIndex, onClose, currentUserId }: P
             )}
           </div>
           <div>
-            <p className="text-white text-sm font-bold">{group.business_name}</p>
+            <div className="flex items-center gap-2">
+              <p className="text-white text-sm font-bold">{group.business_name}</p>
+              {status.isBoosted && (
+                <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30 text-[9px] px-1.5 py-0 h-4">
+                  ⚡ Sponsored
+                </Badge>
+              )}
+            </div>
             <p className="text-white/50 text-[10px]">
               {formatDistanceToNow(new Date(status.created_at), { addSuffix: true })}
             </p>
           </div>
         </div>
-        <button onClick={onClose} className="w-9 h-9 flex items-center justify-center">
-          <X className="w-6 h-6 text-white" />
-        </button>
+        <div className="flex items-center gap-2">
+          {/* Boost button for own non-boosted stories */}
+          {isOwn && !status.isBoosted && (
+            <button
+              onClick={() => setBoostOpen(true)}
+              className="flex items-center gap-1 bg-yellow-500/20 text-yellow-400 rounded-full px-3 py-1.5 text-xs font-bold"
+            >
+              <Zap className="w-3.5 h-3.5" /> Boost
+            </button>
+          )}
+          <button onClick={onClose} className="w-9 h-9 flex items-center justify-center">
+            <X className="w-6 h-6 text-white" />
+          </button>
+        </div>
       </div>
 
       {/* Story content */}
@@ -166,37 +194,36 @@ export const StoryViewer = ({ stories, initialIndex, onClose, currentUserId }: P
         <button className="absolute right-0 top-0 w-1/3 h-full z-10" onClick={goNext} />
 
         {status.image_url ? (
-          <img
-            src={status.image_url}
-            alt=""
-            className="w-full h-full object-contain"
-          />
+          <img src={status.image_url} alt="" className="w-full h-full object-contain" />
         ) : (
           <div className="px-8 text-center">
-            <p className="text-white text-xl font-bold leading-relaxed">
-              {status.text_content}
-            </p>
+            <p className="text-white text-xl font-bold leading-relaxed">{status.text_content}</p>
           </div>
         )}
 
         {/* Text overlay on image */}
         {status.image_url && status.text_content && (
           <div className="absolute bottom-24 left-0 right-0 px-6">
-            <p className="text-white text-lg font-semibold text-center drop-shadow-lg">
-              {status.text_content}
-            </p>
+            <p className="text-white text-lg font-semibold text-center drop-shadow-lg">{status.text_content}</p>
           </div>
         )}
 
-        {/* View count */}
-        <div className="absolute top-3 right-3 flex items-center gap-1 bg-black/40 rounded-full px-2.5 py-1">
-          <Eye className="w-3.5 h-3.5 text-white/70" />
-          <span className="text-[11px] text-white/70">{status.view_count}</span>
+        {/* View count + sponsored tag */}
+        <div className="absolute top-3 right-3 flex items-center gap-2">
+          {status.isBoosted && (
+            <span className="bg-yellow-500/80 text-white text-[10px] font-bold rounded-full px-2 py-0.5">
+              ⚡ {status.boostTier === "high" ? "High Boost" : "Boosted"}
+            </span>
+          )}
+          <div className="flex items-center gap-1 bg-black/40 rounded-full px-2.5 py-1">
+            <Eye className="w-3.5 h-3.5 text-white/70" />
+            <span className="text-[11px] text-white/70">{status.view_count}</span>
+          </div>
         </div>
       </div>
 
       {/* Bottom interaction bar */}
-      {currentUserId && currentUserId !== group.user_id && (
+      {currentUserId && !isOwn && (
         <div className="px-4 py-3 flex items-center gap-3">
           <div className="flex-1 relative">
             <Input
@@ -207,23 +234,29 @@ export const StoryViewer = ({ stories, initialIndex, onClose, currentUserId }: P
               className="h-10 rounded-full bg-white/10 border-white/20 text-white placeholder:text-white/40 pr-10"
             />
             {reply.trim() && (
-              <button
-                onClick={sendReply}
-                className="absolute right-2 top-1/2 -translate-y-1/2"
-              >
+              <button onClick={sendReply} className="absolute right-2 top-1/2 -translate-y-1/2">
                 <Send className="w-4 h-4 text-primary" />
               </button>
             )}
           </div>
           <button onClick={toggleLike} className="shrink-0 flex items-center gap-1">
-            <Heart
-              className={`w-6 h-6 ${liked ? "text-red-500 fill-red-500" : "text-white"}`}
-            />
-            {likeCount > 0 && (
-              <span className="text-white/70 text-xs">{likeCount}</span>
-            )}
+            <Heart className={`w-6 h-6 ${liked ? "text-red-500 fill-red-500" : "text-white"}`} />
+            {likeCount > 0 && <span className="text-white/70 text-xs">{likeCount}</span>}
           </button>
         </div>
+      )}
+
+      {/* Boost dialog */}
+      {boostOpen && status && (
+        <BoostStatusDialog
+          open={boostOpen}
+          onClose={() => setBoostOpen(false)}
+          statusId={status.id}
+          onBoosted={() => {
+            setBoostOpen(false);
+            onRefresh?.();
+          }}
+        />
       )}
     </div>
   );
