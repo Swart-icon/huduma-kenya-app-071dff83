@@ -36,6 +36,7 @@ import { useUnreadCount } from "@/hooks/useUnreadCount";
 import { InstallBanner } from "@/components/InstallBanner";
 import { StoryBar } from "@/components/stories/StoryBar";
 import NearbyServicesSection from "@/components/NearbyServicesSection";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 /* ────────── Role Config ────────── */
 const roleConfig: Record<
@@ -515,6 +516,14 @@ const Dashboard = () => {
           <h3 className="font-display font-bold text-sm text-foreground uppercase tracking-wider mb-1">
             Settings
           </h3>
+          <Card className="border-0 shadow-sm rounded-2xl">
+            <CardContent className="p-4 space-y-3">
+              <div>
+                <p className="text-sm font-bold text-foreground mb-2">Theme</p>
+                <ThemeToggle />
+              </div>
+            </CardContent>
+          </Card>
           <QuickAction
             icon={<Settings className="w-5 h-5" />}
             label="Security"
