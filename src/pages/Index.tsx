@@ -10,6 +10,8 @@ const Index = () => {
     if (loading) return;
     if (user && role) {
       navigate("/dashboard");
+    } else if (!localStorage.getItem("huduma-onboarded")) {
+      navigate("/onboarding");
     } else {
       navigate("/welcome");
     }
