@@ -5,9 +5,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, MapPin, Phone, Mail, Briefcase, Star, MessageSquare, Award, Ruler, CheckCircle, Clock as ClockIcon } from "lucide-react";
+import { ArrowLeft, MapPin, Phone, Mail, Briefcase, Star, MessageSquare, Award, Ruler, CheckCircle, Clock as ClockIcon, Eye, Heart } from "lucide-react";
 import { getOrCreateConversation } from "@/lib/conversations";
 import { useToast } from "@/hooks/use-toast";
+import { StoryViewer } from "@/components/stories/StoryViewer";
 
 const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
@@ -30,18 +31,21 @@ const ProviderPublicProfile = () => {
   const [portfolio, setPortfolio] = useState<any[]>([]);
   const [availability, setAvailability] = useState<any[]>([]);
   const [services, setServices] = useState<any[]>([]);
+  const [providerStories, setProviderStories] = useState<any[]>([]);
+  const [viewerOpen, setViewerOpen] = useState(false);
 
   useEffect(() => {
     if (providerId) fetchAll();
   }, [providerId]);
 
   const fetchAll = async () => {
-    const [profRes, revRes, portRes, availRes, svcRes] = await Promise.all([
+    const [profRes, revRes, portRes, availRes, svcRes, statusRes] = await Promise.all([
       supabase.from("provider_profiles").select("*").eq("user_id", providerId!).maybeSingle(),
       supabase.from("reviews").select("rating").eq("provider_id", providerId!),
       supabase.from("portfolio_items").select("*").eq("user_id", providerId!).order("created_at", { ascending: false }),
       supabase.from("provider_availability").select("*").eq("user_id", providerId!).order("day_of_week"),
       supabase.from("services").select("*").eq("provider_id", providerId!).eq("is_active", true),
+      supabase.from("provider_statuses").select("*").eq("user_id", providerId!).gt("expires_at", new Date().toISOString()).order("created_at", { ascending: false }),
     ]);
     setProfile(profRes.data);
     const reviews = revRes.data || [];
@@ -52,6 +56,23 @@ const ProviderPublicProfile = () => {
     setPortfolio(portRes.data || []);
     setAvailability(availRes.data || []);
     setServices(svcRes.data || []);
+
+    // Build story data for viewer
+    if (statusRes.data && statusRes.data.length > 0 && profRes.data) {
+      setProviderStories([{
+        user_id: providerId!,
+        business_name: profRes.data.business_name,
+        profile_image_url: profRes.data.profile_image_url,
+        statuses: statusRes.data.map((s: any) => ({
+          id: s.id,
+          image_url: s.image_url,
+          text_content: s.text_content,
+          created_at: s.created_at,
+          view_count: s.view_count,
+        })),
+      }]);
+    }
+
     setLoading(false);
   };
 
@@ -97,7 +118,11 @@ const ProviderPublicProfile = () => {
 
       <div className="px-6 -mt-16">
         <div className="max-w-sm mx-auto">
-          <div className="w-28 h-28 rounded-2xl bg-card border-4 border-background overflow-hidden shadow-lg mb-4 relative">
+          {/* Profile image with story ring */}
+          <button
+            onClick={() => providerStories.length > 0 && setViewerOpen(true)}
+            className={`w-28 h-28 rounded-2xl bg-card border-4 ${providerStories.length > 0 ? 'border-primary' : 'border-background'} overflow-hidden shadow-lg mb-4 relative`}
+          >
             {profile.profile_image_url ? (
               <img src={profile.profile_image_url} alt={profile.business_name} className="w-full h-full object-cover" />
             ) : (
@@ -110,7 +135,12 @@ const ProviderPublicProfile = () => {
                 <CheckCircle className="w-5 h-5 text-primary-foreground" />
               </div>
             )}
-          </div>
+            {providerStories.length > 0 && (
+              <div className="absolute top-1 left-1 bg-primary rounded-full px-1.5 py-0.5 text-[9px] font-bold text-primary-foreground">
+                {providerStories[0].statuses.length}
+              </div>
+            )}
+          </button>
 
           <div className="flex items-center gap-2 mb-1">
             <h1 className="font-display text-2xl font-bold text-foreground">{profile.business_name}</h1>
@@ -122,16 +152,24 @@ const ProviderPublicProfile = () => {
           </div>
           <span className={`inline-block text-xs font-semibold px-3 py-1 rounded-full ${badge.color}`}>{badge.label}</span>
 
-          {/* Quick stats */}
-          <div className="flex gap-3 mt-4">
+          {/* Profile Stats */}
+          <div className="flex gap-4 mt-4 mb-2">
+            <div className="text-center">
+              <p className="text-lg font-bold text-foreground">{services.length}</p>
+              <p className="text-[10px] text-muted-foreground">Services</p>
+            </div>
+            <div className="text-center">
+              <p className="text-lg font-bold text-foreground">{avgRating ? avgRating.toFixed(1) : "—"}</p>
+              <p className="text-[10px] text-muted-foreground">Rating</p>
+            </div>
+            <div className="text-center">
+              <p className="text-lg font-bold text-foreground">{reviewCount}</p>
+              <p className="text-[10px] text-muted-foreground">Reviews</p>
+            </div>
             {profile.years_experience > 0 && (
-              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                <Award className="w-4 h-4" /><span>{profile.years_experience}yr exp</span>
-              </div>
-            )}
-            {profile.service_radius_km > 0 && (
-              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                <Ruler className="w-4 h-4" /><span>{profile.service_radius_km}km radius</span>
+              <div className="text-center">
+                <p className="text-lg font-bold text-foreground">{profile.years_experience}</p>
+                <p className="text-[10px] text-muted-foreground">Yrs Exp</p>
               </div>
             )}
           </div>
@@ -278,6 +316,16 @@ const ProviderPublicProfile = () => {
           <div className="h-8" />
         </div>
       </div>
+
+      {/* Story Viewer */}
+      {viewerOpen && providerStories.length > 0 && (
+        <StoryViewer
+          stories={providerStories}
+          initialIndex={0}
+          onClose={() => setViewerOpen(false)}
+          currentUserId={user?.id || null}
+        />
+      )}
     </div>
   );
 };

@@ -30,6 +30,7 @@ import {
 } from "lucide-react";
 import { useUnreadCount } from "@/hooks/useUnreadCount";
 import { InstallBanner } from "@/components/InstallBanner";
+import { StoryBar } from "@/components/stories/StoryBar";
 
 /* ────────── Role Config ────────── */
 const roleConfig: Record<
@@ -266,6 +267,9 @@ const Dashboard = () => {
 
         {/* ─── Role Switcher ─── */}
         <RoleSwitcher />
+
+        {/* ─── Story Bar ─── */}
+        <StoryBar />
 
         {/* ─── Provider Actions ─── */}
         {role === "provider" && (
