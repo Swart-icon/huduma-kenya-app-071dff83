@@ -30,6 +30,7 @@ import {
   TrendingUp,
   Eye,
   Navigation as NavigationIcon,
+  Video,
 } from "lucide-react";
 import { useUnreadCount } from "@/hooks/useUnreadCount";
 import { InstallBanner } from "@/components/InstallBanner";
@@ -293,6 +294,27 @@ const Dashboard = () => {
 
         {/* ─── Story Bar ─── */}
         <StoryBar />
+
+        {/* ─── Watch Videos CTA ─── */}
+        <Card
+          className="mb-5 border-0 shadow-md rounded-2xl overflow-hidden cursor-pointer hover:shadow-lg transition-shadow active:scale-[0.98]"
+          onClick={() => navigate("/videos")}
+        >
+          <div className="bg-gradient-to-r from-primary/10 to-accent/10 p-4 flex items-center gap-3">
+            <div className="w-11 h-11 rounded-xl bg-primary/20 flex items-center justify-center shrink-0">
+              <Video className="w-5 h-5 text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h3 className="font-display font-bold text-sm text-foreground">
+                Watch Videos 🎬
+              </h3>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                See providers showcase their work & skills
+              </p>
+            </div>
+            <ChevronRight className="w-5 h-5 text-primary shrink-0" />
+          </div>
+        </Card>
 
         {/* ─── Provider Actions ─── */}
         {role === "provider" && (
