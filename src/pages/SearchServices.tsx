@@ -391,6 +391,16 @@ const SearchServices = () => {
               </Select>
             </div>
 
+            {/* Location for nearby */}
+            {!userLocation && (
+              <div>
+                <label className="text-xs font-medium text-muted-foreground mb-2 block flex items-center gap-1">
+                  <Navigation className="w-3 h-3" /> Your Location (for nearby sort)
+                </label>
+                <LocationPicker compact={false} />
+              </div>
+            )}
+
             <Button onClick={() => setShowFilters(false)} className="w-full rounded-xl h-10">
               Show results ({totalHint})
             </Button>
