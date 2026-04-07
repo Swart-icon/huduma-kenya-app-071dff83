@@ -407,7 +407,7 @@ const ProviderProfileEdit = () => {
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label className="text-sm font-semibold">County *</Label>
-              <Select value={profile.county} onValueChange={(v) => setProfile({ ...profile, county: v })}>
+              <Select value={profile.county} onValueChange={handleCountyChange}>
                 <SelectTrigger className="h-12 rounded-xl mt-1.5"><SelectValue placeholder="Select" /></SelectTrigger>
                 <SelectContent>
                   {kenyanCounties.map((c) => (<SelectItem key={c} value={c}>{c}</SelectItem>))}
@@ -419,6 +419,65 @@ const ProviderProfileEdit = () => {
               <Input value={profile.city} onChange={(e) => setProfile({ ...profile, city: e.target.value })} placeholder="e.g. Westlands" className="h-12 rounded-xl mt-1.5" />
             </div>
           </div>
+
+          {/* Location Detection */}
+          <Card className="border-dashed">
+            <CardContent className="p-4 space-y-3">
+              <Label className="text-sm font-semibold flex items-center gap-1.5">
+                <MapPin className="w-4 h-4 text-primary" />
+                Pin Your Location
+              </Label>
+              <p className="text-xs text-muted-foreground">
+                Set your GPS coordinates so clients can find you on the map.
+              </p>
+              <Button
+                type="button"
+                variant={profile.latitude ? "secondary" : "default"}
+                className="w-full rounded-xl h-11 gap-2"
+                onClick={handleDetectLocation}
+                disabled={detectingLocation}
+              >
+                {detectingLocation ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Navigation className="w-4 h-4" />
+                )}
+                {detectingLocation
+                  ? "Detecting..."
+                  : profile.latitude
+                  ? "Location set ✓ — Re-detect"
+                  : "Detect My Location"}
+              </Button>
+
+              <div className="flex items-center gap-3">
+                <div className="h-px flex-1 bg-border" />
+                <span className="text-xs text-muted-foreground">or pick a city</span>
+                <div className="h-px flex-1 bg-border" />
+              </div>
+
+              <Select onValueChange={handleManualCitySelect}>
+                <SelectTrigger className="h-11 rounded-xl text-sm">
+                  <SelectValue placeholder="Choose a major city" />
+                </SelectTrigger>
+                <SelectContent>
+                  {KENYAN_LOCATIONS.map((city) => (
+                    <SelectItem key={city.name} value={city.name}>
+                      <span className="flex items-center gap-2">
+                        <MapPin className="w-3 h-3 text-muted-foreground" />
+                        {city.name}, {city.county}
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              {profile.latitude && profile.longitude && (
+                <p className="text-[11px] text-muted-foreground text-center">
+                  📍 Coordinates: {profile.latitude.toFixed(4)}, {profile.longitude.toFixed(4)}
+                </p>
+              )}
+            </CardContent>
+          </Card>
 
           <div>
             <Label className="text-sm font-semibold">Phone</Label>
