@@ -231,13 +231,28 @@ const SearchServices = () => {
     minRating > 0,
   ].filter(Boolean).length;
 
-  // Filter by rating client-side
-  const filteredServices = minRating > 0
-    ? services.filter((s) => {
-        const agg = reviewAggs.get(s.provider_id);
-        return agg && agg.avg_rating >= minRating;
-      })
-    : services;
+  // Filter by rating client-side & sort by distance if nearby
+  const filteredServices = (() => {
+    let result = minRating > 0
+      ? services.filter((s) => {
+          const agg = reviewAggs.get(s.provider_id);
+          return agg && agg.avg_rating >= minRating;
+        })
+      : services;
+
+    if (sortBy === "nearby" && userLocation) {
+      result = [...result].sort((a, b) => {
+        const distA = (a as any).latitude && (a as any).longitude
+          ? getDistanceKm(userLocation.latitude, userLocation.longitude, (a as any).latitude, (a as any).longitude)
+          : Infinity;
+        const distB = (b as any).latitude && (b as any).longitude
+          ? getDistanceKm(userLocation.latitude, userLocation.longitude, (b as any).latitude, (b as any).longitude)
+          : Infinity;
+        return distA - distB;
+      });
+    }
+    return result;
+  })();
 
   return (
     <div className="min-h-screen bg-background">
