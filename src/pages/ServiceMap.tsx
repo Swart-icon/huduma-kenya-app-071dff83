@@ -73,6 +73,7 @@ const FlyToUser = ({ lat, lng }: { lat: number; lng: number }) => {
   return null;
 };
 
+// react-leaflet v4 for React 18 compat
 const ServiceMap = () => {
   const navigate = useNavigate();
   const { location: userLocation, status: locationStatus } = useLocation();
