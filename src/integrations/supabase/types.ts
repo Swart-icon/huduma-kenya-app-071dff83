@@ -556,6 +556,36 @@ export type Database = {
         }
         Relationships: []
       }
+      provider_statuses: {
+        Row: {
+          created_at: string
+          expires_at: string
+          id: string
+          image_url: string | null
+          text_content: string | null
+          user_id: string
+          view_count: number
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          image_url?: string | null
+          text_content?: string | null
+          user_id: string
+          view_count?: number
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          image_url?: string | null
+          text_content?: string | null
+          user_id?: string
+          view_count?: number
+        }
+        Relationships: []
+      }
       provider_verifications: {
         Row: {
           admin_notes: string | null
@@ -735,6 +765,67 @@ export type Database = {
             columns: ["category_id"]
             isOneToOne: false
             referencedRelation: "service_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      status_likes: {
+        Row: {
+          created_at: string
+          id: string
+          status_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          status_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          status_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "status_likes_status_id_fkey"
+            columns: ["status_id"]
+            isOneToOne: false
+            referencedRelation: "provider_statuses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      status_replies: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          status_id: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          status_id: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          status_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "status_replies_status_id_fkey"
+            columns: ["status_id"]
+            isOneToOne: false
+            referencedRelation: "provider_statuses"
             referencedColumns: ["id"]
           },
         ]
