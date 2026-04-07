@@ -31,6 +31,8 @@ const ProviderPublicProfile = () => {
   const [portfolio, setPortfolio] = useState<any[]>([]);
   const [availability, setAvailability] = useState<any[]>([]);
   const [services, setServices] = useState<any[]>([]);
+  const [providerStories, setProviderStories] = useState<any[]>([]);
+  const [viewerOpen, setViewerOpen] = useState(false);
 
   useEffect(() => {
     if (providerId) fetchAll();
