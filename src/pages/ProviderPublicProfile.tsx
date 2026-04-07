@@ -152,16 +152,24 @@ const ProviderPublicProfile = () => {
           </div>
           <span className={`inline-block text-xs font-semibold px-3 py-1 rounded-full ${badge.color}`}>{badge.label}</span>
 
-          {/* Quick stats */}
-          <div className="flex gap-3 mt-4">
+          {/* Profile Stats */}
+          <div className="flex gap-4 mt-4 mb-2">
+            <div className="text-center">
+              <p className="text-lg font-bold text-foreground">{services.length}</p>
+              <p className="text-[10px] text-muted-foreground">Services</p>
+            </div>
+            <div className="text-center">
+              <p className="text-lg font-bold text-foreground">{avgRating ? avgRating.toFixed(1) : "—"}</p>
+              <p className="text-[10px] text-muted-foreground">Rating</p>
+            </div>
+            <div className="text-center">
+              <p className="text-lg font-bold text-foreground">{reviewCount}</p>
+              <p className="text-[10px] text-muted-foreground">Reviews</p>
+            </div>
             {profile.years_experience > 0 && (
-              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                <Award className="w-4 h-4" /><span>{profile.years_experience}yr exp</span>
-              </div>
-            )}
-            {profile.service_radius_km > 0 && (
-              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                <Ruler className="w-4 h-4" /><span>{profile.service_radius_km}km radius</span>
+              <div className="text-center">
+                <p className="text-lg font-bold text-foreground">{profile.years_experience}</p>
+                <p className="text-[10px] text-muted-foreground">Yrs Exp</p>
               </div>
             )}
           </div>
