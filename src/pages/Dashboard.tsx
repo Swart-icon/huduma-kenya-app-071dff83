@@ -177,8 +177,8 @@ const Dashboard = () => {
       {/* ─── Top Bar ─── */}
       <div className="sticky top-0 z-30 bg-background/80 backdrop-blur-lg border-b border-border/50">
         <div className="flex items-center justify-between px-5 py-3 max-w-lg mx-auto">
-          <div className="flex items-center gap-2.5">
-            <img src={hudumaLogo} alt="HudumaHub.ke" className="h-8 w-auto" />
+          <div className="flex items-center">
+            <img src={hudumaLogo} alt="HudumaHub.ke" className="h-14 w-auto" />
           </div>
           <div className="flex gap-0.5">
             <Button
