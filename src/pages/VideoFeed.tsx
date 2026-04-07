@@ -24,7 +24,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
-const MAX_VIDEO_SIZE_MB = 50;
+const MAX_VIDEO_SIZE_MB = 1024;
 const ALLOWED_FORMATS = ["video/mp4", "video/webm", "video/quicktime", "video/x-m4v"];
 const PAGE_SIZE = 10;
 
