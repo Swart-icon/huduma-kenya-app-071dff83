@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import hudumaLogo from "@/assets/hudumahub-logo-transparent.png";
 import { useState, useEffect, memo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -127,10 +128,7 @@ const Welcome = () => {
         <div className="relative z-10 px-5 pb-8 pt-16">
           {/* Logo */}
           <div className="flex items-center gap-2 mb-8">
-            <div className="w-9 h-9 rounded-xl bg-primary-foreground/20 backdrop-blur-sm flex items-center justify-center border border-primary-foreground/10">
-              <Shield className="w-5 h-5 text-primary-foreground" />
-            </div>
-            <span className="font-display font-bold text-lg text-primary-foreground">Huduma</span>
+            <img src={hudumaLogo} alt="HudumaHub.ke" className="h-10 w-auto brightness-0 invert" />
           </div>
 
           <h1 className="font-display text-3xl font-bold text-primary-foreground leading-tight mb-2">
