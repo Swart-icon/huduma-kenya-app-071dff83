@@ -128,8 +128,8 @@ const Welcome = () => {
         <div className="relative z-10 px-5 pb-8 pt-16">
           {/* Logo */}
           <div className="mb-8">
-            <div className="inline-block bg-white/95 rounded-2xl px-5 py-3 shadow-lg">
-              <img src={hudumaLogo} alt="HudumaHub.ke" className="h-16 w-auto" />
+            <div className="inline-block bg-white/95 rounded-2xl px-6 py-4 shadow-xl animate-[float_3s_ease-in-out_infinite]">
+              <img src={hudumaLogo} alt="HudumaHub.ke" className="h-24 w-auto" />
             </div>
           </div>
 
