@@ -295,7 +295,9 @@ const Dashboard = () => {
         <RoleSwitcher />
 
         {/* ─── Story Bar ─── */}
-        <StoryBar />
+        <FeatureTooltip id="story-bar" message="Share stories & boost your visibility!" position="top" className="w-full">
+          <StoryBar />
+        </FeatureTooltip>
 
         {/* ─── Watch Videos CTA ─── */}
         <FeatureTooltip id="watch-videos" message="Watch providers showcase their work!" position="top">
