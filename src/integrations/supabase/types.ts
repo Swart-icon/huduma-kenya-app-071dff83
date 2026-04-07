@@ -769,6 +769,59 @@ export type Database = {
           },
         ]
       }
+      status_boosts: {
+        Row: {
+          amount_kes: number
+          boost_end: string
+          boost_start: string
+          boost_tier: string
+          created_at: string
+          id: string
+          is_active: boolean
+          payment_method: string
+          payment_reference: string | null
+          payment_status: string
+          status_id: string
+          user_id: string
+        }
+        Insert: {
+          amount_kes?: number
+          boost_end: string
+          boost_start?: string
+          boost_tier?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          payment_method?: string
+          payment_reference?: string | null
+          payment_status?: string
+          status_id: string
+          user_id: string
+        }
+        Update: {
+          amount_kes?: number
+          boost_end?: string
+          boost_start?: string
+          boost_tier?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          payment_method?: string
+          payment_reference?: string | null
+          payment_status?: string
+          status_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "status_boosts_status_id_fkey"
+            columns: ["status_id"]
+            isOneToOne: false
+            referencedRelation: "provider_statuses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       status_likes: {
         Row: {
           created_at: string
