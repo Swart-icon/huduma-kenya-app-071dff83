@@ -316,6 +316,16 @@ const ProviderPublicProfile = () => {
           <div className="h-8" />
         </div>
       </div>
+
+      {/* Story Viewer */}
+      {viewerOpen && providerStories.length > 0 && (
+        <StoryViewer
+          stories={providerStories}
+          initialIndex={0}
+          onClose={() => setViewerOpen(false)}
+          currentUserId={user?.id || null}
+        />
+      )}
     </div>
   );
 };
