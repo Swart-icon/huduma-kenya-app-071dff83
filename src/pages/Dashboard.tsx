@@ -37,6 +37,7 @@ import { InstallBanner } from "@/components/InstallBanner";
 import { StoryBar } from "@/components/stories/StoryBar";
 import NearbyServicesSection from "@/components/NearbyServicesSection";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { FeatureTooltip } from "@/components/FeatureTooltip";
 
 /* ────────── Role Config ────────── */
 const roleConfig: Record<
@@ -294,28 +295,32 @@ const Dashboard = () => {
         <RoleSwitcher />
 
         {/* ─── Story Bar ─── */}
-        <StoryBar />
+        <FeatureTooltip id="story-bar" message="Share stories & boost your visibility!" position="top" className="w-full">
+          <StoryBar />
+        </FeatureTooltip>
 
         {/* ─── Watch Videos CTA ─── */}
-        <Card
-          className="mb-5 border-0 shadow-md rounded-2xl overflow-hidden cursor-pointer hover:shadow-lg transition-shadow active:scale-[0.98]"
-          onClick={() => navigate("/videos")}
-        >
-          <div className="bg-gradient-to-r from-primary/10 to-accent/10 p-4 flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-primary/20 flex items-center justify-center shrink-0">
-              <Video className="w-5 h-5 text-primary" />
+        <FeatureTooltip id="watch-videos" message="Watch providers showcase their work!" position="top">
+          <Card
+            className="mb-5 border-0 shadow-md rounded-2xl overflow-hidden cursor-pointer hover:shadow-lg transition-shadow active:scale-[0.98] w-full"
+            onClick={() => navigate("/videos")}
+          >
+            <div className="bg-gradient-to-r from-primary/10 to-accent/10 p-4 flex items-center gap-3">
+              <div className="w-11 h-11 rounded-xl bg-primary/20 flex items-center justify-center shrink-0">
+                <Video className="w-5 h-5 text-primary" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-display font-bold text-sm text-foreground">
+                  Watch Videos 🎬
+                </h3>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  See providers showcase their work & skills
+                </p>
+              </div>
+              <ChevronRight className="w-5 h-5 text-primary shrink-0" />
             </div>
-            <div className="flex-1 min-w-0">
-              <h3 className="font-display font-bold text-sm text-foreground">
-                Watch Videos 🎬
-              </h3>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                See providers showcase their work & skills
-              </p>
-            </div>
-            <ChevronRight className="w-5 h-5 text-primary shrink-0" />
-          </div>
-        </Card>
+          </Card>
+        </FeatureTooltip>
 
         {/* ─── Provider Actions ─── */}
         {role === "provider" && (
@@ -337,13 +342,15 @@ const Dashboard = () => {
               onClick={() => navigate("/my-services")}
               accentClass="bg-accent/15 text-accent-foreground"
             />
-            <QuickAction
-              icon={<PlusCircle className="w-5 h-5" />}
-              label="Create Service"
-              description="Add a new service listing"
-              onClick={() => navigate("/services/new")}
-              accentClass="bg-primary/10 text-primary"
-            />
+            <FeatureTooltip id="create-service" message="List your service to get discovered!" position="top" className="w-full">
+              <QuickAction
+                icon={<PlusCircle className="w-5 h-5" />}
+                label="Create Service"
+                description="Add a new service listing"
+                onClick={() => navigate("/services/new")}
+                accentClass="bg-primary/10 text-primary"
+              />
+            </FeatureTooltip>
             <QuickAction
               icon={<ClipboardList className="w-5 h-5" />}
               label="Job Board"
@@ -374,13 +381,15 @@ const Dashboard = () => {
               onClick={() => navigate("/my-jobs")}
               accentClass="bg-secondary/10 text-secondary"
             />
-            <QuickAction
-              icon={<PlusCircle className="w-5 h-5" />}
-              label="Post a Job"
-              description="Create a new job listing"
-              onClick={() => navigate("/jobs/new")}
-              accentClass="bg-accent/15 text-accent-foreground"
-            />
+            <FeatureTooltip id="post-job" message="Hire skilled professionals near you!" position="top" className="w-full">
+              <QuickAction
+                icon={<PlusCircle className="w-5 h-5" />}
+                label="Post a Job"
+                description="Create a new job listing"
+                onClick={() => navigate("/jobs/new")}
+                accentClass="bg-accent/15 text-accent-foreground"
+              />
+            </FeatureTooltip>
             <QuickAction
               icon={<Calendar className="w-5 h-5" />}
               label="My Bookings"
