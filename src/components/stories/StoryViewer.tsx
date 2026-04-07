@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { X, Heart, Send, Eye, Zap } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -84,20 +84,32 @@ export const StoryViewer = ({ stories, initialIndex, onClose, currentUserId, onR
     supabase.rpc("increment_view_count" as any, { status_id: status.id }).then(() => {});
   }, [status?.id, currentUserId, group?.user_id]);
 
+  // Use ref to track if we should advance
+  const shouldAdvanceRef = useRef(false);
+
   // Auto-advance timer (pause when boost dialog or viewers dialog is open)
   useEffect(() => {
     if (boostOpen || viewersOpen) return;
     const interval = setInterval(() => {
       setProgress((prev) => {
-        if (prev >= 100) {
-          goNext();
-          return 0;
+        const next = prev + PROGRESS_INCREMENT;
+        if (next >= 100) {
+          shouldAdvanceRef.current = true;
+          return 100;
         }
-        return prev + PROGRESS_INCREMENT;
+        return next;
       });
     }, TICK_INTERVAL_MS);
     return () => clearInterval(interval);
   }, [groupIdx, statusIdx, stories.length, boostOpen, viewersOpen]);
+
+  // Handle advance in a separate effect
+  useEffect(() => {
+    if (progress >= 100 && shouldAdvanceRef.current) {
+      shouldAdvanceRef.current = false;
+      goNext();
+    }
+  }, [progress]);
 
   const goNext = () => {
     if (!group) return;
