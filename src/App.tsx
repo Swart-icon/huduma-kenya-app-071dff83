@@ -39,6 +39,7 @@ import ReportUser from "./pages/ReportUser";
 import SessionManagement from "./pages/SessionManagement";
 import SearchServices from "./pages/SearchServices";
 import AdminPanel from "./pages/AdminPanel";
+import ServiceMap from "./pages/ServiceMap";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 import JobSeekerDashboard from "./pages/JobSeekerDashboard";
@@ -101,6 +102,7 @@ const App = () => (
             <Route path="/provider-profile/edit" element={<ProviderProfileEdit />} />
             <Route path="/provider-profile/preview" element={<ProviderProfilePreview />} />
             <Route path="/search" element={<SearchServices />} />
+            <Route path="/map" element={<ServiceMap />} />
             <Route path="/categories" element={<Categories />} />
             <Route path="/categories/:slug" element={<CategoryServices />} />
             <Route path="/services/:id" element={<ServiceDetailPage />} />

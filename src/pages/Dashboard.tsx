@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import hudumaLogo from "@/assets/hudumahub-logo-transparent.png";
 import {
   Briefcase,
+  Map as MapIcon,
   Search,
   UserCheck,
   LogOut,
@@ -413,6 +414,13 @@ const Dashboard = () => {
                 description="Explore services by category"
                 onClick={() => navigate("/categories")}
                 accentClass="bg-accent/15 text-accent-foreground"
+              />
+              <QuickAction
+                icon={<MapIcon className="w-5 h-5" />}
+                label="Service Map"
+                description="Find providers near you on a map"
+                onClick={() => navigate("/map")}
+                accentClass="bg-primary/10 text-primary"
               />
             </div>
           </>
