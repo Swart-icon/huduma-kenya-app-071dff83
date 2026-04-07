@@ -268,6 +268,9 @@ const Dashboard = () => {
         {/* ─── Role Switcher ─── */}
         <RoleSwitcher />
 
+        {/* ─── Story Bar ─── */}
+        <StoryBar />
+
         {/* ─── Provider Actions ─── */}
         {role === "provider" && (
           <div className="space-y-2.5 mb-6">
