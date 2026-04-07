@@ -7,9 +7,12 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
-import { ArrowLeft, Search, MapPin, Star, SlidersHorizontal, X, ChevronDown, Loader2 } from "lucide-react";
+import { ArrowLeft, Search, MapPin, Star, SlidersHorizontal, X, ChevronDown, Loader2, Navigation } from "lucide-react";
 import { useCategories } from "@/hooks/useCategories";
 import { ServiceCardSkeleton, ListSkeletons } from "@/components/Skeletons";
+import { useLocation } from "@/contexts/LocationContext";
+import { getDistanceKm } from "@/hooks/useGeolocation";
+import LocationPicker from "@/components/LocationPicker";
 
 type Service = {
   id: string;
