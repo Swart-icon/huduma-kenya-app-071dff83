@@ -464,7 +464,7 @@ const Dashboard = () => {
         </div>
 
         <p className="text-center text-[11px] text-muted-foreground mt-8 mb-2">
-          Huduma — Kenya's Service Marketplace 🇰🇪
+          HudumaHub.ke — Connecting Kenya's Services 🇰🇪
         </p>
       </div>
     </div>
