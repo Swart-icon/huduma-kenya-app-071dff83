@@ -3,6 +3,7 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { ThemeProvider } from "next-themes";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { LocationProvider } from "@/contexts/LocationContext";
 import ErrorBoundary from "@/components/ErrorBoundary";
@@ -87,6 +88,7 @@ const queryClient = new QueryClient({
 const App = () => (
   <ErrorBoundary>
   <QueryClientProvider client={queryClient}>
+    <ThemeProvider attribute="class" defaultTheme="system" storageKey="huduma-theme" enableSystem>
     <TooltipProvider>
       <Toaster />
       <Sonner />
@@ -142,6 +144,7 @@ const App = () => (
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
+    </ThemeProvider>
   </QueryClientProvider>
   </ErrorBoundary>
 );
