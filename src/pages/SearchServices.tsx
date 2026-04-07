@@ -61,6 +61,7 @@ const priceLabel = (price: number | null, type: string) => {
 const SearchServices = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  const { location: userLocation, status: locationStatus } = useLocation();
 
   // State
   const [query, setQuery] = useState(searchParams.get("q") || "");
