@@ -32,6 +32,7 @@ import {
 import { useUnreadCount } from "@/hooks/useUnreadCount";
 import { InstallBanner } from "@/components/InstallBanner";
 import { StoryBar } from "@/components/stories/StoryBar";
+import NearbyServicesSection from "@/components/NearbyServicesSection";
 
 /* ────────── Role Config ────────── */
 const roleConfig: Record<
