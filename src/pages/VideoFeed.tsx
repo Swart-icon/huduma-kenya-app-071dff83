@@ -262,6 +262,7 @@ const VideoSlide = memo(({
   onToggleMute: () => void; onOpenComments: (id: string) => void; globalIndex: number;
 }) => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const videoRef = useRef<HTMLVideoElement>(null);
   const [paused, setPaused] = useState(false);
