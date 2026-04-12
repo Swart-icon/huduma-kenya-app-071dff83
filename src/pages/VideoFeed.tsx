@@ -252,7 +252,17 @@ const VideoFeed = () => {
           {TABS.map((tab) => (
             <button
               key={tab.key}
-              onClick={() => setActiveTab(tab.key)}
+              onClick={() => {
+                if (tab.key === "service") {
+                  navigate("/categories");
+                } else if (tab.key === "jobseeker") {
+                  navigate("/jobs");
+                } else if (tab.key === "client") {
+                  navigate("/dashboard");
+                } else {
+                  setActiveTab(tab.key);
+                }
+              }}
               className={`px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-colors ${
                 activeTab === tab.key
                   ? "bg-white text-black"
