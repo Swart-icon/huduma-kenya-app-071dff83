@@ -4,9 +4,13 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { useProfile } from "@/hooks/useProfile";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
-  Home, Plus, MessageCircle, User, Loader2, Video, Search, X,
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
+} from "@/components/ui/dialog";
+import {
+  Home, Plus, MessageCircle, User, Loader2, Video, Search, X, LogIn,
 } from "lucide-react";
 import { UploadVideoDialog } from "@/components/video/UploadVideoDialog";
 import { CommentsSheet } from "@/components/video/CommentsSheet";
@@ -14,6 +18,7 @@ import { VideoSlide } from "@/components/video/VideoSlide";
 import type { VideoItem, FeedTab } from "@/components/video/types";
 
 const PAGE_SIZE = 10;
+const GUEST_VIDEO_LIMIT = 3;
 
 const TABS: { key: FeedTab; label: string }[] = [
   { key: "all", label: "For You" },
@@ -21,6 +26,58 @@ const TABS: { key: FeedTab; label: string }[] = [
   { key: "jobseeker", label: "Jobseekers" },
   { key: "client", label: "Clients" },
 ];
+
+/* ─── Auth Prompt Dialog ─── */
+const AuthPromptDialog = ({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) => {
+  const navigate = useNavigate();
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-sm mx-auto text-center">
+        <DialogHeader>
+          <DialogTitle className="flex items-center justify-center gap-2 text-lg">
+            <LogIn className="w-5 h-5 text-primary" /> Join Huduma
+          </DialogTitle>
+          <DialogDescription>
+            Sign up or log in to like, comment, call providers, and upload videos.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="flex flex-col gap-3 mt-4">
+          <Button className="w-full rounded-xl" onClick={() => { onOpenChange(false); navigate("/register"); }}>
+            Create Account
+          </Button>
+          <Button variant="outline" className="w-full rounded-xl" onClick={() => { onOpenChange(false); navigate("/login"); }}>
+            Sign In
+          </Button>
+          <button className="text-sm text-muted-foreground hover:text-foreground transition-colors" onClick={() => onOpenChange(false)}>
+            Continue watching
+          </button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+/* ─── Guest Overlay (shown after 3 videos) ─── */
+const GuestLimitOverlay = () => {
+  const navigate = useNavigate();
+  return (
+    <div className="h-screen w-full bg-black flex flex-col items-center justify-center text-center px-8" style={{ scrollSnapAlign: "start" }}>
+      <div className="w-20 h-20 rounded-full bg-primary/20 flex items-center justify-center mb-6">
+        <LogIn className="w-10 h-10 text-primary" />
+      </div>
+      <h2 className="text-white font-bold text-xl mb-2">Want to see more?</h2>
+      <p className="text-white/60 text-sm mb-8 max-w-xs">
+        Sign up to unlock unlimited videos, like, comment, and connect with service providers.
+      </p>
+      <Button className="w-full max-w-xs rounded-xl mb-3" onClick={() => navigate("/register")}>
+        Create Free Account
+      </Button>
+      <Button variant="outline" className="w-full max-w-xs rounded-xl border-white/20 text-white hover:bg-white/10" onClick={() => navigate("/login")}>
+        Sign In
+      </Button>
+    </div>
+  );
+};
 
 const VideoFeed = () => {
   const { user, roles } = useAuth();
@@ -34,9 +91,11 @@ const VideoFeed = () => {
   const [activeTab, setActiveTab] = useState<FeedTab>("all");
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [authPromptOpen, setAuthPromptOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const canUpload = roles.includes("provider") || roles.includes("job_seeker");
+  const isGuest = !user;
+  const canUpload = !isGuest && (roles.includes("provider") || roles.includes("job_seeker"));
 
   const { data: videos, isLoading, fetchNextPage, hasNextPage } = useInfiniteQuery({
     queryKey: ["videos-feed", activeTab, searchQuery],
@@ -88,7 +147,6 @@ const VideoFeed = () => {
         } as VideoItem & { _roles: string[] };
       });
 
-      // Filter by tab
       if (activeTab === "service") {
         mapped = mapped.filter((v) => v._roles.includes("provider"));
       } else if (activeTab === "jobseeker") {
@@ -108,14 +166,14 @@ const VideoFeed = () => {
   });
 
   const allVideos = videos?.pages.flat() || [];
+  // Limit guest users to 3 videos
+  const displayVideos = isGuest ? allVideos.slice(0, GUEST_VIDEO_LIMIT) : allVideos;
 
-  // Reset active index when tab/search changes
   useEffect(() => {
     setActiveIndex(0);
     containerRef.current?.scrollTo({ top: 0 });
   }, [activeTab, searchQuery]);
 
-  // Snap scroll observer
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
@@ -127,7 +185,7 @@ const VideoFeed = () => {
             const idx = Number(entry.target.getAttribute("data-index"));
             if (!isNaN(idx)) {
               setActiveIndex(idx);
-              if (idx >= allVideos.length - 3 && hasNextPage) fetchNextPage();
+              if (!isGuest && idx >= allVideos.length - 3 && hasNextPage) fetchNextPage();
             }
           }
         });
@@ -136,18 +194,19 @@ const VideoFeed = () => {
     );
     container.querySelectorAll("[data-index]").forEach((el) => observer.observe(el));
     return () => observer.disconnect();
-  }, [allVideos.length, hasNextPage, fetchNextPage]);
+  }, [allVideos.length, hasNextPage, fetchNextPage, isGuest]);
 
   const openComments = (videoId: string) => {
     setCommentVideoId(videoId);
     setCommentsOpen(true);
   };
 
+  const handleAuthRequired = () => setAuthPromptOpen(true);
+
   return (
     <div className="h-screen w-screen bg-black relative overflow-hidden flex flex-col">
       {/* ─── Top Header ─── */}
       <div className="absolute top-0 left-0 right-0 z-40">
-        {/* Search bar row */}
         <div className="flex items-center gap-2 px-3 pt-3 pb-1">
           {searchOpen ? (
             <div className="flex-1 flex items-center gap-2">
@@ -171,13 +230,19 @@ const VideoFeed = () => {
               <button onClick={() => setSearchOpen(true)} className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center">
                 <Search className="w-4 h-4 text-white" />
               </button>
-              <button onClick={() => navigate("/profile")} className="w-9 h-9 rounded-full overflow-hidden bg-white/10 flex items-center justify-center ml-1">
-                {profile?.avatar_url ? (
-                  <img src={profile.avatar_url} className="w-full h-full object-cover" alt="" />
-                ) : (
-                  <User className="w-4 h-4 text-white" />
-                )}
-              </button>
+              {isGuest ? (
+                <button onClick={() => navigate("/login")} className="ml-1 px-3 py-1.5 rounded-full bg-primary text-primary-foreground text-xs font-semibold">
+                  Sign In
+                </button>
+              ) : (
+                <button onClick={() => navigate("/profile")} className="w-9 h-9 rounded-full overflow-hidden bg-white/10 flex items-center justify-center ml-1">
+                  {profile?.avatar_url ? (
+                    <img src={profile.avatar_url} className="w-full h-full object-cover" alt="" />
+                  ) : (
+                    <User className="w-4 h-4 text-white" />
+                  )}
+                </button>
+              )}
             </>
           )}
         </div>
@@ -219,7 +284,7 @@ const VideoFeed = () => {
           className="flex-1 overflow-y-scroll snap-y snap-mandatory scrollbar-hide"
           style={{ scrollSnapType: "y mandatory", WebkitOverflowScrolling: "touch" }}
         >
-          {allVideos.map((v, i) => (
+          {displayVideos.map((v, i) => (
             <div key={v.id} data-index={i} className="h-screen w-full" style={{ scrollSnapAlign: "start" }}>
               <VideoSlide
                 video={v}
@@ -228,9 +293,16 @@ const VideoFeed = () => {
                 onToggleMute={() => setIsMuted((m) => !m)}
                 onOpenComments={openComments}
                 globalIndex={i - activeIndex}
+                onAuthRequired={isGuest ? handleAuthRequired : undefined}
               />
             </div>
           ))}
+          {/* Guest limit: show signup CTA after last preview video */}
+          {isGuest && displayVideos.length > 0 && (
+            <div data-index={displayVideos.length}>
+              <GuestLimitOverlay />
+            </div>
+          )}
         </div>
       )}
 
@@ -245,20 +317,18 @@ const VideoFeed = () => {
             <span className="text-[10px]">Home</span>
           </button>
 
-          {canUpload && (
-            <button
-              onClick={() => setUploadOpen(true)}
-              className="flex flex-col items-center gap-0.5"
-            >
-              <div className="w-10 h-7 rounded-lg bg-primary flex items-center justify-center">
-                <Plus className="w-5 h-5 text-primary-foreground" />
-              </div>
-              <span className="text-[10px] text-white/70">Upload</span>
-            </button>
-          )}
+          <button
+            onClick={() => { if (isGuest) { handleAuthRequired(); } else if (canUpload) { setUploadOpen(true); } else { handleAuthRequired(); } }}
+            className="flex flex-col items-center gap-0.5"
+          >
+            <div className="w-10 h-7 rounded-lg bg-primary flex items-center justify-center">
+              <Plus className="w-5 h-5 text-primary-foreground" />
+            </div>
+            <span className="text-[10px] text-white/70">Upload</span>
+          </button>
 
           <button
-            onClick={() => navigate("/conversations")}
+            onClick={() => { if (isGuest) handleAuthRequired(); else navigate("/conversations"); }}
             className="flex flex-col items-center gap-0.5 text-white/70 hover:text-white transition-colors"
           >
             <MessageCircle className="w-5 h-5" />
@@ -266,7 +336,7 @@ const VideoFeed = () => {
           </button>
 
           <button
-            onClick={() => navigate("/profile")}
+            onClick={() => { if (isGuest) handleAuthRequired(); else navigate("/profile"); }}
             className="flex flex-col items-center gap-0.5 text-white/70 hover:text-white transition-colors"
           >
             <User className="w-5 h-5" />
@@ -275,6 +345,7 @@ const VideoFeed = () => {
         </div>
       </div>
 
+      <AuthPromptDialog open={authPromptOpen} onOpenChange={setAuthPromptOpen} />
       <CommentsSheet open={commentsOpen} onOpenChange={setCommentsOpen} videoId={commentVideoId} />
       {canUpload && <UploadVideoDialog open={uploadOpen} onOpenChange={setUploadOpen} />}
     </div>

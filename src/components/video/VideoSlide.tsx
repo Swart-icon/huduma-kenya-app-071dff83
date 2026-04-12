@@ -10,10 +10,11 @@ import { toast } from "sonner";
 import type { VideoItem } from "./types";
 
 export const VideoSlide = memo(({
-  video, isActive, isMuted, onToggleMute, onOpenComments, globalIndex,
+  video, isActive, isMuted, onToggleMute, onOpenComments, globalIndex, onAuthRequired,
 }: {
   video: VideoItem; isActive: boolean; isMuted: boolean;
   onToggleMute: () => void; onOpenComments: (id: string) => void; globalIndex: number;
+  onAuthRequired?: () => void;
 }) => {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -21,6 +22,11 @@ export const VideoSlide = memo(({
   const [paused, setPaused] = useState(false);
   const [liked, setLiked] = useState(false);
   const [localLikeCount, setLocalLikeCount] = useState(video.like_count);
+
+  const requireAuth = () => {
+    if (!user && onAuthRequired) { onAuthRequired(); return true; }
+    return false;
+  };
 
   useEffect(() => {
     if (!user) return;
@@ -52,6 +58,7 @@ export const VideoSlide = memo(({
   };
 
   const toggleLike = async () => {
+    if (requireAuth()) return;
     if (!user) { toast.error("Sign in to like"); return; }
     const wasLiked = liked;
     setLiked(!wasLiked);
@@ -68,12 +75,23 @@ export const VideoSlide = memo(({
     }
   };
 
+  const handleComment = () => {
+    if (requireAuth()) return;
+    onOpenComments(video.id);
+  };
+
   const handleCall = () => {
+    if (requireAuth()) return;
     if (video.providerPhone) {
       window.location.href = `tel:${video.providerPhone}`;
     } else {
       toast.info("No phone number available");
     }
+  };
+
+  const handleProfile = () => {
+    if (requireAuth()) return;
+    navigate(`/provider/${video.user_id}`);
   };
 
   const location = video.providerCity
@@ -103,8 +121,7 @@ export const VideoSlide = memo(({
 
       {/* Right action bar */}
       <div className="absolute right-3 bottom-36 flex flex-col items-center gap-4">
-        {/* Profile pic */}
-        <button onClick={() => navigate(`/provider/${video.user_id}`)} className="relative mb-1">
+        <button onClick={handleProfile} className="relative mb-1">
           <div className="w-12 h-12 rounded-full border-2 border-white overflow-hidden bg-white/10">
             {video.profile?.avatar_url ? (
               <img src={video.profile.avatar_url} className="w-full h-full object-cover" alt="" />
@@ -114,7 +131,6 @@ export const VideoSlide = memo(({
           </div>
         </button>
 
-        {/* Like */}
         <button onClick={toggleLike} className="flex flex-col items-center">
           <div className={`w-10 h-10 rounded-full flex items-center justify-center ${liked ? "bg-red-500/20" : "bg-white/10"}`}>
             <Heart className={`w-6 h-6 ${liked ? "text-red-500 fill-red-500" : "text-white"}`} />
@@ -122,15 +138,13 @@ export const VideoSlide = memo(({
           <span className="text-white text-[11px] font-bold mt-1">{localLikeCount}</span>
         </button>
 
-        {/* Comment */}
-        <button onClick={() => onOpenComments(video.id)} className="flex flex-col items-center">
+        <button onClick={handleComment} className="flex flex-col items-center">
           <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center">
             <MessageCircle className="w-6 h-6 text-white" />
           </div>
           <span className="text-white text-[11px] font-bold mt-1">{video.comment_count}</span>
         </button>
 
-        {/* Views */}
         <div className="flex flex-col items-center">
           <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center">
             <Eye className="w-5 h-5 text-white" />
@@ -138,7 +152,6 @@ export const VideoSlide = memo(({
           <span className="text-white text-[11px] font-bold mt-1">{video.view_count}</span>
         </div>
 
-        {/* Call */}
         <button onClick={handleCall} className="flex flex-col items-center">
           <div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center">
             <Phone className="w-5 h-5 text-green-400" />

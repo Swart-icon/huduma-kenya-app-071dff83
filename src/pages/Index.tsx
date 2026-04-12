@@ -13,7 +13,8 @@ const Index = () => {
     } else if (!localStorage.getItem("huduma-onboarded")) {
       navigate("/onboarding");
     } else {
-      navigate("/welcome");
+      // After onboarding, send guests to the video feed preview
+      navigate("/videos");
     }
   }, [user, role, loading, navigate]);
 
