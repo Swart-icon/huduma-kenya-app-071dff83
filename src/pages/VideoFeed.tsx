@@ -72,7 +72,7 @@ const GuestLimitOverlay = () => {
       <Button className="w-full max-w-xs rounded-xl mb-3" onClick={() => navigate("/register")}>
         Create Free Account
       </Button>
-      <Button variant="outline" className="w-full max-w-xs rounded-xl border-white/20 text-white hover:bg-white/10" onClick={() => navigate("/login")}>
+      <Button variant="outline" className="w-full max-w-xs rounded-xl border-white/30 text-white bg-transparent hover:bg-white/10" onClick={() => navigate("/login")}>
         Sign In
       </Button>
     </div>
