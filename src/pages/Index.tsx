@@ -8,15 +8,9 @@ const Index = () => {
 
   useEffect(() => {
     if (loading) return;
-    if (user && role) {
-      navigate("/dashboard");
-    } else if (!localStorage.getItem("huduma-onboarded")) {
-      navigate("/onboarding");
-    } else {
-      // After onboarding, send guests to the video feed preview
-      navigate("/videos");
-    }
-  }, [user, role, loading, navigate]);
+    // Always land on the video feed — it's the primary entry point
+    navigate("/videos");
+  }, [loading, navigate]);
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center">
