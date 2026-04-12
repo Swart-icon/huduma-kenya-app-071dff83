@@ -320,7 +320,8 @@ const ProviderProfileEdit = () => {
       service_radius_km: profile.service_radius_km,
       latitude: profile.latitude,
       longitude: profile.longitude,
-    };
+      service_type: profile.service_type,
+    } as any;
 
     const { error } = isNew
       ? await supabase.from("provider_profiles").insert(payload)
