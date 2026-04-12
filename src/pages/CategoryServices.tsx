@@ -38,10 +38,12 @@ const CategoryServices = () => {
 
   useEffect(() => {
     const fetchData = async () => {
+      // Support both slug and UUID lookups
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(slug!);
       const { data: cat } = await supabase
         .from("service_categories")
         .select("*")
-        .eq("slug", slug!)
+        .eq(isUuid ? "id" : "slug", slug!)
         .maybeSingle();
 
       if (!cat) {
