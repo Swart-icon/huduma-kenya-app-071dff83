@@ -425,7 +425,7 @@ const ProviderProfileEdit = () => {
           </div>
 
           <div>
-            <Label className="text-sm font-semibold">Description</Label>
+            <Label className="text-sm font-semibold">Description *</Label>
             <Textarea value={profile.description} onChange={(e) => setProfile({ ...profile, description: e.target.value })} placeholder="Tell clients what you do..." className="rounded-xl mt-1.5 min-h-[100px]" maxLength={500} />
             <p className="text-xs text-muted-foreground mt-1">{profile.description.length}/500</p>
           </div>
