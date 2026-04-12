@@ -39,6 +39,7 @@ type ProviderProfile = {
   service_radius_km: number;
   latitude: number | null;
   longitude: number | null;
+  service_type: string;
 };
 
 type PortfolioItem = {
@@ -67,7 +68,7 @@ const emptyProfile: ProviderProfile = {
   business_name: "", description: "", city: "", county: "",
   contact_phone: "", contact_email: "", profile_image_url: "",
   availability_status: "available", years_experience: 0, skills: [], service_radius_km: 10,
-  latitude: null, longitude: null,
+  latitude: null, longitude: null, service_type: "providing_services",
 };
 
 const ProviderProfileEdit = () => {
@@ -133,6 +134,7 @@ const ProviderProfileEdit = () => {
         service_radius_km: profRes.data.service_radius_km ?? 10,
         latitude: profRes.data.latitude ?? null,
         longitude: profRes.data.longitude ?? null,
+        service_type: (profRes.data as any).service_type || "providing_services",
       });
       setIsNew(false);
     }
