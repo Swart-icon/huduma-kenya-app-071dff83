@@ -294,6 +294,7 @@ const VideoFeed = () => {
                 onOpenComments={openComments}
                 globalIndex={i - activeIndex}
                 onAuthRequired={isGuest ? handleAuthRequired : undefined}
+                activeRole={activeRole}
               />
             </div>
           ))}
