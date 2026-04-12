@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, MapPin, DollarSign, Search, Loader2 } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ArrowLeft, MapPin, DollarSign, Search, Loader2, Send } from "lucide-react";
 import { useCategories } from "@/hooks/useCategories";
 import { JobCardSkeleton, ListSkeletons } from "@/components/Skeletons";
 
@@ -30,6 +30,7 @@ const JobBoard = () => {
   const { data: categoriesArr = [] } = useCategories();
   const [jobs, setJobs] = useState<JobPost[]>([]);
   const [search, setSearch] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("all");
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
@@ -38,19 +39,25 @@ const JobBoard = () => {
   const categories = Object.fromEntries(categoriesArr.map((c) => [c.id, c]));
 
   useEffect(() => {
+    setPage(0);
     fetchJobs(0);
-  }, []);
+  }, [selectedCategory]);
 
   const fetchJobs = async (pageNum: number, append = false) => {
     if (append) setLoadingMore(true); else setLoading(true);
     const from = pageNum * PAGE_SIZE;
-    const { data } = await supabase
+    let q = supabase
       .from("job_posts")
       .select("*")
       .eq("status", "open")
       .order("created_at", { ascending: false })
       .range(from, from + PAGE_SIZE - 1);
 
+    if (selectedCategory !== "all") {
+      q = q.eq("category_id", selectedCategory);
+    }
+
+    const { data } = await q;
     const results = data || [];
     if (append) {
       setJobs((prev) => [...prev, ...results]);
@@ -82,6 +89,23 @@ const JobBoard = () => {
 
         <h1 className="font-display text-2xl font-bold text-foreground mb-4">Job Board</h1>
 
+        {/* Category Filter */}
+        <div className="mb-3">
+          <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+            <SelectTrigger className="h-12 rounded-xl">
+              <SelectValue placeholder="All Categories" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Categories</SelectItem>
+              {categoriesArr.map((c) => (
+                <SelectItem key={c.id} value={c.id}>
+                  {c.icon} {c.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
         <div className="relative mb-6">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
           <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search jobs..." className="h-12 rounded-xl pl-10" />
@@ -99,20 +123,30 @@ const JobBoard = () => {
           <>
             <div className="space-y-3">
               {filtered.map((job) => (
-                <Card key={job.id} className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate(`/jobs/${job.id}`)}>
+                <Card key={job.id} className="hover:shadow-md transition-shadow">
                   <CardContent className="p-4">
                     {categories[job.category_id] && (
-                      <span className="text-xs text-muted-foreground">{categories[job.category_id].name}</span>
+                      <Badge variant="secondary" className="text-[10px] mb-2">
+                        {categories[job.category_id].icon} {categories[job.category_id].name}
+                      </Badge>
                     )}
-                    <h3 className="font-semibold text-foreground mt-1 mb-1">{job.title}</h3>
+                    <h3 className="font-semibold text-foreground mb-1">{job.title}</h3>
                     {job.description && <p className="text-sm text-muted-foreground line-clamp-2 mb-2">{job.description}</p>}
-                    <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                    <div className="flex items-center gap-3 text-xs text-muted-foreground mb-3">
                       {(job.city || job.county) && (
                         <span className="flex items-center gap-1"><MapPin className="w-3 h-3" />{[job.city, job.county].filter(Boolean).join(", ")}</span>
                       )}
                       {job.budget && (
                         <span className="flex items-center gap-1 font-semibold text-foreground"><DollarSign className="w-3 h-3" />KSh {job.budget.toLocaleString()}</span>
                       )}
+                    </div>
+                    <div className="flex gap-2">
+                      <Button size="sm" className="rounded-xl flex-1 gap-1.5" onClick={() => navigate(`/jobs/${job.id}`)}>
+                        <Send className="w-3.5 h-3.5" /> Apply
+                      </Button>
+                      <Button size="sm" variant="outline" className="rounded-xl" onClick={() => navigate(`/jobs/${job.id}`)}>
+                        View
+                      </Button>
                     </div>
                   </CardContent>
                 </Card>

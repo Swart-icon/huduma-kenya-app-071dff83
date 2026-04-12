@@ -81,6 +81,18 @@ const JobSeekerProfile = () => {
 
   const handleSave = async () => {
     if (!user) return;
+
+    // Validate required fields from user's main profile
+    const { data: mainProfile } = await supabase.from("profiles").select("phone, full_name").eq("user_id", user.id).maybeSingle();
+    if (!mainProfile?.phone?.trim()) {
+      toast({ title: "Phone number is required", description: "Update your phone in your profile settings", variant: "destructive" });
+      return;
+    }
+    if (!preferredCounty.trim()) {
+      toast({ title: "Location is required", description: "Please enter your preferred county", variant: "destructive" });
+      return;
+    }
+
     setSaving(true);
 
     const payload = {
@@ -251,11 +263,11 @@ const JobSeekerProfile = () => {
         {/* Preferred Location */}
         <Card className="border-0 shadow-sm rounded-2xl mb-6">
           <CardContent className="p-4 space-y-3">
-            <Label className="text-sm font-bold">Preferred Location</Label>
+            <Label className="text-sm font-bold">Preferred Location *</Label>
             <Input
               value={preferredCounty}
               onChange={(e) => setPreferredCounty(e.target.value)}
-              placeholder="County (e.g., Nairobi)"
+              placeholder="County (e.g., Nairobi) *"
               className="h-10 rounded-xl"
             />
             <Input
@@ -264,6 +276,7 @@ const JobSeekerProfile = () => {
               placeholder="City/Town"
               className="h-10 rounded-xl"
             />
+            <p className="text-xs text-muted-foreground">County is required to save your profile.</p>
           </CardContent>
         </Card>
 

@@ -39,6 +39,7 @@ type ProviderProfile = {
   service_radius_km: number;
   latitude: number | null;
   longitude: number | null;
+  service_type: string;
 };
 
 type PortfolioItem = {
@@ -67,7 +68,7 @@ const emptyProfile: ProviderProfile = {
   business_name: "", description: "", city: "", county: "",
   contact_phone: "", contact_email: "", profile_image_url: "",
   availability_status: "available", years_experience: 0, skills: [], service_radius_km: 10,
-  latitude: null, longitude: null,
+  latitude: null, longitude: null, service_type: "providing_services",
 };
 
 const ProviderProfileEdit = () => {
@@ -133,6 +134,7 @@ const ProviderProfileEdit = () => {
         service_radius_km: profRes.data.service_radius_km ?? 10,
         latitude: profRes.data.latitude ?? null,
         longitude: profRes.data.longitude ?? null,
+        service_type: (profRes.data as any).service_type || "providing_services",
       });
       setIsNew(false);
     }
@@ -288,6 +290,18 @@ const ProviderProfileEdit = () => {
       toast({ title: "Please select a county", variant: "destructive" });
       return;
     }
+    if (!profile.contact_phone.trim()) {
+      toast({ title: "Phone number is required", variant: "destructive" });
+      return;
+    }
+    if (!profile.contact_email.trim()) {
+      toast({ title: "Email is required", variant: "destructive" });
+      return;
+    }
+    if (!profile.description.trim()) {
+      toast({ title: "Description is required", variant: "destructive" });
+      return;
+    }
 
     setSaving(true);
 
@@ -306,7 +320,8 @@ const ProviderProfileEdit = () => {
       service_radius_km: profile.service_radius_km,
       latitude: profile.latitude,
       longitude: profile.longitude,
-    };
+      service_type: profile.service_type,
+    } as any;
 
     const { error } = isNew
       ? await supabase.from("provider_profiles").insert(payload)
@@ -399,7 +414,18 @@ const ProviderProfileEdit = () => {
           </div>
 
           <div>
-            <Label className="text-sm font-semibold">Description</Label>
+            <Label className="text-sm font-semibold">Business Type *</Label>
+            <Select value={profile.service_type} onValueChange={(v) => setProfile({ ...profile, service_type: v })}>
+              <SelectTrigger className="h-12 rounded-xl mt-1.5"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="providing_services">🔧 Providing Services</SelectItem>
+                <SelectItem value="selling_goods">🛒 Selling Goods</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <Label className="text-sm font-semibold">Description *</Label>
             <Textarea value={profile.description} onChange={(e) => setProfile({ ...profile, description: e.target.value })} placeholder="Tell clients what you do..." className="rounded-xl mt-1.5 min-h-[100px]" maxLength={500} />
             <p className="text-xs text-muted-foreground mt-1">{profile.description.length}/500</p>
           </div>
@@ -480,12 +506,12 @@ const ProviderProfileEdit = () => {
           </Card>
 
           <div>
-            <Label className="text-sm font-semibold">Phone</Label>
+            <Label className="text-sm font-semibold">Phone *</Label>
             <Input value={profile.contact_phone} onChange={(e) => setProfile({ ...profile, contact_phone: e.target.value })} placeholder="+254 7XX XXX XXX" className="h-12 rounded-xl mt-1.5" />
           </div>
 
           <div>
-            <Label className="text-sm font-semibold">Email</Label>
+            <Label className="text-sm font-semibold">Email *</Label>
             <Input type="email" value={profile.contact_email} onChange={(e) => setProfile({ ...profile, contact_email: e.target.value })} placeholder="business@email.com" className="h-12 rounded-xl mt-1.5" />
           </div>
 
@@ -597,45 +623,6 @@ const ProviderProfileEdit = () => {
           </CardContent>
         </Card>
 
-        {/* Verification */}
-        <Card className="mt-6">
-          <CardContent className="p-5">
-            <h3 className="font-semibold text-foreground mb-4">Verification Documents</h3>
-            <p className="text-xs text-muted-foreground mb-4">Submit documents to get verified and earn a trust badge.</p>
-            <div className="flex gap-2 mb-4">
-              <Select value={verifyDocType} onValueChange={setVerifyDocType}>
-                <SelectTrigger className="h-10 rounded-xl flex-1"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="national_id">National ID</SelectItem>
-                  <SelectItem value="business_license">Business License</SelectItem>
-                  <SelectItem value="certificate">Certificate</SelectItem>
-                </SelectContent>
-              </Select>
-              <Button size="sm" className="h-10 rounded-xl px-3" onClick={() => verifyInputRef.current?.click()} disabled={uploadingVerify}>
-                <Upload className="w-4 h-4" />
-              </Button>
-              <input ref={verifyInputRef} type="file" accept="image/*,.pdf" className="hidden" onChange={handleVerifyUpload} />
-            </div>
-            {uploadingVerify && <p className="text-sm text-muted-foreground mb-3">Uploading...</p>}
-            {verifications.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-2">No documents submitted</p>
-            ) : (
-              <div className="space-y-2">
-                {verifications.map((v) => (
-                  <div key={v.id} className="flex items-center justify-between py-2 border-b last:border-0">
-                    <div className="flex items-center gap-2">
-                      {verifyStatusIcon(v.status)}
-                      <span className="text-sm capitalize text-foreground">{v.document_type.replace("_", " ")}</span>
-                    </div>
-                    <Badge variant={v.status === "approved" ? "default" : v.status === "rejected" ? "destructive" : "secondary"} className="text-xs">
-                      {v.status}
-                    </Badge>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
 
         <Button onClick={handleSave} disabled={saving} className="w-full h-14 text-lg font-bold rounded-xl mt-8" size="lg">
           <Save className="w-5 h-5 mr-2" />

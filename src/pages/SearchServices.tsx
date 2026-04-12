@@ -266,14 +266,33 @@ const SearchServices = () => {
             <h1 className="font-display text-lg font-bold text-foreground">Search Services</h1>
           </div>
 
+          {/* Category selection first */}
+          <div className="mb-3">
+            <label className="text-xs font-medium text-muted-foreground mb-1 block">Select a category to search *</label>
+            <Select value={categoryId} onValueChange={setCategoryId}>
+              <SelectTrigger className="h-10 rounded-xl text-sm">
+                <SelectValue placeholder="Choose a category first" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All categories</SelectItem>
+                {categories.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>
+                    {c.icon} {c.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
           <form onSubmit={handleSearch} className="flex gap-2">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search services..."
+                placeholder={categoryId !== "all" ? "Search within category..." : "Select a category first..."}
                 className="h-10 rounded-xl pl-9 text-sm"
+                disabled={categoryId === "all"}
               />
             </div>
             <Button
@@ -305,23 +324,7 @@ const SearchServices = () => {
               </button>
             </div>
 
-            {/* Category */}
-            <div>
-              <label className="text-xs font-medium text-muted-foreground mb-1 block">Category</label>
-              <Select value={categoryId} onValueChange={setCategoryId}>
-                <SelectTrigger className="h-9 rounded-lg text-sm">
-                  <SelectValue placeholder="All categories" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All categories</SelectItem>
-                  {categories.map((c) => (
-                    <SelectItem key={c.id} value={c.id}>
-                      {c.icon} {c.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            {/* Category is now in the main header */}
 
             {/* County */}
             <div>
