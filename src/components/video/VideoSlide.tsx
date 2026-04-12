@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import {
-  Play, Heart, MessageCircle, Eye, User, Phone, MapPin,
+  Play, Heart, MessageCircle, Eye, User, Phone, MapPin, Briefcase, Wrench,
 } from "lucide-react";
 import { toast } from "sonner";
 import type { VideoItem } from "./types";
