@@ -38,3 +38,22 @@ export const getCoordinatesForCity = (city: string): { lat: number; lng: number 
   );
   return match ? { lat: match.lat, lng: match.lng } : null;
 };
+
+export const KENYAN_COUNTIES = [
+  "Baringo", "Bomet", "Bungoma", "Busia", "Elgeyo-Marakwet", "Embu", "Garissa",
+  "Homa Bay", "Isiolo", "Kajiado", "Kakamega", "Kericho", "Kiambu", "Kilifi",
+  "Kirinyaga", "Kisii", "Kisumu", "Kitui", "Kwale", "Laikipia", "Lamu", "Machakos",
+  "Makueni", "Mandera", "Marsabit", "Meru", "Migori", "Mombasa", "Murang'a",
+  "Nairobi", "Nakuru", "Nandi", "Narok", "Nyamira", "Nyandarua", "Nyeri",
+  "Samburu", "Siaya", "Taita-Taveta", "Tana River", "Tharaka-Nithi", "Trans-Nzoia",
+  "Turkana", "Uasin Gishu", "Vihiga", "Wajir", "West Pokot",
+];
+
+/** Get cities for a given county (falls back to county name if no mapping) */
+export const getCitiesByCounty = (county: string): string[] => {
+  const match = KENYAN_LOCATIONS.filter(
+    (loc) => loc.county.toLowerCase() === county.toLowerCase()
+  );
+  if (match.length > 0) return match.map((m) => m.name);
+  return [county]; // Fallback: use county name as city
+};
