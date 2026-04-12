@@ -506,12 +506,12 @@ const ProviderProfileEdit = () => {
           </Card>
 
           <div>
-            <Label className="text-sm font-semibold">Phone</Label>
+            <Label className="text-sm font-semibold">Phone *</Label>
             <Input value={profile.contact_phone} onChange={(e) => setProfile({ ...profile, contact_phone: e.target.value })} placeholder="+254 7XX XXX XXX" className="h-12 rounded-xl mt-1.5" />
           </div>
 
           <div>
-            <Label className="text-sm font-semibold">Email</Label>
+            <Label className="text-sm font-semibold">Email *</Label>
             <Input type="email" value={profile.contact_email} onChange={(e) => setProfile({ ...profile, contact_email: e.target.value })} placeholder="business@email.com" className="h-12 rounded-xl mt-1.5" />
           </div>
 
