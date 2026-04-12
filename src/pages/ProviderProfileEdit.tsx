@@ -290,6 +290,18 @@ const ProviderProfileEdit = () => {
       toast({ title: "Please select a county", variant: "destructive" });
       return;
     }
+    if (!profile.contact_phone.trim()) {
+      toast({ title: "Phone number is required", variant: "destructive" });
+      return;
+    }
+    if (!profile.contact_email.trim()) {
+      toast({ title: "Email is required", variant: "destructive" });
+      return;
+    }
+    if (!profile.description.trim()) {
+      toast({ title: "Description is required", variant: "destructive" });
+      return;
+    }
 
     setSaving(true);
 
