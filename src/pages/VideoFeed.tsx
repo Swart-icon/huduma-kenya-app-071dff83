@@ -18,7 +18,7 @@ import { VideoSlide } from "@/components/video/VideoSlide";
 import type { VideoItem, FeedTab } from "@/components/video/types";
 
 const PAGE_SIZE = 10;
-const GUEST_VIDEO_LIMIT = 3;
+const GUEST_VIDEO_LIMIT = 5;
 
 const TABS: { key: FeedTab; label: string }[] = [
   { key: "all", label: "For You" },
