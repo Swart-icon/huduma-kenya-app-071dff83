@@ -515,6 +515,7 @@ export type Database = {
           longitude: number | null
           profile_image_url: string | null
           service_radius_km: number | null
+          service_type: string | null
           skills: string[] | null
           updated_at: string
           user_id: string
@@ -535,6 +536,7 @@ export type Database = {
           longitude?: number | null
           profile_image_url?: string | null
           service_radius_km?: number | null
+          service_type?: string | null
           skills?: string[] | null
           updated_at?: string
           user_id: string
@@ -555,6 +557,7 @@ export type Database = {
           longitude?: number | null
           profile_image_url?: string | null
           service_radius_km?: number | null
+          service_type?: string | null
           skills?: string[] | null
           updated_at?: string
           user_id?: string
