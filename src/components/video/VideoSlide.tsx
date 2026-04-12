@@ -90,8 +90,23 @@ export const VideoSlide = memo(({
   };
 
   const handleProfile = () => {
-    if (requireAuth()) return;
     navigate(`/provider/${video.user_id}`);
+  };
+
+  const handleServices = () => {
+    if (video.category_id) {
+      navigate(`/categories/${video.category_id}`);
+    } else {
+      navigate("/categories");
+    }
+  };
+
+  const handleJobs = () => {
+    if (video.category_id) {
+      navigate(`/jobs?category=${video.category_id}`);
+    } else {
+      navigate("/jobs");
+    }
   };
 
   const location = video.providerCity
