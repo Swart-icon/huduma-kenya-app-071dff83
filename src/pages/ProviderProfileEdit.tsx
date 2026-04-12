@@ -623,45 +623,6 @@ const ProviderProfileEdit = () => {
           </CardContent>
         </Card>
 
-        {/* Verification */}
-        <Card className="mt-6">
-          <CardContent className="p-5">
-            <h3 className="font-semibold text-foreground mb-4">Verification Documents</h3>
-            <p className="text-xs text-muted-foreground mb-4">Submit documents to get verified and earn a trust badge.</p>
-            <div className="flex gap-2 mb-4">
-              <Select value={verifyDocType} onValueChange={setVerifyDocType}>
-                <SelectTrigger className="h-10 rounded-xl flex-1"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="national_id">National ID</SelectItem>
-                  <SelectItem value="business_license">Business License</SelectItem>
-                  <SelectItem value="certificate">Certificate</SelectItem>
-                </SelectContent>
-              </Select>
-              <Button size="sm" className="h-10 rounded-xl px-3" onClick={() => verifyInputRef.current?.click()} disabled={uploadingVerify}>
-                <Upload className="w-4 h-4" />
-              </Button>
-              <input ref={verifyInputRef} type="file" accept="image/*,.pdf" className="hidden" onChange={handleVerifyUpload} />
-            </div>
-            {uploadingVerify && <p className="text-sm text-muted-foreground mb-3">Uploading...</p>}
-            {verifications.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-2">No documents submitted</p>
-            ) : (
-              <div className="space-y-2">
-                {verifications.map((v) => (
-                  <div key={v.id} className="flex items-center justify-between py-2 border-b last:border-0">
-                    <div className="flex items-center gap-2">
-                      {verifyStatusIcon(v.status)}
-                      <span className="text-sm capitalize text-foreground">{v.document_type.replace("_", " ")}</span>
-                    </div>
-                    <Badge variant={v.status === "approved" ? "default" : v.status === "rejected" ? "destructive" : "secondary"} className="text-xs">
-                      {v.status}
-                    </Badge>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
 
         <Button onClick={handleSave} disabled={saving} className="w-full h-14 text-lg font-bold rounded-xl mt-8" size="lg">
           <Save className="w-5 h-5 mr-2" />
