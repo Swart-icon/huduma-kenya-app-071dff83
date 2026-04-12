@@ -11,11 +11,12 @@ import { toast } from "sonner";
 import type { VideoItem } from "./types";
 
 export const VideoSlide = memo(({
-  video, isActive, isMuted, onToggleMute, onOpenComments, globalIndex, onAuthRequired,
+  video, isActive, isMuted, onToggleMute, onOpenComments, globalIndex, onAuthRequired, activeRole,
 }: {
   video: VideoItem; isActive: boolean; isMuted: boolean;
   onToggleMute: () => void; onOpenComments: (id: string) => void; globalIndex: number;
   onAuthRequired?: () => void;
+  activeRole?: AppRole | null;
 }) => {
   const { user } = useAuth();
   const navigate = useNavigate();
