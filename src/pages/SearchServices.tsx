@@ -324,23 +324,7 @@ const SearchServices = () => {
               </button>
             </div>
 
-            {/* Category */}
-            <div>
-              <label className="text-xs font-medium text-muted-foreground mb-1 block">Category</label>
-              <Select value={categoryId} onValueChange={setCategoryId}>
-                <SelectTrigger className="h-9 rounded-lg text-sm">
-                  <SelectValue placeholder="All categories" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All categories</SelectItem>
-                  {categories.map((c) => (
-                    <SelectItem key={c.id} value={c.id}>
-                      {c.icon} {c.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            {/* Category is now in the main header */}
 
             {/* County */}
             <div>
