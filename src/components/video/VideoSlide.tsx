@@ -120,9 +120,9 @@ export const VideoSlide = memo(({
       )}
 
       {/* Right action bar */}
-      <div className="absolute right-3 bottom-36 flex flex-col items-center gap-4">
+      <div className="absolute right-3 bottom-[140px] flex flex-col items-center gap-3">
         <button onClick={handleProfile} className="relative mb-1">
-          <div className="w-12 h-12 rounded-full border-2 border-white overflow-hidden bg-white/10">
+          <div className="w-10 h-10 rounded-full border-2 border-white overflow-hidden bg-white/10">
             {video.profile?.avatar_url ? (
               <img src={video.profile.avatar_url} className="w-full h-full object-cover" alt="" />
             ) : (
@@ -132,36 +132,36 @@ export const VideoSlide = memo(({
         </button>
 
         <button onClick={toggleLike} className="flex flex-col items-center">
-          <div className={`w-10 h-10 rounded-full flex items-center justify-center ${liked ? "bg-red-500/20" : "bg-white/10"}`}>
-            <Heart className={`w-6 h-6 ${liked ? "text-red-500 fill-red-500" : "text-white"}`} />
+          <div className={`w-9 h-9 rounded-full flex items-center justify-center ${liked ? "bg-red-500/20" : "bg-white/10"}`}>
+            <Heart className={`w-5 h-5 ${liked ? "text-red-500 fill-red-500" : "text-white"}`} />
           </div>
-          <span className="text-white text-[11px] font-bold mt-1">{localLikeCount}</span>
+          <span className="text-white text-[10px] font-bold mt-0.5">{localLikeCount}</span>
         </button>
 
         <button onClick={handleComment} className="flex flex-col items-center">
-          <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center">
-            <MessageCircle className="w-6 h-6 text-white" />
+          <div className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center">
+            <MessageCircle className="w-5 h-5 text-white" />
           </div>
-          <span className="text-white text-[11px] font-bold mt-1">{video.comment_count}</span>
+          <span className="text-white text-[10px] font-bold mt-0.5">{video.comment_count}</span>
         </button>
 
         <div className="flex flex-col items-center">
-          <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center">
+          <div className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center">
             <Eye className="w-5 h-5 text-white" />
           </div>
-          <span className="text-white text-[11px] font-bold mt-1">{video.view_count}</span>
+          <span className="text-white text-[10px] font-bold mt-0.5">{video.view_count}</span>
         </div>
 
         <button onClick={handleCall} className="flex flex-col items-center">
-          <div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center">
-            <Phone className="w-5 h-5 text-green-400" />
+          <div className="w-9 h-9 rounded-full bg-green-500/20 flex items-center justify-center">
+            <Phone className="w-4 h-4 text-green-400" />
           </div>
-          <span className="text-white text-[10px] mt-1">Call</span>
+          <span className="text-white text-[10px] mt-0.5">Call</span>
         </button>
       </div>
 
       {/* Bottom info */}
-      <div className="absolute bottom-20 left-4 right-20">
+      <div className="absolute bottom-[72px] left-3 right-16">
         <p className="text-white font-bold text-sm drop-shadow-lg">
           @{video.profile?.full_name || "User"}
         </p>
