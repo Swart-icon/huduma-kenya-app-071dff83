@@ -141,8 +141,8 @@ const VideoFeed = () => {
           profile: profileMap.get(v.user_id) || null,
           category: v.service_categories || null,
           providerPhone: prov?.contact_phone || null,
-          providerCity: prov?.city || null,
-          providerCounty: prov?.county || null,
+          providerCity: v.city || prov?.city || null,
+          providerCounty: v.county || prov?.county || null,
           _roles: rolesMap.get(v.user_id) || [],
         } as VideoItem & { _roles: string[] };
       });
