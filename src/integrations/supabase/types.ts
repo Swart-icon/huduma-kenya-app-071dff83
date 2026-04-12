@@ -1075,7 +1075,9 @@ export type Database = {
       videos: {
         Row: {
           category_id: string | null
+          city: string | null
           comment_count: number
+          county: string | null
           created_at: string
           duration_seconds: number | null
           id: string
@@ -1090,7 +1092,9 @@ export type Database = {
         }
         Insert: {
           category_id?: string | null
+          city?: string | null
           comment_count?: number
+          county?: string | null
           created_at?: string
           duration_seconds?: number | null
           id?: string
@@ -1105,7 +1109,9 @@ export type Database = {
         }
         Update: {
           category_id?: string | null
+          city?: string | null
           comment_count?: number
+          county?: string | null
           created_at?: string
           duration_seconds?: number | null
           id?: string
