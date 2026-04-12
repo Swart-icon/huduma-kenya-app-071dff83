@@ -96,18 +96,44 @@ export const VideoSlide = memo(({
   };
 
   const handleServices = () => {
-    if (video.category_id) {
-      navigate(`/categories/${video.category_id}`);
+    if (!user) {
+      // Guests can browse services in preview mode
+      if (video.category_id) {
+        navigate(`/categories/${video.category_id}`);
+      } else {
+        navigate("/categories");
+      }
+      return;
+    }
+    if (activeRole === "provider") {
+      // Providers go to their own services dashboard
+      navigate("/my-services");
     } else {
-      navigate("/categories");
+      // Clients & job seekers browse providers filtered by category
+      if (video.category_id) {
+        navigate(`/categories/${video.category_id}`);
+      } else {
+        navigate("/categories");
+      }
     }
   };
 
   const handleJobs = () => {
-    if (video.category_id) {
-      navigate(`/jobs?category=${video.category_id}`);
-    } else {
+    if (!user) {
+      // Guests can browse jobs in preview mode
       navigate("/jobs");
+      return;
+    }
+    if (activeRole === "client") {
+      // Clients see their posted jobs & applicants
+      navigate("/my-jobs");
+    } else {
+      // Providers & job seekers browse available jobs to apply
+      if (video.category_id) {
+        navigate(`/jobs?category=${video.category_id}`);
+      } else {
+        navigate("/jobs");
+      }
     }
   };
 
