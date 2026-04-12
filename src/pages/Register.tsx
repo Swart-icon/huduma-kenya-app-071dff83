@@ -29,7 +29,7 @@ const Register = () => {
       setStep("role");
     }
     if (!loading && user && roles.filter((r) => r !== "admin").length > 0) {
-      navigate("/dashboard");
+      navigate("/videos");
     }
   }, [loading, user, roles, navigate]);
 
@@ -81,7 +81,7 @@ const Register = () => {
     } else {
       const labels = selectedRoles.map((r) => roleOptions.find((o) => o.value === r)?.label).filter(Boolean);
       toast({ title: "Welcome to Huduma! 🎉", description: `You're registered as: ${labels.join(", ")}` });
-      navigate("/dashboard");
+      navigate("/videos");
     }
   };
 

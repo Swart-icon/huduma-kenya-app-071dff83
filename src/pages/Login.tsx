@@ -21,7 +21,7 @@ const Login = () => {
     if (!authLoading && user) {
       const hasNonAdminRole = roles.filter((r) => r !== "admin").length > 0;
       if (hasNonAdminRole) {
-        navigate("/dashboard");
+        navigate("/videos");
       } else {
         navigate("/register"); // needs role selection
       }
@@ -40,7 +40,7 @@ const Login = () => {
     if (error) {
       toast({ title: "Login failed", description: error.message, variant: "destructive" });
     } else {
-      navigate("/dashboard");
+      navigate("/videos");
     }
   };
 
