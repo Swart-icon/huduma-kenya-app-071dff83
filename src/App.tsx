@@ -124,6 +124,7 @@ const App = () => (
             <Route path="/my-applications" element={<MyApplications />} />
             <Route path="/saved-jobs" element={<SavedJobs />} />
             <Route path="/job-board" element={<JobBoard />} />
+            <Route path="/jobs" element={<JobBoard />} />
             <Route path="/book/:serviceId" element={<BookService />} />
             <Route path="/my-bookings" element={<MyBookings />} />
             <Route path="/conversations" element={<Conversations />} />
