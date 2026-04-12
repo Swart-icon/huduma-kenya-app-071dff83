@@ -308,13 +308,24 @@ const VideoFeed = () => {
 
       {/* ─── Bottom Navigation ─── */}
       <div className="absolute bottom-0 left-0 right-0 z-40 bg-black/80 backdrop-blur-md border-t border-white/10">
-        <div className="flex items-center justify-around py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+      <div className="flex items-center justify-around py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
           <button
-            onClick={() => { setActiveIndex(0); containerRef.current?.scrollTo({ top: 0, behavior: "smooth" }); }}
+            onClick={() => {
+              if (isGuest) { handleAuthRequired(); }
+              else { navigate("/dashboard"); }
+            }}
             className="flex flex-col items-center gap-0.5 text-white/70 hover:text-white transition-colors"
           >
             <Home className="w-5 h-5" />
             <span className="text-[10px]">Home</span>
+          </button>
+
+          <button
+            onClick={() => { setActiveIndex(0); containerRef.current?.scrollTo({ top: 0, behavior: "smooth" }); }}
+            className="flex flex-col items-center gap-0.5 text-white/70 hover:text-white transition-colors"
+          >
+            <Video className="w-5 h-5" />
+            <span className="text-[10px]">Videos</span>
           </button>
 
           <button
