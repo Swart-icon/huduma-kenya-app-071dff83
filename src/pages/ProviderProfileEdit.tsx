@@ -414,6 +414,17 @@ const ProviderProfileEdit = () => {
           </div>
 
           <div>
+            <Label className="text-sm font-semibold">Business Type *</Label>
+            <Select value={profile.service_type} onValueChange={(v) => setProfile({ ...profile, service_type: v })}>
+              <SelectTrigger className="h-12 rounded-xl mt-1.5"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="providing_services">🔧 Providing Services</SelectItem>
+                <SelectItem value="selling_goods">🛒 Selling Goods</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
             <Label className="text-sm font-semibold">Description</Label>
             <Textarea value={profile.description} onChange={(e) => setProfile({ ...profile, description: e.target.value })} placeholder="Tell clients what you do..." className="rounded-xl mt-1.5 min-h-[100px]" maxLength={500} />
             <p className="text-xs text-muted-foreground mt-1">{profile.description.length}/500</p>
