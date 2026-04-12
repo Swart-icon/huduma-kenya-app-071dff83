@@ -1,10 +1,11 @@
 import { useState, useRef, useEffect, memo } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import type { AppRole } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import {
-  Play, Heart, MessageCircle, Eye, User, Phone, MapPin, Briefcase, Wrench,
+  Play, Heart, MessageCircle, User, Phone, MapPin, Briefcase, Wrench,
 } from "lucide-react";
 import { toast } from "sonner";
 import type { VideoItem } from "./types";
