@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import {
-  Play, Heart, MessageCircle, Eye, User, Phone, MapPin,
+  Play, Heart, MessageCircle, Eye, User, Phone, MapPin, Briefcase, Wrench,
 } from "lucide-react";
 import { toast } from "sonner";
 import type { VideoItem } from "./types";
@@ -90,8 +90,23 @@ export const VideoSlide = memo(({
   };
 
   const handleProfile = () => {
-    if (requireAuth()) return;
     navigate(`/provider/${video.user_id}`);
+  };
+
+  const handleServices = () => {
+    if (video.category_id) {
+      navigate(`/categories/${video.category_id}`);
+    } else {
+      navigate("/categories");
+    }
+  };
+
+  const handleJobs = () => {
+    if (video.category_id) {
+      navigate(`/jobs?category=${video.category_id}`);
+    } else {
+      navigate("/jobs");
+    }
   };
 
   const location = video.providerCity
@@ -120,7 +135,7 @@ export const VideoSlide = memo(({
       )}
 
       {/* Right action bar */}
-      <div className="absolute right-3 bottom-[140px] flex flex-col items-center gap-3">
+      <div className="absolute right-3 bottom-[140px] flex flex-col items-center gap-2.5">
         <button onClick={handleProfile} className="relative mb-1">
           <div className="w-10 h-10 rounded-full border-2 border-white overflow-hidden bg-white/10">
             {video.profile?.avatar_url ? (
@@ -145,12 +160,19 @@ export const VideoSlide = memo(({
           <span className="text-white text-[10px] font-bold mt-0.5">{video.comment_count}</span>
         </button>
 
-        <div className="flex flex-col items-center">
-          <div className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center">
-            <Eye className="w-5 h-5 text-white" />
+        <button onClick={handleServices} className="flex flex-col items-center">
+          <div className="w-9 h-9 rounded-full bg-blue-500/20 flex items-center justify-center">
+            <Wrench className="w-4 h-4 text-blue-400" />
           </div>
-          <span className="text-white text-[10px] font-bold mt-0.5">{video.view_count}</span>
-        </div>
+          <span className="text-white text-[10px] mt-0.5">Services</span>
+        </button>
+
+        <button onClick={handleJobs} className="flex flex-col items-center">
+          <div className="w-9 h-9 rounded-full bg-amber-500/20 flex items-center justify-center">
+            <Briefcase className="w-4 h-4 text-amber-400" />
+          </div>
+          <span className="text-white text-[10px] mt-0.5">Jobs</span>
+        </button>
 
         <button onClick={handleCall} className="flex flex-col items-center">
           <div className="w-9 h-9 rounded-full bg-green-500/20 flex items-center justify-center">
