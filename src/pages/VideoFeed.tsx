@@ -80,7 +80,7 @@ const GuestLimitOverlay = () => {
 };
 
 const VideoFeed = () => {
-  const { user, roles } = useAuth();
+  const { user, roles, role: activeRole } = useAuth();
   const navigate = useNavigate();
   const { data: profile } = useProfile();
   const [uploadOpen, setUploadOpen] = useState(false);
@@ -294,6 +294,7 @@ const VideoFeed = () => {
                 onOpenComments={openComments}
                 globalIndex={i - activeIndex}
                 onAuthRequired={isGuest ? handleAuthRequired : undefined}
+                activeRole={activeRole}
               />
             </div>
           ))}

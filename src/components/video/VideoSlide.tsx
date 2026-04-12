@@ -1,20 +1,22 @@
 import { useState, useRef, useEffect, memo } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import type { AppRole } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import {
-  Play, Heart, MessageCircle, Eye, User, Phone, MapPin, Briefcase, Wrench,
+  Play, Heart, MessageCircle, User, Phone, MapPin, Briefcase, Wrench,
 } from "lucide-react";
 import { toast } from "sonner";
 import type { VideoItem } from "./types";
 
 export const VideoSlide = memo(({
-  video, isActive, isMuted, onToggleMute, onOpenComments, globalIndex, onAuthRequired,
+  video, isActive, isMuted, onToggleMute, onOpenComments, globalIndex, onAuthRequired, activeRole,
 }: {
   video: VideoItem; isActive: boolean; isMuted: boolean;
   onToggleMute: () => void; onOpenComments: (id: string) => void; globalIndex: number;
   onAuthRequired?: () => void;
+  activeRole?: AppRole | null;
 }) => {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -94,18 +96,44 @@ export const VideoSlide = memo(({
   };
 
   const handleServices = () => {
-    if (video.category_id) {
-      navigate(`/categories/${video.category_id}`);
+    if (!user) {
+      // Guests can browse services in preview mode
+      if (video.category_id) {
+        navigate(`/categories/${video.category_id}`);
+      } else {
+        navigate("/categories");
+      }
+      return;
+    }
+    if (activeRole === "provider") {
+      // Providers go to their own services dashboard
+      navigate("/my-services");
     } else {
-      navigate("/categories");
+      // Clients & job seekers browse providers filtered by category
+      if (video.category_id) {
+        navigate(`/categories/${video.category_id}`);
+      } else {
+        navigate("/categories");
+      }
     }
   };
 
   const handleJobs = () => {
-    if (video.category_id) {
-      navigate(`/jobs?category=${video.category_id}`);
-    } else {
+    if (!user) {
+      // Guests can browse jobs in preview mode
       navigate("/jobs");
+      return;
+    }
+    if (activeRole === "client") {
+      // Clients see their posted jobs & applicants
+      navigate("/my-jobs");
+    } else {
+      // Providers & job seekers browse available jobs to apply
+      if (video.category_id) {
+        navigate(`/jobs?category=${video.category_id}`);
+      } else {
+        navigate("/jobs");
+      }
     }
   };
 
