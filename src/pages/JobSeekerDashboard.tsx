@@ -7,8 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import {
-  ArrowLeft, Briefcase, FileText, Bookmark, User, ChevronRight,
-  MapPin, Clock, Send, CheckCircle, XCircle, Eye, Star,
+  ArrowLeft, Briefcase, Bookmark, User, ChevronRight,
+  MapPin, Clock, Send, CheckCircle, XCircle, Eye, Star, Search,
 } from "lucide-react";
 
 const statusColors: Record<string, string> = {
@@ -28,27 +28,35 @@ const statusIcons: Record<string, React.ReactNode> = {
 };
 
 type Application = {
-  id: string;
-  job_post_id: string;
-  status: string;
-  created_at: string;
-  cover_message: string | null;
-  job_title?: string;
-  job_city?: string | null;
-  job_county?: string | null;
-  job_budget?: number | null;
+  id: string; job_post_id: string; status: string; created_at: string; cover_message: string | null;
+  job_title?: string; job_city?: string | null; job_county?: string | null; job_budget?: number | null;
 };
 
 type RecommendedJob = {
-  id: string;
-  title: string;
-  city: string | null;
-  county: string | null;
-  budget: number | null;
-  budget_type: string;
-  created_at: string;
-  category_id: string;
+  id: string; title: string; city: string | null; county: string | null;
+  budget: number | null; budget_type: string; created_at: string; category_id: string;
 };
+
+const StatChip = ({ icon, value, label }: { icon: React.ReactNode; value: string | number; label: string }) => (
+  <Card className="border-0 shadow-sm rounded-2xl flex-1">
+    <CardContent className="p-3.5 flex flex-col items-center gap-1">
+      <div className="w-10 h-10 rounded-2xl bg-primary/10 flex items-center justify-center">{icon}</div>
+      <span className="text-xl font-bold text-foreground">{value}</span>
+      <span className="text-[10px] text-muted-foreground">{label}</span>
+    </CardContent>
+  </Card>
+);
+
+const SectionHeader = ({ title, action, onAction }: { title: string; action?: string; onAction?: () => void }) => (
+  <div className="flex items-center justify-between mb-3">
+    <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">{title}</h3>
+    {action && (
+      <button onClick={onAction} className="text-xs text-primary font-semibold flex items-center gap-0.5">
+        {action} <ChevronRight className="w-3 h-3" />
+      </button>
+    )}
+  </div>
+);
 
 const JobSeekerDashboard = () => {
   const { user, role, loading: authLoading } = useAuth();
@@ -60,10 +68,7 @@ const JobSeekerDashboard = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!authLoading && (!user || role !== "job_seeker")) {
-      navigate("/dashboard");
-      return;
-    }
+    if (!authLoading && (!user || role !== "job_seeker")) { navigate("/dashboard"); return; }
     if (user) fetchAll();
   }, [authLoading, user, role]);
 
@@ -75,7 +80,6 @@ const JobSeekerDashboard = () => {
       supabase.from("job_posts").select("*").eq("status", "open").order("created_at", { ascending: false }).limit(5),
     ]);
 
-    // Enrich applications with job titles
     const appsData = appsRes.data || [];
     if (appsData.length > 0) {
       const jobIds = [...new Set(appsData.map((a: any) => a.job_post_id))];
@@ -83,24 +87,18 @@ const JobSeekerDashboard = () => {
       const jobMap: Record<string, any> = {};
       (jobPosts || []).forEach((j: any) => { jobMap[j.id] = j; });
       setApplications(appsData.map((a: any) => ({
-        ...a,
-        job_title: jobMap[a.job_post_id]?.title || "Job Post",
-        job_city: jobMap[a.job_post_id]?.city,
-        job_county: jobMap[a.job_post_id]?.county,
-        job_budget: jobMap[a.job_post_id]?.budget,
+        ...a, job_title: jobMap[a.job_post_id]?.title || "Job Post",
+        job_city: jobMap[a.job_post_id]?.city, job_county: jobMap[a.job_post_id]?.county, job_budget: jobMap[a.job_post_id]?.budget,
       })));
-    } else {
-      setApplications([]);
-    }
+    } else { setApplications([]); }
 
     setSavedCount((savedRes.data || []).length);
     setRecommendedJobs(jobsRes.data || []);
 
-    // Calculate profile completion
     if (profileRes.data) {
       const p = profileRes.data;
       let filled = 0;
-      let total = 7;
+      const total = 7;
       if ((p.skills as string[])?.length > 0) filled++;
       if (p.experience_years && p.experience_years > 0) filled++;
       if (p.experience_description) filled++;
@@ -110,21 +108,14 @@ const JobSeekerDashboard = () => {
       if (p.cv_url) filled++;
       setProfileCompletion(Math.round((filled / total) * 100));
     }
-
     setLoading(false);
   };
 
-  // Subscribe to realtime application updates
   useEffect(() => {
     if (!user) return;
     const channel = supabase
       .channel("my-applications")
-      .on("postgres_changes", {
-        event: "UPDATE",
-        schema: "public",
-        table: "job_applications",
-        filter: `applicant_id=eq.${user.id}`,
-      }, () => { fetchAll(); })
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "job_applications", filter: `applicant_id=eq.${user.id}` }, () => { fetchAll(); })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [user]);
@@ -141,102 +132,74 @@ const JobSeekerDashboard = () => {
   const activeApps = applications.filter(a => !["rejected", "accepted"].includes(a.status)).length;
 
   return (
-    <div className="min-h-screen bg-background px-5 py-5 pb-24">
-      <div className="max-w-lg mx-auto">
-        <button onClick={() => navigate("/dashboard")} className="flex items-center gap-2 text-muted-foreground mb-5">
-          <ArrowLeft className="w-5 h-5" />
-          <span>Dashboard</span>
-        </button>
+    <div className="min-h-screen bg-background pb-24">
+      {/* Header */}
+      <div className="sticky top-0 z-30 bg-background/80 backdrop-blur-lg border-b border-border/40">
+        <div className="flex items-center gap-3 px-5 py-3 max-w-lg mx-auto">
+          <button onClick={() => navigate("/dashboard")} className="w-9 h-9 rounded-full bg-muted flex items-center justify-center">
+            <ArrowLeft className="w-4 h-4 text-foreground" />
+          </button>
+          <h1 className="font-display text-lg font-bold text-foreground">Job Seeker Hub</h1>
+        </div>
+      </div>
 
-        <h1 className="font-display text-2xl font-bold text-foreground mb-5">Job Seeker Hub</h1>
+      <div className="px-5 max-w-lg mx-auto pt-4 space-y-5">
 
-        {/* Overview Stats */}
-        <div className="grid grid-cols-3 gap-2.5 mb-5">
-          <Card className="border-0 shadow-sm rounded-2xl">
-            <CardContent className="p-3 text-center">
-              <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center mx-auto mb-1.5">
-                <Send className="w-4 h-4 text-primary" />
-              </div>
-              <p className="text-xl font-bold text-foreground">{totalApps}</p>
-              <p className="text-[10px] text-muted-foreground">Applied</p>
-            </CardContent>
-          </Card>
-          <Card className="border-0 shadow-sm rounded-2xl">
-            <CardContent className="p-3 text-center">
-              <div className="w-9 h-9 rounded-xl bg-accent/15 flex items-center justify-center mx-auto mb-1.5">
-                <Briefcase className="w-4 h-4 text-accent-foreground" />
-              </div>
-              <p className="text-xl font-bold text-foreground">{activeApps}</p>
-              <p className="text-[10px] text-muted-foreground">Active</p>
-            </CardContent>
-          </Card>
-          <Card className="border-0 shadow-sm rounded-2xl">
-            <CardContent className="p-3 text-center">
-              <div className="w-9 h-9 rounded-xl bg-secondary/10 flex items-center justify-center mx-auto mb-1.5">
-                <Bookmark className="w-4 h-4 text-secondary" />
-              </div>
-              <p className="text-xl font-bold text-foreground">{savedCount}</p>
-              <p className="text-[10px] text-muted-foreground">Saved</p>
-            </CardContent>
-          </Card>
+        {/* Stats Row */}
+        <div className="flex gap-2.5">
+          <StatChip icon={<Send className="w-4.5 h-4.5 text-primary" />} value={totalApps} label="Applied" />
+          <StatChip icon={<Briefcase className="w-4.5 h-4.5 text-primary" />} value={activeApps} label="Active" />
+          <StatChip icon={<Bookmark className="w-4.5 h-4.5 text-primary" />} value={savedCount} label="Saved" />
         </div>
 
         {/* Profile Completion */}
-        <Card className="border-0 shadow-sm rounded-2xl mb-5 cursor-pointer" onClick={() => navigate("/job-seeker-profile")}>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
-                <User className="w-4 h-4 text-primary" />
-                <span className="text-sm font-bold text-foreground">Profile</span>
+        {profileCompletion < 100 && (
+          <Card className="border-0 shadow-sm rounded-2xl cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate("/job-seeker-profile")}>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <User className="w-4 h-4 text-primary" />
+                  <span className="text-sm font-semibold text-foreground">Profile Completion</span>
+                </div>
+                <span className="text-sm font-bold text-primary">{profileCompletion}%</span>
               </div>
-              <span className="text-sm font-bold text-primary">{profileCompletion}%</span>
-            </div>
-            <Progress value={profileCompletion} className="h-2 rounded-full" />
-            <p className="text-xs text-muted-foreground mt-1.5">
-              {profileCompletion < 100 ? "Complete your profile to stand out" : "Your profile is complete! ✅"}
-            </p>
-          </CardContent>
-        </Card>
+              <Progress value={profileCompletion} className="h-2 rounded-full" />
+              <p className="text-xs text-muted-foreground mt-1.5">Complete your profile to stand out</p>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Quick Actions */}
-        <div className="grid grid-cols-2 gap-2.5 mb-6">
-          <Button variant="outline" className="h-auto py-3 rounded-xl flex flex-col gap-1" onClick={() => navigate("/job-board")}>
-            <Briefcase className="w-5 h-5 text-primary" />
+        <div className="grid grid-cols-2 gap-3">
+          <Button className="h-auto py-4 rounded-2xl flex flex-col gap-1.5 shadow-sm" onClick={() => navigate("/job-board")}>
+            <Briefcase className="w-6 h-6" />
             <span className="text-xs font-semibold">Browse Jobs</span>
           </Button>
-          <Button variant="outline" className="h-auto py-3 rounded-xl flex flex-col gap-1" onClick={() => navigate("/saved-jobs")}>
-            <Bookmark className="w-5 h-5 text-primary" />
+          <Button variant="outline" className="h-auto py-4 rounded-2xl flex flex-col gap-1.5 shadow-sm border-0 bg-muted/50" onClick={() => navigate("/saved-jobs")}>
+            <Bookmark className="w-6 h-6 text-primary" />
             <span className="text-xs font-semibold">Saved Jobs</span>
           </Button>
         </div>
 
         {/* Recent Applications */}
-        <div className="mb-6">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="font-display font-bold text-sm text-foreground uppercase tracking-wider">My Applications</h2>
-            {applications.length > 3 && (
-              <button onClick={() => navigate("/my-applications")} className="text-xs text-primary font-semibold">
-                View All <ChevronRight className="w-3 h-3 inline" />
-              </button>
-            )}
-          </div>
+        <div>
+          <SectionHeader title="My Applications" action={applications.length > 3 ? "View All" : undefined} onAction={() => navigate("/my-applications")} />
           {applications.length === 0 ? (
-            <Card className="border-dashed">
-              <CardContent className="py-8 text-center">
+            <Card className="border-dashed rounded-2xl">
+              <CardContent className="py-10 text-center">
+                <Send className="w-8 h-8 text-muted-foreground/40 mx-auto mb-3" />
                 <p className="text-muted-foreground text-sm mb-3">No applications yet</p>
-                <Button size="sm" className="rounded-xl" onClick={() => navigate("/job-board")}>
-                  Browse Jobs
-                </Button>
+                <Button size="sm" className="rounded-xl" onClick={() => navigate("/job-board")}>Browse Jobs</Button>
               </CardContent>
             </Card>
           ) : (
             <div className="space-y-2.5">
               {applications.slice(0, 3).map((app) => (
-                <Card key={app.id} className="border-0 shadow-sm rounded-2xl cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate(`/jobs/${app.job_post_id}`)}>
-                  <CardContent className="p-3.5">
-                    <div className="flex items-start justify-between mb-1.5">
+                <Card key={app.id} className="border-0 shadow-sm rounded-2xl cursor-pointer hover:shadow-md transition-all active:scale-[0.98]" onClick={() => navigate(`/jobs/${app.job_post_id}`)}>
+                  <CardContent className="p-4">
+                    <div className="flex items-start justify-between mb-2">
                       <h3 className="text-sm font-semibold text-foreground line-clamp-1 flex-1 mr-2">{app.job_title}</h3>
-                      <Badge variant="outline" className={`text-[10px] px-1.5 py-0 h-5 gap-1 shrink-0 ${statusColors[app.status] || statusColors.pending}`}>
+                      <Badge variant="outline" className={`text-[10px] px-2 py-0.5 h-5 gap-1 shrink-0 rounded-full ${statusColors[app.status] || statusColors.pending}`}>
                         {statusIcons[app.status]}
                         {app.status}
                       </Badge>
@@ -256,19 +219,20 @@ const JobSeekerDashboard = () => {
 
         {/* Recommended Jobs */}
         <div>
-          <h2 className="font-display font-bold text-sm text-foreground uppercase tracking-wider mb-3">Recommended Jobs</h2>
+          <SectionHeader title="Recommended Jobs" />
           {recommendedJobs.length === 0 ? (
-            <Card className="border-dashed">
-              <CardContent className="py-8 text-center">
+            <Card className="border-dashed rounded-2xl">
+              <CardContent className="py-10 text-center">
+                <Briefcase className="w-8 h-8 text-muted-foreground/40 mx-auto mb-3" />
                 <p className="text-muted-foreground text-sm">No open jobs right now</p>
               </CardContent>
             </Card>
           ) : (
             <div className="space-y-2.5">
               {recommendedJobs.map((job) => (
-                <Card key={job.id} className="border-0 shadow-sm rounded-2xl cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate(`/jobs/${job.id}`)}>
-                  <CardContent className="p-3.5">
-                    <h3 className="text-sm font-semibold text-foreground mb-1">{job.title}</h3>
+                <Card key={job.id} className="border-0 shadow-sm rounded-2xl cursor-pointer hover:shadow-md transition-all active:scale-[0.98]" onClick={() => navigate(`/jobs/${job.id}`)}>
+                  <CardContent className="p-4">
+                    <h3 className="text-sm font-semibold text-foreground mb-1.5">{job.title}</h3>
                     <div className="flex items-center gap-3 text-xs text-muted-foreground">
                       {(job.city || job.county) && (
                         <span className="flex items-center gap-1"><MapPin className="w-3 h-3" />{[job.city, job.county].filter(Boolean).join(", ")}</span>
@@ -282,6 +246,14 @@ const JobSeekerDashboard = () => {
           )}
         </div>
       </div>
+
+      {/* FAB */}
+      <button
+        onClick={() => navigate("/job-board")}
+        className="fixed bottom-6 right-6 z-40 w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-lg hover:shadow-xl flex items-center justify-center transition-all active:scale-90"
+      >
+        <Search className="w-6 h-6" />
+      </button>
     </div>
   );
 };
