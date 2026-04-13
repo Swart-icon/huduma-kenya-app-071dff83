@@ -53,6 +53,7 @@ import ProviderPublicProfile from "./pages/ProviderPublicProfile";
 import VideoFeed from "./pages/VideoFeed";
 import HelpCenter from "./pages/HelpCenter";
 import { OfflineBanner } from "@/components/OfflineBanner";
+import ProfileGuard from "@/components/ProfileGuard";
 
 // Keep React Query's online status in sync with browser events
 onlineManager.setEventListener((setOnline) => {
