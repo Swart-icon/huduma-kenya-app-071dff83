@@ -90,6 +90,13 @@ const Profile = () => {
           <span>Dashboard</span>
         </button>
 
+        {(!profile.full_name || !profile.phone) && (
+          <div className="mb-4 p-3 rounded-xl bg-primary/10 border border-primary/20">
+            <p className="text-sm font-semibold text-primary">⚠️ Complete your profile to continue</p>
+            <p className="text-xs text-muted-foreground mt-0.5">Fill in your full name and phone number to access the dashboard.</p>
+          </div>
+        )}
+
         <h1 className="font-display text-2xl font-bold text-foreground mb-6">Your Profile</h1>
 
         <Card className="mb-6">
