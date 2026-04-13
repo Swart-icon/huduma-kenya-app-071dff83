@@ -18,6 +18,8 @@ import AnalyticsDashboard from "@/components/admin/AnalyticsDashboard";
 /* ─── Analytics (extracted to separate component) ─── */
 
 /* ─── Users Management ─── */
+type RoleFilter = "all" | "provider" | "client" | "job_seeker";
+
 const UsersTab = () => {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -26,6 +28,7 @@ const UsersTab = () => {
   const [loading, setLoading] = useState(true);
   const [roles, setRoles] = useState<Record<string, string[]>>({});
   const [suspensions, setSuspensions] = useState<Record<string, any>>({});
+  const [roleFilter, setRoleFilter] = useState<RoleFilter>("all");
 
   useEffect(() => { loadUsers(); }, []);
 
@@ -67,15 +70,44 @@ const UsersTab = () => {
     else { toast({ title: "Suspension lifted" }); loadUsers(); }
   };
 
-  const filtered = profiles.filter((p) =>
-    !search || (p.full_name || "").toLowerCase().includes(search.toLowerCase()) ||
-    p.user_id.includes(search)
-  );
+  const filtered = profiles.filter((p) => {
+    const matchesSearch = !search || (p.full_name || "").toLowerCase().includes(search.toLowerCase()) || p.user_id.includes(search);
+    const userRoles = roles[p.user_id] || [];
+    const matchesRole = roleFilter === "all" || userRoles.includes(roleFilter);
+    return matchesSearch && matchesRole;
+  });
+
+  const roleCounts = {
+    all: profiles.length,
+    provider: profiles.filter(p => (roles[p.user_id] || []).includes("provider")).length,
+    client: profiles.filter(p => (roles[p.user_id] || []).includes("client")).length,
+    job_seeker: profiles.filter(p => (roles[p.user_id] || []).includes("job_seeker")).length,
+  };
 
   if (loading) return <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>;
 
   return (
     <div className="space-y-3">
+      {/* Role filter chips */}
+      <div className="flex gap-2 overflow-x-auto pb-1">
+        {([
+          { key: "all", label: "All", icon: Users },
+          { key: "provider", label: "Providers", icon: Briefcase },
+          { key: "client", label: "Clients", icon: Users },
+          { key: "job_seeker", label: "Job Seekers", icon: Search },
+        ] as const).map(({ key, label, icon: Icon }) => (
+          <Button
+            key={key}
+            size="sm"
+            variant={roleFilter === key ? "default" : "outline"}
+            className="text-xs h-8 rounded-full whitespace-nowrap"
+            onClick={() => setRoleFilter(key)}
+          >
+            <Icon className="w-3 h-3 mr-1" />
+            {label} ({roleCounts[key]})
+          </Button>
+        ))}
+      </div>
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
         <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search users..." className="h-9 pl-9 rounded-lg text-sm" />
