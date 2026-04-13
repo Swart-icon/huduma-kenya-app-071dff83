@@ -51,6 +51,7 @@ import MyApplications from "./pages/MyApplications";
 import SavedJobs from "./pages/SavedJobs";
 import ProviderPublicProfile from "./pages/ProviderPublicProfile";
 import VideoFeed from "./pages/VideoFeed";
+import UserVideos from "./pages/UserVideos";
 import HelpCenter from "./pages/HelpCenter";
 import { OfflineBanner } from "@/components/OfflineBanner";
 import ProfileGuard from "@/components/ProfileGuard";
@@ -144,6 +145,7 @@ const App = () => (
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
             <Route path="/terms-of-service" element={<TermsOfService />} />
             <Route path="/videos" element={<VideoFeed />} />
+            <Route path="/user/:userId/videos" element={<UserVideos />} />
             <Route path="/help" element={<HelpCenter />} />
             <Route path="*" element={<NotFound />} />
           </Routes>

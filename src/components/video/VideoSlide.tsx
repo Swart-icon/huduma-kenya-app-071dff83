@@ -92,7 +92,7 @@ export const VideoSlide = memo(({
   };
 
   const handleProfile = () => {
-    navigate(`/provider/${video.user_id}`);
+    navigate(`/user/${video.user_id}/videos`);
   };
 
   const handleServices = () => {
@@ -209,9 +209,11 @@ export const VideoSlide = memo(({
 
       {/* Bottom info */}
       <div className="absolute bottom-[72px] left-3 right-16">
-        <p className="text-white font-bold text-sm drop-shadow-lg">
-          @{video.profile?.full_name || "User"}
-        </p>
+        <button onClick={() => navigate(`/user/${video.user_id}/videos`)} className="text-left">
+          <p className="text-white font-bold text-sm drop-shadow-lg">
+            @{video.profile?.full_name || "User"}
+          </p>
+        </button>
         {video.title && (
           <p className="text-white/90 text-sm mt-1 line-clamp-2 drop-shadow">{video.title}</p>
         )}

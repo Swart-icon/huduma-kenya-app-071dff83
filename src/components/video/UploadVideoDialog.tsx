@@ -1,10 +1,9 @@
-import { useState } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCategories } from "@/hooks/useCategories";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -13,7 +12,8 @@ import {
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from "@/components/ui/dialog";
-import { Video, Upload, Loader2, X, AlertCircle } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Video, Upload, Loader2, X, AlertCircle, Camera, Square, CircleDot } from "lucide-react";
 import { toast } from "sonner";
 import { KENYAN_COUNTIES, getCitiesByCounty } from "@/lib/kenyanLocations";
 
@@ -42,20 +42,109 @@ export const UploadVideoDialog = ({ open, onOpenChange }: { open: boolean; onOpe
   const [errors, setErrors] = useState<ValidationErrors>({});
   const [submitted, setSubmitted] = useState(false);
 
+  // Recording state
+  const [recording, setRecording] = useState(false);
+  const [recordingTime, setRecordingTime] = useState(0);
+  const [stream, setStream] = useState<MediaStream | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const liveVideoRef = useRef<HTMLVideoElement>(null);
+
   const canUpload = roles.includes("provider") || roles.includes("job_seeker");
   const cities = county ? getCitiesByCounty(county) : [];
 
-  const resetForm = () => {
+  const resetForm = useCallback(() => {
     setFile(null); setDescription(""); setCategoryId("");
     setCounty(""); setCity(""); setPreview(null);
     setErrors({}); setSubmitted(false);
+    stopCamera();
+  }, []);
+
+  // Cleanup on dialog close
+  useEffect(() => {
+    if (!open) {
+      stopCamera();
+    }
+  }, [open]);
+
+  const stopCamera = () => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
+      mediaRecorderRef.current.stop();
+    }
+    if (stream) {
+      stream.getTracks().forEach((t) => t.stop());
+      setStream(null);
+    }
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+    setRecording(false);
+    setRecordingTime(0);
+  };
+
+  const startCamera = async () => {
+    try {
+      const mediaStream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "environment", width: { ideal: 1080 }, height: { ideal: 1920 } },
+        audio: true,
+      });
+      setStream(mediaStream);
+      if (liveVideoRef.current) {
+        liveVideoRef.current.srcObject = mediaStream;
+      }
+    } catch (err: any) {
+      toast.error("Camera access denied. Please allow camera permissions.");
+    }
+  };
+
+  const startRecording = () => {
+    if (!stream) return;
+    chunksRef.current = [];
+    const mimeType = MediaRecorder.isTypeSupported("video/webm;codecs=vp9,opus")
+      ? "video/webm;codecs=vp9,opus"
+      : "video/webm";
+    const recorder = new MediaRecorder(stream, { mimeType });
+    recorder.ondataavailable = (e) => {
+      if (e.data.size > 0) chunksRef.current.push(e.data);
+    };
+    recorder.onstop = () => {
+      const blob = new Blob(chunksRef.current, { type: "video/webm" });
+      const recordedFile = new File([blob], `recording-${Date.now()}.webm`, { type: "video/webm" });
+      setFile(recordedFile);
+      setPreview(URL.createObjectURL(blob));
+      stopCamera();
+    };
+    mediaRecorderRef.current = recorder;
+    recorder.start(1000);
+    setRecording(true);
+    setRecordingTime(0);
+    timerRef.current = setInterval(() => setRecordingTime((t) => t + 1), 1000);
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
+      mediaRecorderRef.current.stop();
+    }
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+    setRecording(false);
+  };
+
+  const formatTime = (s: number) => {
+    const m = Math.floor(s / 60);
+    const sec = s % 60;
+    return `${m}:${sec.toString().padStart(2, "0")}`;
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
     if (!f) return;
     if (!ALLOWED_FORMATS.includes(f.type)) { toast.error("Use MP4, WebM, or MOV format."); return; }
-    if (f.size > MAX_VIDEO_SIZE_MB * 1024 * 1024) { toast.error(`Video must be under 1GB`); return; }
+    if (f.size > MAX_VIDEO_SIZE_MB * 1024 * 1024) { toast.error("Video must be under 1GB"); return; }
     setFile(f);
     setPreview(URL.createObjectURL(f));
     if (submitted) setErrors((prev) => ({ ...prev, file: undefined }));
@@ -63,7 +152,7 @@ export const UploadVideoDialog = ({ open, onOpenChange }: { open: boolean; onOpe
 
   const validate = (): ValidationErrors => {
     const e: ValidationErrors = {};
-    if (!file) e.file = "Please select a video";
+    if (!file) e.file = "Please select or record a video";
     if (!description.trim()) e.description = "Description is required";
     else if (description.trim().length < 10) e.description = "Description must be at least 10 characters";
     if (!categoryId) e.category = "Category is required";
@@ -84,7 +173,7 @@ export const UploadVideoDialog = ({ open, onOpenChange }: { open: boolean; onOpe
 
     setUploading(true);
     try {
-      const ext = file.name.split(".").pop() || "mp4";
+      const ext = file.name.split(".").pop() || "webm";
       const path = `${user.id}/${Date.now()}.${ext}`;
       const { error: storageError } = await supabase.storage.from("user-videos").upload(path, file, { contentType: file.type });
       if (storageError) throw storageError;
@@ -140,22 +229,80 @@ export const UploadVideoDialog = ({ open, onOpenChange }: { open: boolean; onOpe
           <DialogTitle className="flex items-center gap-2">
             <Video className="w-5 h-5 text-primary" /> Upload Video
           </DialogTitle>
-          <DialogDescription>All fields are required before uploading</DialogDescription>
+          <DialogDescription>Record or upload a video</DialogDescription>
         </DialogHeader>
         <div className="space-y-4 mt-2">
-          {/* Video file */}
+          {/* Video source: Upload or Record */}
           {!file ? (
-            <div>
-              <label className={`flex flex-col items-center justify-center w-full h-36 border-2 border-dashed rounded-2xl cursor-pointer transition-colors ${
-                errors.file ? "border-destructive bg-destructive/5" : "border-primary/30 hover:border-primary/60 bg-primary/5"
-              }`}>
-                <Upload className="w-8 h-8 text-primary/60 mb-2" />
-                <p className="text-sm font-medium text-primary">Tap to select video</p>
-                <p className="text-xs text-muted-foreground mt-1">MP4, WebM, MOV • Max 1GB</p>
-                <input type="file" accept="video/mp4,video/webm,video/quicktime,video/x-m4v" className="hidden" onChange={handleFileSelect} />
-              </label>
-              <FieldError message={errors.file} />
-            </div>
+            <Tabs defaultValue="upload" className="w-full">
+              <TabsList className="w-full">
+                <TabsTrigger value="upload" className="flex-1 gap-1.5">
+                  <Upload className="w-4 h-4" /> Upload
+                </TabsTrigger>
+                <TabsTrigger value="record" className="flex-1 gap-1.5">
+                  <Camera className="w-4 h-4" /> Record
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="upload">
+                <label className={`flex flex-col items-center justify-center w-full h-36 border-2 border-dashed rounded-2xl cursor-pointer transition-colors ${
+                  errors.file ? "border-destructive bg-destructive/5" : "border-primary/30 hover:border-primary/60 bg-primary/5"
+                }`}>
+                  <Upload className="w-8 h-8 text-primary/60 mb-2" />
+                  <p className="text-sm font-medium text-primary">Tap to select video</p>
+                  <p className="text-xs text-muted-foreground mt-1">MP4, WebM, MOV • Max 1GB</p>
+                  <input type="file" accept="video/mp4,video/webm,video/quicktime,video/x-m4v" className="hidden" onChange={handleFileSelect} />
+                </label>
+                <FieldError message={errors.file} />
+              </TabsContent>
+
+              <TabsContent value="record">
+                <div className="space-y-3">
+                  {!stream ? (
+                    <button
+                      onClick={startCamera}
+                      className="flex flex-col items-center justify-center w-full h-36 border-2 border-dashed rounded-2xl border-primary/30 hover:border-primary/60 bg-primary/5 transition-colors"
+                    >
+                      <Camera className="w-8 h-8 text-primary/60 mb-2" />
+                      <p className="text-sm font-medium text-primary">Tap to open camera</p>
+                      <p className="text-xs text-muted-foreground mt-1">Record directly from your device</p>
+                    </button>
+                  ) : (
+                    <div className="relative rounded-2xl overflow-hidden bg-black">
+                      <video
+                        ref={liveVideoRef}
+                        autoPlay
+                        playsInline
+                        muted
+                        className="w-full h-48 object-cover mirror"
+                        style={{ transform: "scaleX(-1)" }}
+                      />
+                      {recording && (
+                        <div className="absolute top-3 left-3 flex items-center gap-2 bg-black/60 rounded-full px-3 py-1">
+                          <div className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse" />
+                          <span className="text-white text-xs font-mono">{formatTime(recordingTime)}</span>
+                        </div>
+                      )}
+                      <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-3">
+                        {!recording ? (
+                          <Button onClick={startRecording} size="sm" className="rounded-full bg-red-500 hover:bg-red-600 gap-1.5">
+                            <CircleDot className="w-4 h-4" /> Start Recording
+                          </Button>
+                        ) : (
+                          <Button onClick={stopRecording} size="sm" variant="destructive" className="rounded-full gap-1.5">
+                            <Square className="w-3 h-3" /> Stop
+                          </Button>
+                        )}
+                        <Button onClick={stopCamera} size="sm" variant="outline" className="rounded-full bg-white/10 border-white/20 text-white hover:bg-white/20">
+                          Cancel
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                <FieldError message={errors.file} />
+              </TabsContent>
+            </Tabs>
           ) : (
             <div className="relative rounded-2xl overflow-hidden bg-black">
               <video src={preview!} className="w-full max-h-40 object-contain" controls />
@@ -205,7 +352,7 @@ export const UploadVideoDialog = ({ open, onOpenChange }: { open: boolean; onOpe
             <FieldError message={errors.category} />
           </div>
 
-          {/* Location: County */}
+          {/* County */}
           <div>
             <Label className="text-sm font-medium">
               County <span className="text-destructive">*</span>
@@ -225,7 +372,7 @@ export const UploadVideoDialog = ({ open, onOpenChange }: { open: boolean; onOpe
             <FieldError message={errors.county} />
           </div>
 
-          {/* Location: City */}
+          {/* City */}
           <div>
             <Label className="text-sm font-medium">
               City <span className="text-destructive">*</span>
