@@ -28,24 +28,29 @@ const TABS: { key: FeedTab; label: string }[] = [
 ];
 
 /* ─── Auth Prompt Dialog ─── */
-const AuthPromptDialog = ({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) => {
+const AuthPromptDialog = ({ open, onOpenChange, targetRole }: { open: boolean; onOpenChange: (o: boolean) => void; targetRole?: string }) => {
   const navigate = useNavigate();
+  const roleParam = targetRole ? `?role=${targetRole}` : "";
+  const roleLabels: Record<string, string> = { provider: "Service Provider", job_seeker: "Job Seeker", client: "Client" };
+  const roleLabel = targetRole ? roleLabels[targetRole] || "" : "";
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-sm mx-auto text-center">
         <DialogHeader>
           <DialogTitle className="flex items-center justify-center gap-2 text-lg">
-            <LogIn className="w-5 h-5 text-primary" /> Join Huduma
+            <LogIn className="w-5 h-5 text-primary" /> Join Huduma{roleLabel ? ` as ${roleLabel}` : ""}
           </DialogTitle>
           <DialogDescription>
-            Sign up or log in to like, comment, call providers, and upload videos.
+            {roleLabel
+              ? `Sign up or log in as a ${roleLabel} to access this section.`
+              : "Sign up or log in to like, comment, call providers, and upload videos."}
           </DialogDescription>
         </DialogHeader>
         <div className="flex flex-col gap-3 mt-4">
-          <Button className="w-full rounded-xl" onClick={() => { onOpenChange(false); navigate("/register"); }}>
+          <Button className="w-full rounded-xl" onClick={() => { onOpenChange(false); navigate(`/register${roleParam}`); }}>
             Create Account
           </Button>
-          <Button variant="outline" className="w-full rounded-xl" onClick={() => { onOpenChange(false); navigate("/login"); }}>
+          <Button variant="outline" className="w-full rounded-xl" onClick={() => { onOpenChange(false); navigate(`/login${roleParam}`); }}>
             Sign In
           </Button>
           <button className="text-sm text-muted-foreground hover:text-foreground transition-colors" onClick={() => onOpenChange(false)}>
@@ -92,6 +97,7 @@ const VideoFeed = () => {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [authPromptOpen, setAuthPromptOpen] = useState(false);
+  const [authPromptRole, setAuthPromptRole] = useState<string | undefined>(undefined);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const isGuest = !user;
@@ -201,7 +207,10 @@ const VideoFeed = () => {
     setCommentsOpen(true);
   };
 
-  const handleAuthRequired = () => setAuthPromptOpen(true);
+  const handleAuthRequired = (targetRole?: string) => {
+    setAuthPromptRole(targetRole);
+    setAuthPromptOpen(true);
+  };
 
   return (
     <div className="h-screen w-screen bg-black relative overflow-hidden flex flex-col">
@@ -254,11 +263,17 @@ const VideoFeed = () => {
               key={tab.key}
               onClick={() => {
                 if (tab.key === "service") {
-                  navigate("/categories");
+                  if (isGuest) { handleAuthRequired("provider"); }
+                  else if (activeRole === "provider") { navigate("/dashboard"); }
+                  else { navigate("/categories"); }
                 } else if (tab.key === "jobseeker") {
-                  navigate("/jobs");
+                  if (isGuest) { handleAuthRequired("job_seeker"); }
+                  else if (activeRole === "job_seeker") { navigate("/job-seeker"); }
+                  else { navigate("/jobs"); }
                 } else if (tab.key === "client") {
-                  navigate("/dashboard");
+                  if (isGuest) { handleAuthRequired("client"); }
+                  else if (activeRole === "client") { navigate("/dashboard"); }
+                  else { navigate("/dashboard"); }
                 } else {
                   setActiveTab(tab.key);
                 }
@@ -367,7 +382,7 @@ const VideoFeed = () => {
         </div>
       </div>
 
-      <AuthPromptDialog open={authPromptOpen} onOpenChange={setAuthPromptOpen} />
+      <AuthPromptDialog open={authPromptOpen} onOpenChange={setAuthPromptOpen} targetRole={authPromptRole} />
       <CommentsSheet open={commentsOpen} onOpenChange={setCommentsOpen} videoId={commentVideoId} />
       {canUpload && <UploadVideoDialog open={uploadOpen} onOpenChange={setUploadOpen} />}
     </div>
