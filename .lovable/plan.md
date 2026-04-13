@@ -1,49 +1,44 @@
 
 
-## Plan: First-Time User Onboarding Walkthrough
+## Plan: In-App Camera Recording & User Video Profile
 
-### Overview
-Add a swipeable full-screen onboarding experience that shows once for new visitors before the Welcome page. Uses `localStorage` to track completion so it never shows again.
+Two features to add:
 
-### Flow
-1. User opens app for the first time → `Index.tsx` checks `localStorage` for `huduma-onboarded` flag
-2. If not onboarded → redirect to `/onboarding`
-3. User swipes through 4 slides, can skip or tap "Get Started" on the last slide
-4. On completion → set `huduma-onboarded = true` in localStorage → navigate to `/welcome`
+### 1. In-App Camera Recording
 
-### Onboarding Slides (4 screens)
-1. **Find Services** — "Discover trusted professionals near you" (Search/MapPin icon)
-2. **Hire or Get Hired** — "Post jobs or apply as a skilled professional" (Briefcase icon)
-3. **Share Your Work** — "Post videos and stories to showcase your skills" (Video icon)
-4. **Secure Payments** — "Book and pay with confidence" (Shield icon)
+Update `UploadVideoDialog.tsx` to offer two modes: **Record** (using `MediaRecorder` API with the phone camera) and **Upload** (existing file picker).
 
-### UI Design
-- Full-screen slides with large centered icon, bold heading, short subtitle
-- Dot indicators at the bottom showing current slide
-- "Skip" link top-right on all slides except the last
-- "Next" button on slides 1-3, "Get Started" button on slide 4
-- Swipe gesture support via touch events
-- Mobile-first, dark/light theme compatible
+- Add a "Record Video" tab/button alongside "Upload Video"
+- When "Record" is selected, show a live camera preview using `navigator.mediaDevices.getUserMedia({ video: true, audio: true })`
+- Add record/stop controls with a timer display
+- On stop, convert the recorded `Blob` to a `File` and feed it into the existing upload flow (description, category, location fields)
+- The recorded video uses `video/webm` format (natively supported by `MediaRecorder`)
+- Reuse the same metadata form and upload logic already in place
 
-### Technical Details
+### 2. User Video Profile (My Videos)
 
-**New file:** `src/pages/Onboarding.tsx`
-- Swipeable carousel using touch event handlers (no extra dependency)
-- Each slide is a full-viewport div with icon, title, subtitle
-- Dot pagination + Next/Skip/Get Started buttons
-- On complete: `localStorage.setItem("huduma-onboarded", "true")` then navigate to `/welcome`
+Add a profile-style view showing all videos posted by a specific user, similar to TikTok's profile grid.
 
-**Edit:** `src/pages/Index.tsx`
-- Before redirecting to `/welcome`, check if `localStorage.getItem("huduma-onboarded")` is falsy
-- If not onboarded → navigate to `/onboarding` instead
+- Create a new page `src/pages/UserVideos.tsx` at route `/user/:userId/videos`
+- Query `videos` table filtered by `user_id`, ordered by `created_at desc`
+- Display as a grid of video thumbnails (3 columns) with view count overlay
+- Tapping a thumbnail opens that video in a full-screen vertical player (reuse `VideoSlide`)
+- Add a "My Videos" link/button on the Profile page and the bottom nav "Me" tab
+- On each `VideoSlide`, make the username/avatar tappable to navigate to that user's video profile
 
-**Edit:** `src/App.tsx`
-- Add route: `<Route path="/onboarding" element={<Onboarding />} />`
+### Files to create/edit
 
-### Files Changed
-| File | Action |
+| File | Change |
 |------|--------|
-| `src/pages/Onboarding.tsx` | Create |
-| `src/pages/Index.tsx` | Edit redirect logic |
-| `src/App.tsx` | Add route |
+| `src/components/video/UploadVideoDialog.tsx` | Add camera recording tab with MediaRecorder logic |
+| `src/pages/UserVideos.tsx` | New page: user's video grid + full-screen viewer |
+| `src/App.tsx` | Add `/user/:userId/videos` route |
+| `src/components/video/VideoSlide.tsx` | Make username/avatar tappable to navigate to user's videos |
+| `src/pages/Profile.tsx` | Add "My Videos" navigation card |
+
+### Technical details
+
+- **MediaRecorder API**: Uses `getUserMedia` for camera access, records to `webm` blobs, converts to `File` for the existing Supabase storage upload pipeline
+- **Video grid**: Uses CSS grid with `aspect-video` thumbnails; falls back to first frame via `<video>` element if no `thumbnail_url` exists
+- **No database changes needed** -- all data already exists in the `videos` table
 
