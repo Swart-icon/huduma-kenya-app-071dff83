@@ -22,7 +22,7 @@ import {
   ClipboardList,
   MessageCircle,
   Bell,
-  ArrowLeftRight,
+  
   Star,
   MapPin,
   ChevronRight,
@@ -113,41 +113,6 @@ const QuickAction = ({
   </Card>
 );
 
-/* ────────── Role Switcher ────────── */
-const RoleSwitcher = () => {
-  const { role, roles, switchRole } = useAuth();
-  const nonAdminRoles = roles.filter((r) => r !== "admin");
-
-  if (nonAdminRoles.length <= 1) return null;
-
-  return (
-    <div className="mb-5">
-      <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1.5">
-        <ArrowLeftRight className="w-3 h-3" /> Switch Role
-      </p>
-      <div className="flex gap-2">
-        {nonAdminRoles.map((r) => {
-          const cfg = roleConfig[r];
-          const isActive = r === role;
-          return (
-            <button
-              key={r}
-              onClick={() => switchRole(r as AppRole)}
-              className={`flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${
-                isActive
-                  ? "bg-primary text-primary-foreground shadow-md"
-                  : "bg-card text-muted-foreground hover:bg-muted shadow-sm border border-border"
-              }`}
-            >
-              {cfg?.icon}
-              <span className="truncate">{cfg?.title?.split(" ")[0]}</span>
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
-};
 
 /* ────────── Main Dashboard ────────── */
 const Dashboard = () => {
@@ -293,7 +258,7 @@ const Dashboard = () => {
           </Card>
         )}
 
-        <RoleSwitcher />
+        
 
         {/* ─── Story Bar ─── */}
         <FeatureTooltip id="story-bar" message="Share stories & boost your visibility!" position="top" className="w-full">
