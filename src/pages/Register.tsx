@@ -50,13 +50,6 @@ const Register = () => {
     return { level: 2, label: "Medium", color: "bg-accent" };
   })();
 
-  const toggleRole = (roleValue: AppRole) => {
-    setSelectedRoles((prev) =>
-      prev.includes(roleValue)
-        ? prev.filter((r) => r !== roleValue)
-        : [...prev, roleValue]
-    );
-  };
 
   const handleCredentialsSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
