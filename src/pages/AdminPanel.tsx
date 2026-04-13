@@ -18,6 +18,8 @@ import AnalyticsDashboard from "@/components/admin/AnalyticsDashboard";
 /* ─── Analytics (extracted to separate component) ─── */
 
 /* ─── Users Management ─── */
+type RoleFilter = "all" | "provider" | "client" | "job_seeker";
+
 const UsersTab = () => {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -26,6 +28,7 @@ const UsersTab = () => {
   const [loading, setLoading] = useState(true);
   const [roles, setRoles] = useState<Record<string, string[]>>({});
   const [suspensions, setSuspensions] = useState<Record<string, any>>({});
+  const [roleFilter, setRoleFilter] = useState<RoleFilter>("all");
 
   useEffect(() => { loadUsers(); }, []);
 
@@ -67,10 +70,19 @@ const UsersTab = () => {
     else { toast({ title: "Suspension lifted" }); loadUsers(); }
   };
 
-  const filtered = profiles.filter((p) =>
-    !search || (p.full_name || "").toLowerCase().includes(search.toLowerCase()) ||
-    p.user_id.includes(search)
-  );
+  const filtered = profiles.filter((p) => {
+    const matchesSearch = !search || (p.full_name || "").toLowerCase().includes(search.toLowerCase()) || p.user_id.includes(search);
+    const userRoles = roles[p.user_id] || [];
+    const matchesRole = roleFilter === "all" || userRoles.includes(roleFilter);
+    return matchesSearch && matchesRole;
+  });
+
+  const roleCounts = {
+    all: profiles.length,
+    provider: profiles.filter(p => (roles[p.user_id] || []).includes("provider")).length,
+    client: profiles.filter(p => (roles[p.user_id] || []).includes("client")).length,
+    job_seeker: profiles.filter(p => (roles[p.user_id] || []).includes("job_seeker")).length,
+  };
 
   if (loading) return <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>;
 
