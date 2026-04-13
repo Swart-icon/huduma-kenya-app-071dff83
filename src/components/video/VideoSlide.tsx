@@ -15,7 +15,7 @@ export const VideoSlide = memo(({
 }: {
   video: VideoItem; isActive: boolean; isMuted: boolean;
   onToggleMute: () => void; onOpenComments: (id: string) => void; globalIndex: number;
-  onAuthRequired?: () => void;
+  onAuthRequired?: (targetRole?: string) => void;
   activeRole?: AppRole | null;
 }) => {
   const { user } = useAuth();
@@ -96,20 +96,10 @@ export const VideoSlide = memo(({
   };
 
   const handleServices = () => {
-    if (!user) {
-      // Guests can browse services in preview mode
-      if (video.category_id) {
-        navigate(`/categories/${video.category_id}`);
-      } else {
-        navigate("/categories");
-      }
-      return;
-    }
+    if (requireAuth()) return;
     if (activeRole === "provider") {
-      // Providers go to their own services dashboard
       navigate("/my-services");
     } else {
-      // Clients & job seekers browse providers filtered by category
       if (video.category_id) {
         navigate(`/categories/${video.category_id}`);
       } else {
@@ -119,16 +109,10 @@ export const VideoSlide = memo(({
   };
 
   const handleJobs = () => {
-    if (!user) {
-      // Guests can browse jobs in preview mode
-      navigate("/jobs");
-      return;
-    }
+    if (requireAuth()) return;
     if (activeRole === "client") {
-      // Clients see their posted jobs & applicants
       navigate("/my-jobs");
     } else {
-      // Providers & job seekers browse available jobs to apply
       if (video.category_id) {
         navigate(`/jobs?category=${video.category_id}`);
       } else {
