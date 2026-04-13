@@ -99,6 +99,7 @@ const App = () => (
         <AuthProvider>
           <LocationProvider>
           <OfflineBanner />
+          <ProfileGuard>
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/onboarding" element={<Onboarding />} />
@@ -146,6 +147,7 @@ const App = () => (
             <Route path="/help" element={<HelpCenter />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
+          </ProfileGuard>
         </LocationProvider>
         </AuthProvider>
       </BrowserRouter>
