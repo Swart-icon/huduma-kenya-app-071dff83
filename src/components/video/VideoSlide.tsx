@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import {
-  Play, Heart, MessageCircle, User, Phone, MapPin, Briefcase, Wrench,
+  Play, Heart, MessageCircle, User, Phone, MapPin, Briefcase, Wrench, Flag,
 } from "lucide-react";
 import { toast } from "sonner";
 import type { VideoItem } from "./types";
@@ -191,6 +191,19 @@ export const VideoSlide = memo(({
             <Phone className="w-4 h-4 text-green-400" />
           </div>
           <span className="text-white text-[10px] mt-0.5">Call</span>
+        </button>
+
+        <button
+          onClick={() => {
+            if (requireAuth()) return;
+            navigate(`/report/${video.user_id}`);
+          }}
+          className="flex flex-col items-center"
+        >
+          <div className="w-9 h-9 rounded-full bg-red-500/20 flex items-center justify-center">
+            <Flag className="w-4 h-4 text-red-400" />
+          </div>
+          <span className="text-white text-[10px] mt-0.5">Report</span>
         </button>
       </div>
 
