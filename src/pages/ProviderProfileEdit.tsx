@@ -377,6 +377,13 @@ const ProviderProfileEdit = () => {
           </Button>
         </div>
 
+        {isNew && (
+          <div className="mb-4 p-3 rounded-xl bg-primary/10 border border-primary/20">
+            <p className="text-sm font-semibold text-primary">⚠️ Complete your profile to continue</p>
+            <p className="text-xs text-muted-foreground mt-0.5">Fill in your business name, phone, and city to access the dashboard.</p>
+          </div>
+        )}
+
         <h1 className="font-display text-2xl font-bold text-foreground mb-6">
           {isNew ? "Create Business Profile" : "Edit Business Profile"}
         </h1>
