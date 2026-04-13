@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,6 +11,8 @@ import { useToast } from "@/hooks/use-toast";
 const Login = () => {
   const navigate = useNavigate();
   const { user, role, roles, loading: authLoading, signIn } = useAuth();
+  const [searchParams] = useSearchParams();
+  const roleParam = searchParams.get("role");
   const { toast } = useToast();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -23,7 +25,7 @@ const Login = () => {
       if (hasNonAdminRole) {
         navigate("/videos");
       } else {
-        navigate("/register"); // needs role selection
+        navigate(roleParam ? `/register?role=${roleParam}` : "/register");
       }
     }
   }, [authLoading, user, roles, navigate]);
@@ -123,7 +125,7 @@ const Login = () => {
 
         <p className="text-center text-sm text-muted-foreground mt-4">
           Don't have an account?{" "}
-          <Link to="/register" className="text-primary font-semibold hover:underline">Create Account</Link>
+          <Link to={roleParam ? `/register?role=${roleParam}` : "/register"} className="text-primary font-semibold hover:underline">Create Account</Link>
         </p>
       </div>
     </div>
