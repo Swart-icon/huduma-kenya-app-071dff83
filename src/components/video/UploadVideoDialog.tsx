@@ -93,16 +93,28 @@ export const UploadVideoDialog = ({ open, onOpenChange }: { open: boolean; onOpe
     setRecordingTime(0);
   };
 
-  const startCamera = async () => {
+  const startCamera = async (mode: "user" | "environment" = facingMode) => {
     try {
       const mediaStream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "environment", width: { ideal: 1080 }, height: { ideal: 1920 } },
+        video: { facingMode: mode, width: { ideal: 1080 }, height: { ideal: 1920 } },
         audio: true,
       });
       setStream(mediaStream);
+      setFacingMode(mode);
     } catch (err: any) {
       toast.error("Camera access denied. Please allow camera permissions.");
     }
+  };
+
+  const flipCamera = async () => {
+    if (recording) return;
+    // Stop current stream
+    if (stream) {
+      stream.getTracks().forEach((t) => t.stop());
+      setStream(null);
+    }
+    const newMode = facingMode === "user" ? "environment" : "user";
+    await startCamera(newMode);
   };
 
   const startRecording = () => {
