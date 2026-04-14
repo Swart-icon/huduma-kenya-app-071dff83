@@ -13,7 +13,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Video, Upload, Loader2, X, AlertCircle, Camera, Square, CircleDot } from "lucide-react";
+import { Video, Upload, Loader2, X, AlertCircle, Camera, Square, CircleDot, SwitchCamera } from "lucide-react";
 import { toast } from "sonner";
 import { KENYAN_COUNTIES, getCitiesByCounty } from "@/lib/kenyanLocations";
 
