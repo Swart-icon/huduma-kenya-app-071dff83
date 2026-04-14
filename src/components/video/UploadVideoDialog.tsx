@@ -68,6 +68,14 @@ export const UploadVideoDialog = ({ open, onOpenChange }: { open: boolean; onOpe
     }
   }, [open]);
 
+  // Sync stream to video element after render
+  useEffect(() => {
+    if (stream && liveVideoRef.current) {
+      liveVideoRef.current.srcObject = stream;
+      liveVideoRef.current.play().catch(() => {});
+    }
+  }, [stream]);
+
   const stopCamera = () => {
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
       mediaRecorderRef.current.stop();
@@ -91,9 +99,6 @@ export const UploadVideoDialog = ({ open, onOpenChange }: { open: boolean; onOpe
         audio: true,
       });
       setStream(mediaStream);
-      if (liveVideoRef.current) {
-        liveVideoRef.current.srcObject = mediaStream;
-      }
     } catch (err: any) {
       toast.error("Camera access denied. Please allow camera permissions.");
     }
