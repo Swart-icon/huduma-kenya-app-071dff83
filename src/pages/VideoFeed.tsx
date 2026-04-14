@@ -19,6 +19,7 @@ import { UploadVideoDialog } from "@/components/video/UploadVideoDialog";
 import { CommentsSheet } from "@/components/video/CommentsSheet";
 import { VideoSlide } from "@/components/video/VideoSlide";
 import type { VideoItem, FeedTab } from "@/components/video/types";
+import { VideoSearchSuggestions } from "@/components/video/VideoSearchSuggestions";
 
 const PAGE_SIZE = 10;
 const GUEST_VIDEO_LIMIT = 5;
