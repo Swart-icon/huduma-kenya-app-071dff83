@@ -1,13 +1,16 @@
-import { useState, useEffect, useRef, useMemo } from "react";
-import { MapPin, Tag, FileText, Sparkles, Search } from "lucide-react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
+import { MapPin, Tag, FileText, Sparkles, Search, Clock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useCategories } from "@/hooks/useCategories";
 import { KENYAN_LOCATIONS } from "@/lib/kenyanLocations";
+import { useLocation } from "@/contexts/LocationContext";
+import { getDistanceKm } from "@/hooks/useGeolocation";
 
 type Suggestion = {
-  type: "category" | "location" | "keyword" | "correction";
+  type: "category" | "location" | "keyword" | "correction" | "recent";
   label: string;
   sublabel?: string;
+  score: number; // higher = better
 };
 
 type Props = {
@@ -16,13 +19,30 @@ type Props = {
   visible: boolean;
 };
 
-const MAX_SUGGESTIONS = 7;
+const MAX_SUGGESTIONS = 8;
+const HISTORY_KEY = "huduma_search_history";
+const MAX_HISTORY = 10;
+
+/* ─── Search history helpers ─── */
+const getSearchHistory = (): string[] => {
+  try {
+    return JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]").slice(0, MAX_HISTORY);
+  } catch { return []; }
+};
+
+export const saveSearchTerm = (term: string) => {
+  if (!term.trim()) return;
+  const history = getSearchHistory().filter((h) => h.toLowerCase() !== term.toLowerCase());
+  history.unshift(term.trim());
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(history.slice(0, MAX_HISTORY)));
+};
 
 const iconMap: Record<Suggestion["type"], React.ReactNode> = {
   category: <Tag className="w-3.5 h-3.5 text-primary shrink-0" />,
   location: <MapPin className="w-3.5 h-3.5 text-emerald-400 shrink-0" />,
   keyword: <FileText className="w-3.5 h-3.5 text-amber-400 shrink-0" />,
   correction: <Search className="w-3.5 h-3.5 text-rose-400 shrink-0" />,
+  recent: <Clock className="w-3.5 h-3.5 text-white/50 shrink-0" />,
 };
 
 const labelMap: Record<string, string> = {
@@ -30,9 +50,10 @@ const labelMap: Record<string, string> = {
   location: "Location",
   keyword: "Video",
   correction: "Did you mean?",
+  recent: "Recent",
 };
 
-/* ─── Levenshtein distance for fuzzy matching ─── */
+/* ─── Levenshtein ─── */
 const levenshtein = (a: string, b: string): number => {
   const m = a.length, n = b.length;
   if (m === 0) return n;
@@ -50,28 +71,23 @@ const levenshtein = (a: string, b: string): number => {
   return dp[m][n];
 };
 
-/* Threshold scales with word length */
 const fuzzyMatch = (input: string, target: string): number => {
   const a = input.toLowerCase(), b = target.toLowerCase();
-  if (b.includes(a)) return 0; // exact substring → perfect
+  if (b.includes(a)) return 0;
   const dist = levenshtein(a, b);
   const maxLen = Math.max(a.length, b.length);
-  // Allow ~30 % edits
   return dist <= Math.max(2, Math.floor(maxLen * 0.35)) ? dist : Infinity;
 };
 
-/* Find best fuzzy matches from a dictionary */
 const fuzzyBest = (
   input: string,
-  dict: { text: string; meta?: string }[],
+  dict: { text: string }[],
   limit = 3,
-): { text: string; meta?: string; dist: number }[] => {
-  const scored = dict
-    .map((d) => ({ ...d, dist: fuzzyMatch(input, d.text) }))
-    .filter((d) => d.dist > 0 && d.dist < Infinity) // exclude exact & no-match
-    .sort((a, b) => a.dist - b.dist);
-  return scored.slice(0, limit);
-};
+) => dict
+  .map((d) => ({ ...d, dist: fuzzyMatch(input, d.text) }))
+  .filter((d) => d.dist > 0 && d.dist < Infinity)
+  .sort((a, b) => a.dist - b.dist)
+  .slice(0, limit);
 
 const highlightMatch = (text: string, query: string) => {
   if (!query) return text;
@@ -86,12 +102,32 @@ const highlightMatch = (text: string, query: string) => {
   );
 };
 
+/* ─── Category popularity cache (video counts) ─── */
+type CatPopularity = Record<string, number>;
+
 export const VideoSearchSuggestions = ({ query, onSelect, visible }: Props) => {
   const { data: categories } = useCategories();
-  const [videoTitles, setVideoTitles] = useState<string[]>([]);
+  const { location: userLocation } = useLocation();
+  const [videoTitles, setVideoTitles] = useState<{ title: string; views: number; likes: number }[]>([]);
+  const [catPopularity, setCatPopularity] = useState<CatPopularity>({});
   const debounceRef = useRef<ReturnType<typeof setTimeout>>();
 
-  // Fetch matching video titles with debounce
+  // Fetch category popularity once
+  useEffect(() => {
+    supabase
+      .from("videos")
+      .select("category_id")
+      .eq("status", "active")
+      .then(({ data }) => {
+        const counts: CatPopularity = {};
+        (data || []).forEach((v) => {
+          if (v.category_id) counts[v.category_id] = (counts[v.category_id] || 0) + 1;
+        });
+        setCatPopularity(counts);
+      });
+  }, []);
+
+  // Fetch matching video titles with engagement data
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     const trimmed = query.trim();
@@ -102,53 +138,120 @@ export const VideoSearchSuggestions = ({ query, onSelect, visible }: Props) => {
     debounceRef.current = setTimeout(async () => {
       const { data } = await supabase
         .from("videos")
-        .select("title")
+        .select("title, view_count, like_count")
         .eq("status", "active")
         .ilike("title", `%${trimmed}%`)
-        .limit(5);
-      const unique = [...new Set((data || []).map((v) => v.title).filter(Boolean))];
-      setVideoTitles(unique.slice(0, 5));
+        .order("view_count", { ascending: false })
+        .limit(8);
+      const seen = new Set<string>();
+      const unique = (data || []).filter((v) => {
+        const key = v.title.toLowerCase();
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+      setVideoTitles(unique.slice(0, 5).map((v) => ({
+        title: v.title,
+        views: v.view_count || 0,
+        likes: v.like_count || 0,
+      })));
     }, 150);
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
   }, [query]);
 
+  /* ─── Score a location by proximity to user ─── */
+  const locationScore = useCallback((locName: string): number => {
+    if (!userLocation) return 0;
+    const loc = KENYAN_LOCATIONS.find((l) => l.name.toLowerCase() === locName.toLowerCase());
+    if (!loc) return 0;
+    const dist = getDistanceKm(userLocation.latitude, userLocation.longitude, loc.lat, loc.lng);
+    // Closer = higher score. Max 50 pts for <5km, decaying
+    if (dist < 5) return 50;
+    if (dist < 20) return 40;
+    if (dist < 50) return 30;
+    if (dist < 100) return 15;
+    return 5;
+  }, [userLocation]);
+
   const suggestions = useMemo<Suggestion[]>(() => {
     const trimmed = query.trim().toLowerCase();
-    if (!trimmed) return [];
-
     const results: Suggestion[] = [];
 
-    // ── Exact substring matches ──
-    const catNames = (categories || []).map((c) => c.name);
-    const exactCats = catNames.filter((n) => n.toLowerCase().includes(trimmed));
-    exactCats.slice(0, 3).forEach((n) => results.push({ type: "category", label: n }));
+    // ── Recent searches (show when empty query) ──
+    if (!trimmed) {
+      getSearchHistory().slice(0, 5).forEach((h, i) => {
+        results.push({ type: "recent", label: h, score: 100 - i });
+      });
+      return results.slice(0, MAX_SUGGESTIONS);
+    }
 
-    const exactLocs = KENYAN_LOCATIONS.filter(
-      (l) => l.name.toLowerCase().includes(trimmed) || l.county.toLowerCase().includes(trimmed),
-    );
-    exactLocs.slice(0, 3).forEach((l) => results.push({ type: "location", label: l.name, sublabel: l.county }));
+    // ── Category matches (scored by popularity) ──
+    const catNames = (categories || []);
+    catNames
+      .filter((c) => c.name.toLowerCase().includes(trimmed))
+      .forEach((c) => {
+        const popularity = catPopularity[c.id] || 0;
+        // Base 60 for exact match + popularity bonus (max ~30) + sort order bonus
+        results.push({
+          type: "category",
+          label: c.name,
+          score: 60 + Math.min(popularity * 2, 30) + (10 - c.sort_order * 0.5),
+        });
+      });
 
-    const exactVids = videoTitles.filter((t) => t.toLowerCase().includes(trimmed));
-    exactVids.slice(0, 3).forEach((t) => results.push({ type: "keyword", label: t }));
+    // ── Location matches (scored by proximity) ──
+    KENYAN_LOCATIONS
+      .filter((l) => l.name.toLowerCase().includes(trimmed) || l.county.toLowerCase().includes(trimmed))
+      .forEach((l) => {
+        const proxScore = locationScore(l.name);
+        results.push({
+          type: "location",
+          label: l.name,
+          sublabel: l.county,
+          score: 50 + proxScore,
+        });
+      });
+
+    // ── Video title matches (scored by engagement) ──
+    videoTitles
+      .filter((t) => t.title.toLowerCase().includes(trimmed))
+      .forEach((t) => {
+        const engagement = Math.min(Math.log2((t.views || 1) + (t.likes || 1) * 5) * 5, 30);
+        results.push({
+          type: "keyword",
+          label: t.title,
+          sublabel: `${t.views} views · ${t.likes} likes`,
+          score: 40 + engagement,
+        });
+      });
+
+    // ── Boost results matching recent searches ──
+    const history = getSearchHistory().map((h) => h.toLowerCase());
+    results.forEach((r) => {
+      if (history.some((h) => r.label.toLowerCase().includes(h) || h.includes(r.label.toLowerCase()))) {
+        r.score += 15; // recency boost
+      }
+    });
 
     // ── Fuzzy / "Did you mean?" when few exact matches ──
     if (results.length < 2 && trimmed.length >= 3) {
       const dict = [
-        ...catNames.map((n) => ({ text: n, meta: "category" })),
-        ...KENYAN_LOCATIONS.map((l) => ({ text: l.name, meta: "location" })),
-        ...KENYAN_LOCATIONS.map((l) => ({ text: l.county, meta: "location" })),
+        ...catNames.map((c) => ({ text: c.name })),
+        ...KENYAN_LOCATIONS.map((l) => ({ text: l.name })),
+        ...KENYAN_LOCATIONS.map((l) => ({ text: l.county })),
       ];
       const corrections = fuzzyBest(trimmed, dict, 3);
       const seen = new Set(results.map((r) => r.label.toLowerCase()));
       corrections.forEach((c) => {
         if (!seen.has(c.text.toLowerCase())) {
           seen.add(c.text.toLowerCase());
-          results.push({ type: "correction", label: c.text });
+          results.push({ type: "correction", label: c.text, score: 30 - c.dist * 5 });
         }
       });
     }
 
-    // Deduplicate by label
+    // Sort by score descending, deduplicate
+    results.sort((a, b) => b.score - a.score);
     const seen = new Set<string>();
     return results.filter((s) => {
       const key = s.label.toLowerCase();
@@ -156,21 +259,26 @@ export const VideoSearchSuggestions = ({ query, onSelect, visible }: Props) => {
       seen.add(key);
       return true;
     }).slice(0, MAX_SUGGESTIONS);
-  }, [query, categories, videoTitles]);
+  }, [query, categories, videoTitles, catPopularity, locationScore]);
 
-  if (!visible || !query.trim() || suggestions.length === 0) return null;
+  if (!visible || suggestions.length === 0) return null;
 
-  // Check if there's a "Did you mean?" correction to highlight
   const hasCorrection = suggestions.some((s) => s.type === "correction");
+  const isRecent = suggestions.length > 0 && suggestions[0].type === "recent";
 
   return (
     <div className="absolute top-full left-0 right-0 mt-1 mx-1 bg-black/95 backdrop-blur-xl border border-white/10 rounded-2xl overflow-hidden shadow-2xl z-50 animate-in fade-in slide-in-from-top-2 duration-200">
       <div className="px-3 py-2 flex items-center gap-1.5 border-b border-white/5">
-        <Sparkles className="w-3 h-3 text-primary" />
-        <span className="text-[10px] text-white/40 uppercase tracking-wider font-medium">Suggestions</span>
+        {isRecent ? (
+          <Clock className="w-3 h-3 text-white/40" />
+        ) : (
+          <Sparkles className="w-3 h-3 text-primary" />
+        )}
+        <span className="text-[10px] text-white/40 uppercase tracking-wider font-medium">
+          {isRecent ? "Recent Searches" : "Suggestions"}
+        </span>
       </div>
 
-      {/* "Did you mean?" banner when corrections exist */}
       {hasCorrection && (
         <div className="px-4 py-1.5 bg-rose-500/10 border-b border-white/5">
           <p className="text-[11px] text-rose-300 italic">Did you mean…</p>
@@ -180,7 +288,10 @@ export const VideoSearchSuggestions = ({ query, onSelect, visible }: Props) => {
       {suggestions.map((s, i) => (
         <button
           key={`${s.type}-${s.label}-${i}`}
-          onClick={() => onSelect(s.label)}
+          onClick={() => {
+            saveSearchTerm(s.label);
+            onSelect(s.label);
+          }}
           className={`w-full flex items-center gap-3 px-4 py-2.5 hover:bg-white/10 active:bg-white/15 transition-colors text-left ${
             s.type === "correction" ? "bg-rose-500/5" : ""
           }`}
