@@ -308,16 +308,21 @@ const VideoFeed = () => {
                   if (isGuest) { handleAuthRequired("client"); }
                   else if (activeRole === "client") { navigate("/dashboard"); }
                   else { navigate("/dashboard"); }
+                } else if (tab.key === "nearby") {
+                  if (!userLocation) { requestLocation(); }
+                  setActiveTab("nearby");
                 } else {
                   setActiveTab(tab.key);
                 }
               }}
-              className={`px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-colors ${
+              className={`px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-colors flex items-center gap-1 ${
                 activeTab === tab.key
                   ? "bg-white text-black"
                   : "bg-white/10 text-white/70 hover:bg-white/20"
               }`}
             >
+              {tab.icon}
+              {tab.label}
               {tab.label}
             </button>
           ))}
