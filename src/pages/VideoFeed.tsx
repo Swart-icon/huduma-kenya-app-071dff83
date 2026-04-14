@@ -19,6 +19,7 @@ import { UploadVideoDialog } from "@/components/video/UploadVideoDialog";
 import { CommentsSheet } from "@/components/video/CommentsSheet";
 import { VideoSlide } from "@/components/video/VideoSlide";
 import type { VideoItem, FeedTab } from "@/components/video/types";
+import { VideoSearchSuggestions } from "@/components/video/VideoSearchSuggestions";
 
 const PAGE_SIZE = 10;
 const GUEST_VIDEO_LIMIT = 5;
@@ -262,6 +263,11 @@ const VideoFeed = () => {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-9 bg-white/10 border-0 text-white placeholder:text-white/40 rounded-full h-9 text-sm"
+                />
+                <VideoSearchSuggestions
+                  query={searchQuery}
+                  visible={searchOpen}
+                  onSelect={(val) => setSearchQuery(val)}
                 />
               </div>
               <button onClick={() => { setSearchOpen(false); setSearchQuery(""); }} className="text-white/70 p-1">
