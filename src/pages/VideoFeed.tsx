@@ -126,11 +126,11 @@ const VideoFeed = () => {
         .range(pageParam, pageParam + PAGE_SIZE - 1);
 
       if (trimmed) {
+        const filters = [`title.ilike.%${trimmed}%`, `city.ilike.%${trimmed}%`, `county.ilike.%${trimmed}%`];
         if (matchingCategoryIds.length > 0) {
-          query = query.or(`title.ilike.%${trimmed}%,category_id.in.(${matchingCategoryIds.join(",")})`);
-        } else {
-          query = query.ilike("title", `%${trimmed}%`);
+          filters.push(`category_id.in.(${matchingCategoryIds.join(",")})`);
         }
+        query = query.or(filters.join(","));
       }
 
       const { data, error } = await query;
