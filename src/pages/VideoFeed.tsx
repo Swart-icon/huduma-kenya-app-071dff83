@@ -4,13 +4,16 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { useProfile } from "@/hooks/useProfile";
+import { useLocation } from "@/contexts/LocationContext";
+import { KENYAN_LOCATIONS } from "@/lib/kenyanLocations";
+import { getDistanceKm } from "@/hooks/useGeolocation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from "@/components/ui/dialog";
 import {
-  Home, Plus, MessageCircle, User, Loader2, Video, Search, X, LogIn,
+  Home, Plus, MessageCircle, User, Loader2, Video, Search, X, LogIn, MapPin,
 } from "lucide-react";
 import { UploadVideoDialog } from "@/components/video/UploadVideoDialog";
 import { CommentsSheet } from "@/components/video/CommentsSheet";
@@ -20,8 +23,9 @@ import type { VideoItem, FeedTab } from "@/components/video/types";
 const PAGE_SIZE = 10;
 const GUEST_VIDEO_LIMIT = 5;
 
-const TABS: { key: FeedTab; label: string }[] = [
+const TABS: { key: FeedTab; label: string; icon?: React.ReactNode }[] = [
   { key: "all", label: "For You" },
+  { key: "nearby", label: "Near You", icon: <MapPin className="w-3 h-3" /> },
   { key: "service", label: "Services" },
   { key: "jobseeker", label: "Jobseekers" },
   { key: "client", label: "Clients" },
@@ -88,6 +92,7 @@ const VideoFeed = () => {
   const { user, roles, role: activeRole } = useAuth();
   const navigate = useNavigate();
   const { data: profile } = useProfile();
+  const { location: userLocation, status: locationStatus, requestLocation } = useLocation();
   const [uploadOpen, setUploadOpen] = useState(false);
   const [commentVideoId, setCommentVideoId] = useState<string | null>(null);
   const [commentsOpen, setCommentsOpen] = useState(false);
@@ -103,8 +108,16 @@ const VideoFeed = () => {
   const isGuest = !user;
   const canUpload = !isGuest && (roles.includes("provider") || roles.includes("job_seeker"));
 
+  // Find nearest city name from user's GPS coordinates
+  const nearestCity = userLocation
+    ? KENYAN_LOCATIONS.reduce((closest, loc) => {
+        const dist = getDistanceKm(userLocation.latitude, userLocation.longitude, loc.lat, loc.lng);
+        return dist < closest.dist ? { name: loc.name, county: loc.county, dist } : closest;
+      }, { name: "", county: "", dist: Infinity })
+    : null;
+
   const { data: videos, isLoading, fetchNextPage, hasNextPage } = useInfiniteQuery({
-    queryKey: ["videos-feed", activeTab, searchQuery],
+    queryKey: ["videos-feed", activeTab, searchQuery, nearestCity?.name, nearestCity?.county],
     queryFn: async ({ pageParam = 0 }) => {
       const trimmed = searchQuery.trim();
 
@@ -175,6 +188,12 @@ const VideoFeed = () => {
         mapped = mapped.filter((v) => v._roles.includes("job_seeker"));
       } else if (activeTab === "client") {
         mapped = mapped.filter((v) => v._roles.includes("client"));
+      } else if (activeTab === "nearby" && nearestCity) {
+        mapped = mapped.filter((v) => {
+          const vCity = (v.providerCity || "").toLowerCase();
+          const vCounty = (v.providerCounty || "").toLowerCase();
+          return vCity === nearestCity.name.toLowerCase() || vCounty === nearestCity.county.toLowerCase();
+        });
       }
 
       return mapped as VideoItem[];
@@ -289,16 +308,20 @@ const VideoFeed = () => {
                   if (isGuest) { handleAuthRequired("client"); }
                   else if (activeRole === "client") { navigate("/dashboard"); }
                   else { navigate("/dashboard"); }
+                } else if (tab.key === "nearby") {
+                  if (!userLocation) { requestLocation(); }
+                  setActiveTab("nearby");
                 } else {
                   setActiveTab(tab.key);
                 }
               }}
-              className={`px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-colors ${
+              className={`px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-colors flex items-center gap-1 ${
                 activeTab === tab.key
                   ? "bg-white text-black"
                   : "bg-white/10 text-white/70 hover:bg-white/20"
               }`}
             >
+              {tab.icon}
               {tab.label}
             </button>
           ))}
@@ -306,16 +329,40 @@ const VideoFeed = () => {
       </div>
 
       {/* ─── Video Feed ─── */}
-      {isLoading ? (
+      {activeTab === "nearby" && !userLocation ? (
+        <div className="flex-1 flex flex-col items-center justify-center text-center px-8">
+          <div className="w-20 h-20 rounded-full bg-primary/20 flex items-center justify-center mb-6">
+            <MapPin className="w-10 h-10 text-primary" />
+          </div>
+          <h2 className="text-white font-bold text-xl mb-2">Find Trusted Services Near You</h2>
+          <p className="text-white/60 text-sm mb-6 max-w-xs">
+            Enable your location to discover videos from service providers and professionals around you.
+          </p>
+          <Button className="rounded-xl px-6" onClick={requestLocation}>
+            {locationStatus === "requesting" ? (
+              <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Getting Location...</>
+            ) : (
+              <><MapPin className="w-4 h-4 mr-2" /> Enable Location</>
+            )}
+          </Button>
+          {locationStatus === "denied" && (
+            <p className="text-red-400 text-xs mt-3">Location access was denied. Please enable it in your browser settings.</p>
+          )}
+        </div>
+      ) : isLoading ? (
         <div className="flex-1 flex items-center justify-center">
           <Loader2 className="w-8 h-8 animate-spin text-white" />
         </div>
       ) : !allVideos.length ? (
         <div className="flex-1 flex flex-col items-center justify-center text-center px-8">
           <Video className="w-16 h-16 text-white/20 mb-4" />
-          <p className="text-white font-bold text-lg">No videos found</p>
+          <p className="text-white font-bold text-lg">
+            {activeTab === "nearby" ? "No videos near you yet" : "No videos found"}
+          </p>
           <p className="text-white/50 text-sm mt-2">
-            {searchQuery ? "Try a different search" : "Be the first to share!"}
+            {activeTab === "nearby" && nearestCity
+              ? `No videos from ${nearestCity.name}, ${nearestCity.county} area yet`
+              : searchQuery ? "Try a different search" : "Be the first to share!"}
           </p>
         </div>
       ) : (

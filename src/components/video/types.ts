@@ -18,4 +18,4 @@ export type VideoItem = {
   providerCounty?: string | null;
 };
 
-export type FeedTab = "all" | "jobseeker" | "client" | "service";
+export type FeedTab = "all" | "nearby" | "jobseeker" | "client" | "service";
