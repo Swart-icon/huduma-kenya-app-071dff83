@@ -323,7 +323,6 @@ const VideoFeed = () => {
             >
               {tab.icon}
               {tab.label}
-              {tab.label}
             </button>
           ))}
         </div>
