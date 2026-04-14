@@ -292,18 +292,27 @@ export const UploadVideoDialog = ({ open, onOpenChange }: { open: boolean; onOpe
                         autoPlay
                         playsInline
                         muted
-                        className="w-full h-48 object-cover mirror"
-                        style={{ transform: "scaleX(-1)" }}
+                        className="w-full h-48 object-cover"
+                        style={{ transform: facingMode === "user" ? "scaleX(-1)" : "none" }}
                       />
+                      {/* Flip camera button */}
+                      {!recording && (
+                        <button
+                          onClick={flipCamera}
+                          className="absolute top-3 right-3 w-8 h-8 rounded-full bg-black/50 flex items-center justify-center hover:bg-black/70 transition-colors"
+                        >
+                          <SwitchCamera className="w-4 h-4 text-white" />
+                        </button>
+                      )}
                       {recording && (
                         <div className="absolute top-3 left-3 flex items-center gap-2 bg-black/60 rounded-full px-3 py-1">
-                          <div className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse" />
+                          <div className="w-2.5 h-2.5 rounded-full bg-destructive animate-pulse" />
                           <span className="text-white text-xs font-mono">{formatTime(recordingTime)}</span>
                         </div>
                       )}
                       <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-3">
                         {!recording ? (
-                          <Button onClick={startRecording} size="sm" className="rounded-full bg-red-500 hover:bg-red-600 gap-1.5">
+                          <Button onClick={startRecording} size="sm" variant="destructive" className="rounded-full gap-1.5">
                             <CircleDot className="w-4 h-4" /> Start Recording
                           </Button>
                         ) : (
