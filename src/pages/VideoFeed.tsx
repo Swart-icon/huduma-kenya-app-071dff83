@@ -117,7 +117,7 @@ const VideoFeed = () => {
     : null;
 
   const { data: videos, isLoading, fetchNextPage, hasNextPage } = useInfiniteQuery({
-    queryKey: ["videos-feed", activeTab, searchQuery],
+    queryKey: ["videos-feed", activeTab, searchQuery, nearestCity?.name, nearestCity?.county],
     queryFn: async ({ pageParam = 0 }) => {
       const trimmed = searchQuery.trim();
 
@@ -188,6 +188,12 @@ const VideoFeed = () => {
         mapped = mapped.filter((v) => v._roles.includes("job_seeker"));
       } else if (activeTab === "client") {
         mapped = mapped.filter((v) => v._roles.includes("client"));
+      } else if (activeTab === "nearby" && nearestCity) {
+        mapped = mapped.filter((v) => {
+          const vCity = (v.providerCity || "").toLowerCase();
+          const vCounty = (v.providerCounty || "").toLowerCase();
+          return vCity === nearestCity.name.toLowerCase() || vCounty === nearestCity.county.toLowerCase();
+        });
       }
 
       return mapped as VideoItem[];
