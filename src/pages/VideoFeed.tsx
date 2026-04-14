@@ -4,13 +4,16 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { useProfile } from "@/hooks/useProfile";
+import { useLocation } from "@/contexts/LocationContext";
+import { KENYAN_LOCATIONS } from "@/lib/kenyanLocations";
+import { getDistanceKm } from "@/hooks/useGeolocation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from "@/components/ui/dialog";
 import {
-  Home, Plus, MessageCircle, User, Loader2, Video, Search, X, LogIn,
+  Home, Plus, MessageCircle, User, Loader2, Video, Search, X, LogIn, MapPin,
 } from "lucide-react";
 import { UploadVideoDialog } from "@/components/video/UploadVideoDialog";
 import { CommentsSheet } from "@/components/video/CommentsSheet";
