@@ -106,6 +106,18 @@ const VideoFeed = () => {
   const { data: videos, isLoading, fetchNextPage, hasNextPage } = useInfiniteQuery({
     queryKey: ["videos-feed", activeTab, searchQuery],
     queryFn: async ({ pageParam = 0 }) => {
+      const trimmed = searchQuery.trim();
+
+      // If searching, find matching category IDs first
+      let matchingCategoryIds: string[] = [];
+      if (trimmed) {
+        const { data: cats } = await supabase
+          .from("service_categories")
+          .select("id")
+          .ilike("name", `%${trimmed}%`);
+        matchingCategoryIds = (cats || []).map((c) => c.id);
+      }
+
       let query = supabase
         .from("videos")
         .select("*, service_categories(name, icon)")
@@ -113,8 +125,12 @@ const VideoFeed = () => {
         .order("created_at", { ascending: false })
         .range(pageParam, pageParam + PAGE_SIZE - 1);
 
-      if (searchQuery.trim()) {
-        query = query.ilike("title", `%${searchQuery.trim()}%`);
+      if (trimmed) {
+        if (matchingCategoryIds.length > 0) {
+          query = query.or(`title.ilike.%${trimmed}%,category_id.in.(${matchingCategoryIds.join(",")})`);
+        } else {
+          query = query.ilike("title", `%${trimmed}%`);
+        }
       }
 
       const { data, error } = await query;
