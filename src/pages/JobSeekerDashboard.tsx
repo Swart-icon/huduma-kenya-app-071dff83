@@ -59,7 +59,7 @@ const SectionHeader = ({ title, action, onAction }: { title: string; action?: st
 );
 
 const JobSeekerDashboard = () => {
-  const { user, role, loading: authLoading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [applications, setApplications] = useState<Application[]>([]);
   const [recommendedJobs, setRecommendedJobs] = useState<RecommendedJob[]>([]);
@@ -68,9 +68,9 @@ const JobSeekerDashboard = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!authLoading && (!user || role !== "job_seeker")) { navigate("/dashboard"); return; }
+    if (!authLoading && !user) { navigate("/login"); return; }
     if (user) fetchAll();
-  }, [authLoading, user, role]);
+  }, [authLoading, user]);
 
   const fetchAll = async () => {
     const [appsRes, savedRes, profileRes, jobsRes] = await Promise.all([
