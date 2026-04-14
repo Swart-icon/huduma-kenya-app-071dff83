@@ -13,7 +13,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Video, Upload, Loader2, X, AlertCircle, Camera, Square, CircleDot } from "lucide-react";
+import { Video, Upload, Loader2, X, AlertCircle, Camera, Square, CircleDot, SwitchCamera } from "lucide-react";
 import { toast } from "sonner";
 import { KENYAN_COUNTIES, getCitiesByCounty } from "@/lib/kenyanLocations";
 
@@ -46,6 +46,7 @@ export const UploadVideoDialog = ({ open, onOpenChange }: { open: boolean; onOpe
   const [recording, setRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const [stream, setStream] = useState<MediaStream | null>(null);
+  const [facingMode, setFacingMode] = useState<"user" | "environment">("environment");
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -92,16 +93,28 @@ export const UploadVideoDialog = ({ open, onOpenChange }: { open: boolean; onOpe
     setRecordingTime(0);
   };
 
-  const startCamera = async () => {
+  const startCamera = async (mode: "user" | "environment" = facingMode) => {
     try {
       const mediaStream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "environment", width: { ideal: 1080 }, height: { ideal: 1920 } },
+        video: { facingMode: mode, width: { ideal: 1080 }, height: { ideal: 1920 } },
         audio: true,
       });
       setStream(mediaStream);
+      setFacingMode(mode);
     } catch (err: any) {
       toast.error("Camera access denied. Please allow camera permissions.");
     }
+  };
+
+  const flipCamera = async () => {
+    if (recording) return;
+    // Stop current stream
+    if (stream) {
+      stream.getTracks().forEach((t) => t.stop());
+      setStream(null);
+    }
+    const newMode = facingMode === "user" ? "environment" : "user";
+    await startCamera(newMode);
   };
 
   const startRecording = () => {
@@ -265,7 +278,7 @@ export const UploadVideoDialog = ({ open, onOpenChange }: { open: boolean; onOpe
                 <div className="space-y-3">
                   {!stream ? (
                     <button
-                      onClick={startCamera}
+                      onClick={() => startCamera()}
                       className="flex flex-col items-center justify-center w-full h-36 border-2 border-dashed rounded-2xl border-primary/30 hover:border-primary/60 bg-primary/5 transition-colors"
                     >
                       <Camera className="w-8 h-8 text-primary/60 mb-2" />
@@ -279,18 +292,27 @@ export const UploadVideoDialog = ({ open, onOpenChange }: { open: boolean; onOpe
                         autoPlay
                         playsInline
                         muted
-                        className="w-full h-48 object-cover mirror"
-                        style={{ transform: "scaleX(-1)" }}
+                        className="w-full h-48 object-cover"
+                        style={{ transform: facingMode === "user" ? "scaleX(-1)" : "none" }}
                       />
+                      {/* Flip camera button */}
+                      {!recording && (
+                        <button
+                          onClick={flipCamera}
+                          className="absolute top-3 right-3 w-8 h-8 rounded-full bg-black/50 flex items-center justify-center hover:bg-black/70 transition-colors"
+                        >
+                          <SwitchCamera className="w-4 h-4 text-white" />
+                        </button>
+                      )}
                       {recording && (
                         <div className="absolute top-3 left-3 flex items-center gap-2 bg-black/60 rounded-full px-3 py-1">
-                          <div className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse" />
+                          <div className="w-2.5 h-2.5 rounded-full bg-destructive animate-pulse" />
                           <span className="text-white text-xs font-mono">{formatTime(recordingTime)}</span>
                         </div>
                       )}
                       <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-3">
                         {!recording ? (
-                          <Button onClick={startRecording} size="sm" className="rounded-full bg-red-500 hover:bg-red-600 gap-1.5">
+                          <Button onClick={startRecording} size="sm" variant="destructive" className="rounded-full gap-1.5">
                             <CircleDot className="w-4 h-4" /> Start Recording
                           </Button>
                         ) : (
