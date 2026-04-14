@@ -92,6 +92,7 @@ const VideoFeed = () => {
   const { user, roles, role: activeRole } = useAuth();
   const navigate = useNavigate();
   const { data: profile } = useProfile();
+  const { location: userLocation, status: locationStatus, requestLocation } = useLocation();
   const [uploadOpen, setUploadOpen] = useState(false);
   const [commentVideoId, setCommentVideoId] = useState<string | null>(null);
   const [commentsOpen, setCommentsOpen] = useState(false);
@@ -106,6 +107,14 @@ const VideoFeed = () => {
 
   const isGuest = !user;
   const canUpload = !isGuest && (roles.includes("provider") || roles.includes("job_seeker"));
+
+  // Find nearest city name from user's GPS coordinates
+  const nearestCity = userLocation
+    ? KENYAN_LOCATIONS.reduce((closest, loc) => {
+        const dist = getDistanceKm(userLocation.latitude, userLocation.longitude, loc.lat, loc.lng);
+        return dist < closest.dist ? { name: loc.name, county: loc.county, dist } : closest;
+      }, { name: "", county: "", dist: Infinity })
+    : null;
 
   const { data: videos, isLoading, fetchNextPage, hasNextPage } = useInfiniteQuery({
     queryKey: ["videos-feed", activeTab, searchQuery],
