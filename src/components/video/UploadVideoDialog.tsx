@@ -68,6 +68,14 @@ export const UploadVideoDialog = ({ open, onOpenChange }: { open: boolean; onOpe
     }
   }, [open]);
 
+  // Sync stream to video element after render
+  useEffect(() => {
+    if (stream && liveVideoRef.current) {
+      liveVideoRef.current.srcObject = stream;
+      liveVideoRef.current.play().catch(() => {});
+    }
+  }, [stream]);
+
   const stopCamera = () => {
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
       mediaRecorderRef.current.stop();
