@@ -23,8 +23,9 @@ import type { VideoItem, FeedTab } from "@/components/video/types";
 const PAGE_SIZE = 10;
 const GUEST_VIDEO_LIMIT = 5;
 
-const TABS: { key: FeedTab; label: string }[] = [
+const TABS: { key: FeedTab; label: string; icon?: React.ReactNode }[] = [
   { key: "all", label: "For You" },
+  { key: "nearby", label: "Near You", icon: <MapPin className="w-3 h-3" /> },
   { key: "service", label: "Services" },
   { key: "jobseeker", label: "Jobseekers" },
   { key: "client", label: "Clients" },
