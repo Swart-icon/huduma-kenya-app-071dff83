@@ -264,6 +264,11 @@ const VideoFeed = () => {
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-9 bg-white/10 border-0 text-white placeholder:text-white/40 rounded-full h-9 text-sm"
                 />
+                <VideoSearchSuggestions
+                  query={searchQuery}
+                  visible={searchOpen}
+                  onSelect={(val) => setSearchQuery(val)}
+                />
               </div>
               <button onClick={() => { setSearchOpen(false); setSearchQuery(""); }} className="text-white/70 p-1">
                 <X className="w-5 h-5" />
