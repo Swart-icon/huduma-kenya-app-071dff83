@@ -278,7 +278,7 @@ export const UploadVideoDialog = ({ open, onOpenChange }: { open: boolean; onOpe
                 <div className="space-y-3">
                   {!stream ? (
                     <button
-                      onClick={startCamera}
+                      onClick={() => startCamera()}
                       className="flex flex-col items-center justify-center w-full h-36 border-2 border-dashed rounded-2xl border-primary/30 hover:border-primary/60 bg-primary/5 transition-colors"
                     >
                       <Camera className="w-8 h-8 text-primary/60 mb-2" />
