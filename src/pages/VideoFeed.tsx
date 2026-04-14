@@ -285,7 +285,7 @@ const VideoFeed = () => {
                 } else if (tab.key === "jobseeker") {
                   if (isGuest) { handleAuthRequired("job_seeker"); }
                   else if (activeRole === "job_seeker") { navigate("/job-seeker"); }
-                  else { navigate("/job-seeker"); }
+                  else { navigate("/jobs"); }
                 } else if (tab.key === "client") {
                   if (isGuest) { handleAuthRequired("client"); }
                   else if (activeRole === "client") { navigate("/dashboard"); }
