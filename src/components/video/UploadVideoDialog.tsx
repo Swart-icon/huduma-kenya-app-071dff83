@@ -99,9 +99,6 @@ export const UploadVideoDialog = ({ open, onOpenChange }: { open: boolean; onOpe
         audio: true,
       });
       setStream(mediaStream);
-      if (liveVideoRef.current) {
-        liveVideoRef.current.srcObject = mediaStream;
-      }
     } catch (err: any) {
       toast.error("Camera access denied. Please allow camera permissions.");
     }
