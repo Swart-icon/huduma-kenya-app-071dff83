@@ -267,7 +267,7 @@ const VideoFeed = () => {
                 <VideoSearchSuggestions
                   query={searchQuery}
                   visible={searchOpen}
-                  onSelect={(val) => setSearchQuery(val)}
+                  onSelect={(val) => { saveSearchTerm(val); setSearchQuery(val); }}
                 />
               </div>
               <button onClick={() => { setSearchOpen(false); setSearchQuery(""); }} className="text-white/70 p-1">
