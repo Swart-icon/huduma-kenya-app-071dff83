@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { QueryClient, QueryClientProvider, onlineManager } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -55,6 +56,8 @@ import UserVideos from "./pages/UserVideos";
 import HelpCenter from "./pages/HelpCenter";
 import { OfflineBanner } from "@/components/OfflineBanner";
 import ProfileGuard from "@/components/ProfileGuard";
+import { RateUsDialog } from "@/components/RateUsDialog";
+import { useRatePrompt } from "@/hooks/useRatePrompt";
 
 // Keep React Query's online status in sync with browser events
 onlineManager.setEventListener((setOnline) => {
@@ -89,6 +92,78 @@ const queryClient = new QueryClient({
   },
 });
 
+const AppInner = () => {
+  const ratePrompt = useRatePrompt();
+
+  // Expose trackAction globally so any page can call it
+  useEffect(() => {
+    (window as any).__huduma_trackAction = ratePrompt.trackAction;
+    return () => { delete (window as any).__huduma_trackAction; };
+  }, [ratePrompt.trackAction]);
+
+  return (
+    <>
+      <OfflineBanner />
+      <ProfileGuard>
+        <Routes>
+          <Route path="/" element={<Index />} />
+          <Route path="/onboarding" element={<Onboarding />} />
+          <Route path="/welcome" element={<Welcome />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/provider-profile/edit" element={<ProviderProfileEdit />} />
+          <Route path="/provider-profile/preview" element={<ProviderProfilePreview />} />
+          <Route path="/search" element={<SearchServices />} />
+          <Route path="/map" element={<ServiceMap />} />
+          <Route path="/nearby" element={<NearbyServices />} />
+          <Route path="/categories" element={<Categories />} />
+          <Route path="/categories/:slug" element={<CategoryServices />} />
+          <Route path="/services/:id" element={<ServiceDetailPage />} />
+          <Route path="/my-services" element={<MyServices />} />
+          <Route path="/services/new" element={<CreateService />} />
+          <Route path="/jobs/new" element={<PostJob />} />
+          <Route path="/my-jobs" element={<MyJobs />} />
+          <Route path="/jobs/:id" element={<JobDetail />} />
+          <Route path="/job-seeker" element={<JobSeekerDashboard />} />
+          <Route path="/job-seeker-profile" element={<JobSeekerProfile />} />
+          <Route path="/my-applications" element={<MyApplications />} />
+          <Route path="/saved-jobs" element={<SavedJobs />} />
+          <Route path="/job-board" element={<JobBoard />} />
+          <Route path="/jobs" element={<JobBoard />} />
+          <Route path="/book/:serviceId" element={<BookService />} />
+          <Route path="/my-bookings" element={<MyBookings />} />
+          <Route path="/conversations" element={<Conversations />} />
+          <Route path="/chat/:conversationId" element={<Chat />} />
+          <Route path="/notifications" element={<Notifications />} />
+          <Route path="/payment/:bookingId" element={<PaymentScreen />} />
+          <Route path="/review/:bookingId" element={<ReviewForm />} />
+          <Route path="/provider/:providerId/reviews" element={<ProviderReviews />} />
+          <Route path="/provider/:providerId" element={<ProviderPublicProfile />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/report/:userId" element={<ReportUser />} />
+          <Route path="/admin" element={<AdminPanel />} />
+          <Route path="/security" element={<SessionManagement />} />
+          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+          <Route path="/terms-of-service" element={<TermsOfService />} />
+          <Route path="/videos" element={<VideoFeed />} />
+          <Route path="/user/:userId/videos" element={<UserVideos />} />
+          <Route path="/help" element={<HelpCenter />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </ProfileGuard>
+      <RateUsDialog
+        open={ratePrompt.open}
+        onOpenChange={ratePrompt.setOpen}
+        onDismiss={ratePrompt.dismiss}
+        onRated={ratePrompt.markRated}
+      />
+    </>
+  );
+};
+
 const App = () => (
   <ErrorBoundary>
   <QueryClientProvider client={queryClient}>
@@ -99,58 +174,8 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <LocationProvider>
-          <OfflineBanner />
-          <ProfileGuard>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/onboarding" element={<Onboarding />} />
-            <Route path="/welcome" element={<Welcome />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/provider-profile/edit" element={<ProviderProfileEdit />} />
-            <Route path="/provider-profile/preview" element={<ProviderProfilePreview />} />
-            <Route path="/search" element={<SearchServices />} />
-            <Route path="/map" element={<ServiceMap />} />
-            <Route path="/nearby" element={<NearbyServices />} />
-            <Route path="/categories" element={<Categories />} />
-            <Route path="/categories/:slug" element={<CategoryServices />} />
-            <Route path="/services/:id" element={<ServiceDetailPage />} />
-            <Route path="/my-services" element={<MyServices />} />
-            <Route path="/services/new" element={<CreateService />} />
-            <Route path="/jobs/new" element={<PostJob />} />
-            <Route path="/my-jobs" element={<MyJobs />} />
-            <Route path="/jobs/:id" element={<JobDetail />} />
-            <Route path="/job-seeker" element={<JobSeekerDashboard />} />
-            <Route path="/job-seeker-profile" element={<JobSeekerProfile />} />
-            <Route path="/my-applications" element={<MyApplications />} />
-            <Route path="/saved-jobs" element={<SavedJobs />} />
-            <Route path="/job-board" element={<JobBoard />} />
-            <Route path="/jobs" element={<JobBoard />} />
-            <Route path="/book/:serviceId" element={<BookService />} />
-            <Route path="/my-bookings" element={<MyBookings />} />
-            <Route path="/conversations" element={<Conversations />} />
-            <Route path="/chat/:conversationId" element={<Chat />} />
-            <Route path="/notifications" element={<Notifications />} />
-            <Route path="/payment/:bookingId" element={<PaymentScreen />} />
-            <Route path="/review/:bookingId" element={<ReviewForm />} />
-            <Route path="/provider/:providerId/reviews" element={<ProviderReviews />} />
-            <Route path="/provider/:providerId" element={<ProviderPublicProfile />} />
-            <Route path="/forgot-password" element={<ForgotPassword />} />
-            <Route path="/reset-password" element={<ResetPassword />} />
-            <Route path="/report/:userId" element={<ReportUser />} />
-            <Route path="/admin" element={<AdminPanel />} />
-            <Route path="/security" element={<SessionManagement />} />
-            <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-            <Route path="/terms-of-service" element={<TermsOfService />} />
-            <Route path="/videos" element={<VideoFeed />} />
-            <Route path="/user/:userId/videos" element={<UserVideos />} />
-            <Route path="/help" element={<HelpCenter />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-          </ProfileGuard>
-        </LocationProvider>
+            <AppInner />
+          </LocationProvider>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
