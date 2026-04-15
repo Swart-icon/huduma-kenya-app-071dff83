@@ -43,6 +43,8 @@ export const VideoSlide = memo(({
       setPaused(false);
       el.currentTime = 0;
       el.play().catch(() => {});
+      // Track as meaningful action for rate prompt
+      try { (window as any).__huduma_trackAction?.(); } catch {}
     } else {
       el.pause();
     }
