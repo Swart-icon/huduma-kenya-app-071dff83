@@ -55,6 +55,8 @@ import UserVideos from "./pages/UserVideos";
 import HelpCenter from "./pages/HelpCenter";
 import { OfflineBanner } from "@/components/OfflineBanner";
 import ProfileGuard from "@/components/ProfileGuard";
+import { RateUsDialog } from "@/components/RateUsDialog";
+import { useRatePrompt } from "@/hooks/useRatePrompt";
 
 // Keep React Query's online status in sync with browser events
 onlineManager.setEventListener((setOnline) => {
