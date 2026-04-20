@@ -55,10 +55,14 @@ export const RateUsDialog = ({ open, onOpenChange, onDismiss, onRated }: Props) 
     }
   };
 
-  const handleStarClick = async (stars: number) => {
+  const handleStarClick = (stars: number) => {
     setRating(stars);
-    if (stars >= 4) {
-      await submitRating(stars);
+  };
+
+  const handleConfirmRating = async () => {
+    if (rating === 0) return;
+    if (rating >= 4) {
+      await submitRating(rating);
       setStep("thanks");
       onRated();
     } else {
@@ -121,6 +125,14 @@ export const RateUsDialog = ({ open, onOpenChange, onDismiss, onRated }: Props) 
                 </button>
               ))}
             </div>
+
+            <Button
+              className="w-full rounded-xl mb-3"
+              onClick={handleConfirmRating}
+              disabled={rating === 0 || submitting}
+            >
+              {rating === 0 ? "Tap a star to rate" : "Continue"}
+            </Button>
 
             <button
               onClick={handleClose}
