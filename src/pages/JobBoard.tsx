@@ -9,6 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ArrowLeft, MapPin, DollarSign, Search, Loader2, Send } from "lucide-react";
 import { useCategories } from "@/hooks/useCategories";
 import { JobCardSkeleton, ListSkeletons } from "@/components/Skeletons";
+import { useUserRegion } from "@/hooks/useUserRegion";
+import { RegionBadge } from "@/components/RegionBadge";
 
 type JobPost = {
   id: string;
@@ -21,6 +23,7 @@ type JobPost = {
   status: string;
   created_at: string;
   category_id: string;
+  location_rank?: number;
 };
 
 const PAGE_SIZE = 15;
@@ -28,6 +31,7 @@ const PAGE_SIZE = 15;
 const JobBoard = () => {
   const navigate = useNavigate();
   const { data: categoriesArr = [] } = useCategories();
+  const region = useUserRegion();
   const [jobs, setJobs] = useState<JobPost[]>([]);
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
@@ -41,24 +45,23 @@ const JobBoard = () => {
   useEffect(() => {
     setPage(0);
     fetchJobs(0);
-  }, [selectedCategory]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedCategory, region.city, region.county]);
 
   const fetchJobs = async (pageNum: number, append = false) => {
     if (append) setLoadingMore(true); else setLoading(true);
-    const from = pageNum * PAGE_SIZE;
-    let q = supabase
-      .from("job_posts")
-      .select("*")
-      .eq("status", "open")
-      .order("created_at", { ascending: false })
-      .range(from, from + PAGE_SIZE - 1);
 
-    if (selectedCategory !== "all") {
-      q = q.eq("category_id", selectedCategory);
-    }
+    const { data, error } = await supabase.rpc("ranked_jobs", {
+      _user_city: region.city,
+      _user_county: region.county,
+      _category_id: selectedCategory !== "all" ? selectedCategory : null,
+      _limit_count: PAGE_SIZE,
+      _offset_count: pageNum * PAGE_SIZE,
+    });
 
-    const { data } = await q;
-    const results = data || [];
+    if (error) console.error("ranked_jobs error:", error);
+    const results = (data as JobPost[]) || [];
+
     if (append) {
       setJobs((prev) => [...prev, ...results]);
     } else {
@@ -87,7 +90,13 @@ const JobBoard = () => {
           <span>Dashboard</span>
         </button>
 
-        <h1 className="font-display text-2xl font-bold text-foreground mb-4">Job Board</h1>
+        <h1 className="font-display text-2xl font-bold text-foreground mb-1">Job Board</h1>
+        {(region.city || region.county) && (
+          <p className="text-xs text-muted-foreground mb-4 flex items-center gap-1">
+            <MapPin className="w-3 h-3" />
+            Showing jobs near {region.city || region.county} first
+          </p>
+        )}
 
         {/* Category Filter */}
         <div className="mb-3">
@@ -125,11 +134,14 @@ const JobBoard = () => {
               {filtered.map((job) => (
                 <Card key={job.id} className="hover:shadow-md transition-shadow">
                   <CardContent className="p-4">
-                    {categories[job.category_id] && (
-                      <Badge variant="secondary" className="text-[10px] mb-2">
-                        {categories[job.category_id].icon} {categories[job.category_id].name}
-                      </Badge>
-                    )}
+                    <div className="flex items-center gap-1.5 mb-2 flex-wrap">
+                      {categories[job.category_id] && (
+                        <Badge variant="secondary" className="text-[10px]">
+                          {categories[job.category_id].icon} {categories[job.category_id].name}
+                        </Badge>
+                      )}
+                      {(region.city || region.county) && <RegionBadge rank={job.location_rank} />}
+                    </div>
                     <h3 className="font-semibold text-foreground mb-1">{job.title}</h3>
                     {job.description && <p className="text-sm text-muted-foreground line-clamp-2 mb-2">{job.description}</p>}
                     <div className="flex items-center gap-3 text-xs text-muted-foreground mb-3">
