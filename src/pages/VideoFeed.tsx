@@ -133,24 +133,53 @@ const VideoFeed = () => {
         matchingCategoryIds = (cats || []).map((c) => c.id);
       }
 
-      let query = supabase
-        .from("videos")
-        .select("*, service_categories(name, icon)")
-        .eq("status", "active")
-        .order("created_at", { ascending: false })
-        .range(pageParam, pageParam + PAGE_SIZE - 1);
+      // Region-ranked path: default "For You" tab without search → use ranked_videos RPC
+      // so videos in the user's city/county float to the top.
+      const useRanked = activeTab === "all" && !trimmed && !!nearestCity;
 
-      if (trimmed) {
-        const filters = [`title.ilike.%${trimmed}%`, `city.ilike.%${trimmed}%`, `county.ilike.%${trimmed}%`];
-        if (matchingCategoryIds.length > 0) {
-          filters.push(`category_id.in.(${matchingCategoryIds.join(",")})`);
+      let items: any[] = [];
+
+      if (useRanked) {
+        const { data, error } = await supabase.rpc("ranked_videos", {
+          _user_city: nearestCity!.name || null,
+          _user_county: nearestCity!.county || null,
+          _category_id: null,
+          _limit_count: PAGE_SIZE,
+          _offset_count: pageParam,
+        });
+        if (error) throw error;
+        // RPC doesn't include the joined service_categories — fetch separately
+        const rows = (data || []) as any[];
+        const catIds = [...new Set(rows.map((r) => r.category_id).filter(Boolean))];
+        let catMap = new Map();
+        if (catIds.length > 0) {
+          const { data: cats } = await supabase
+            .from("service_categories")
+            .select("id, name, icon")
+            .in("id", catIds);
+          catMap = new Map((cats || []).map((c) => [c.id, c]));
         }
-        query = query.or(filters.join(","));
-      }
+        items = rows.map((r) => ({ ...r, service_categories: catMap.get(r.category_id) || null }));
+      } else {
+        let query = supabase
+          .from("videos")
+          .select("*, service_categories(name, icon)")
+          .eq("status", "active")
+          .order("created_at", { ascending: false })
+          .range(pageParam, pageParam + PAGE_SIZE - 1);
 
-      const { data, error } = await query;
-      if (error) throw error;
-      const items = (data || []) as any[];
+        if (trimmed) {
+          const filters = [`title.ilike.%${trimmed}%`, `city.ilike.%${trimmed}%`, `county.ilike.%${trimmed}%`];
+          if (matchingCategoryIds.length > 0) {
+            filters.push(`category_id.in.(${matchingCategoryIds.join(",")})`);
+          }
+          query = query.or(filters.join(","));
+        }
+
+        const { data, error } = await query;
+        if (error) throw error;
+        items = (data || []) as any[];
+      }
       const userIds = [...new Set(items.map((v: any) => v.user_id))];
       let profileMap = new Map();
       let providerMap = new Map();
