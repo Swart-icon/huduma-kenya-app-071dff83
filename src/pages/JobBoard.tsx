@@ -31,6 +31,7 @@ const PAGE_SIZE = 15;
 const JobBoard = () => {
   const navigate = useNavigate();
   const { data: categoriesArr = [] } = useCategories();
+  const region = useUserRegion();
   const [jobs, setJobs] = useState<JobPost[]>([]);
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
@@ -44,24 +45,23 @@ const JobBoard = () => {
   useEffect(() => {
     setPage(0);
     fetchJobs(0);
-  }, [selectedCategory]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedCategory, region.city, region.county]);
 
   const fetchJobs = async (pageNum: number, append = false) => {
     if (append) setLoadingMore(true); else setLoading(true);
-    const from = pageNum * PAGE_SIZE;
-    let q = supabase
-      .from("job_posts")
-      .select("*")
-      .eq("status", "open")
-      .order("created_at", { ascending: false })
-      .range(from, from + PAGE_SIZE - 1);
 
-    if (selectedCategory !== "all") {
-      q = q.eq("category_id", selectedCategory);
-    }
+    const { data, error } = await supabase.rpc("ranked_jobs", {
+      _user_city: region.city,
+      _user_county: region.county,
+      _category_id: selectedCategory !== "all" ? selectedCategory : null,
+      _limit_count: PAGE_SIZE,
+      _offset_count: pageNum * PAGE_SIZE,
+    });
 
-    const { data } = await q;
-    const results = data || [];
+    if (error) console.error("ranked_jobs error:", error);
+    const results = (data as JobPost[]) || [];
+
     if (append) {
       setJobs((prev) => [...prev, ...results]);
     } else {
