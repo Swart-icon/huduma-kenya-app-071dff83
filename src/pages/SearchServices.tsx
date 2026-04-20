@@ -13,6 +13,8 @@ import { ServiceCardSkeleton, ListSkeletons } from "@/components/Skeletons";
 import { useLocation } from "@/contexts/LocationContext";
 import { getDistanceKm } from "@/hooks/useGeolocation";
 import LocationPicker from "@/components/LocationPicker";
+import { useUserRegion } from "@/hooks/useUserRegion";
+import { RegionBadge } from "@/components/RegionBadge";
 
 type Service = {
   id: string;
