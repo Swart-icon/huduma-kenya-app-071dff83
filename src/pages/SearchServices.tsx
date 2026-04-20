@@ -526,13 +526,16 @@ const SearchServices = () => {
                       </div>
                     </div>
 
-                    {cat && (
-                      <div className="mt-2">
+                    <div className="mt-2 flex items-center gap-1.5 flex-wrap">
+                      {cat && (
                         <Badge variant="outline" className="text-[10px]">
                           {cat.icon} {cat.name}
                         </Badge>
-                      </div>
-                    )}
+                      )}
+                      {sortBy === "region" && (region.city || region.county) && (
+                        <RegionBadge rank={svc.location_rank} />
+                      )}
+                    </div>
                   </CardContent>
                 </Card>
               );
