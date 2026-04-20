@@ -54,6 +54,7 @@ import ProviderPublicProfile from "./pages/ProviderPublicProfile";
 import VideoFeed from "./pages/VideoFeed";
 import UserVideos from "./pages/UserVideos";
 import HelpCenter from "./pages/HelpCenter";
+import Upgrade from "./pages/Upgrade";
 import { OfflineBanner } from "@/components/OfflineBanner";
 import ProfileGuard from "@/components/ProfileGuard";
 import { RateUsDialog } from "@/components/RateUsDialog";
@@ -151,6 +152,7 @@ const AppInner = () => {
           <Route path="/videos" element={<VideoFeed />} />
           <Route path="/user/:userId/videos" element={<UserVideos />} />
           <Route path="/help" element={<HelpCenter />} />
+          <Route path="/upgrade" element={<Upgrade />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </ProfileGuard>
