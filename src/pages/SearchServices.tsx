@@ -206,7 +206,7 @@ const SearchServices = () => {
         });
       }
     }
-  }, [query, categoryId, county, sortBy, priceRange, minRating]);
+  }, [query, categoryId, county, sortBy, priceRange, minRating, region.city, region.county]);
 
   // Search on filter change
   useEffect(() => {
@@ -406,6 +406,9 @@ const SearchServices = () => {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
+                  {(region.city || region.county) && (
+                    <SelectItem value="region">📍 Best for your area</SelectItem>
+                  )}
                   <SelectItem value="newest">Newest first</SelectItem>
                   <SelectItem value="price_low">Lowest price</SelectItem>
                   <SelectItem value="price_high">Highest price</SelectItem>
