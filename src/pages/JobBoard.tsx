@@ -90,7 +90,13 @@ const JobBoard = () => {
           <span>Dashboard</span>
         </button>
 
-        <h1 className="font-display text-2xl font-bold text-foreground mb-4">Job Board</h1>
+        <h1 className="font-display text-2xl font-bold text-foreground mb-1">Job Board</h1>
+        {(region.city || region.county) && (
+          <p className="text-xs text-muted-foreground mb-4 flex items-center gap-1">
+            <MapPin className="w-3 h-3" />
+            Showing jobs near {region.city || region.county} first
+          </p>
+        )}
 
         {/* Category Filter */}
         <div className="mb-3">
@@ -128,11 +134,14 @@ const JobBoard = () => {
               {filtered.map((job) => (
                 <Card key={job.id} className="hover:shadow-md transition-shadow">
                   <CardContent className="p-4">
-                    {categories[job.category_id] && (
-                      <Badge variant="secondary" className="text-[10px] mb-2">
-                        {categories[job.category_id].icon} {categories[job.category_id].name}
-                      </Badge>
-                    )}
+                    <div className="flex items-center gap-1.5 mb-2 flex-wrap">
+                      {categories[job.category_id] && (
+                        <Badge variant="secondary" className="text-[10px]">
+                          {categories[job.category_id].icon} {categories[job.category_id].name}
+                        </Badge>
+                      )}
+                      {(region.city || region.county) && <RegionBadge rank={job.location_rank} />}
+                    </div>
                     <h3 className="font-semibold text-foreground mb-1">{job.title}</h3>
                     {job.description && <p className="text-sm text-muted-foreground line-clamp-2 mb-2">{job.description}</p>}
                     <div className="flex items-center gap-3 text-xs text-muted-foreground mb-3">
