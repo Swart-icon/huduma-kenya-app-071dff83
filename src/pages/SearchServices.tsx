@@ -27,6 +27,9 @@ type Service = {
   provider_id: string;
   category_id: string;
   created_at: string;
+  latitude?: number | null;
+  longitude?: number | null;
+  location_rank?: number;
 };
 
 type Category = {
@@ -65,11 +68,13 @@ const SearchServices = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const { location: userLocation, status: locationStatus } = useLocation();
 
+  const region = useUserRegion();
+
   // State
   const [query, setQuery] = useState(searchParams.get("q") || "");
   const [categoryId, setCategoryId] = useState(searchParams.get("category") || "all");
   const [county, setCounty] = useState(searchParams.get("county") || "all");
-  const [sortBy, setSortBy] = useState(searchParams.get("sort") || "newest");
+  const [sortBy, setSortBy] = useState(searchParams.get("sort") || "region");
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 100000]);
   const [minRating, setMinRating] = useState(0);
   const [showFilters, setShowFilters] = useState(false);
