@@ -20,7 +20,7 @@ type Props = {
 };
 
 const MAX_SUGGESTIONS = 8;
-const HISTORY_KEY = "huduma_search_history";
+const HISTORY_KEY = "servio_search_history";
 const MAX_HISTORY = 10;
 
 /* ─── Search history helpers ─── */

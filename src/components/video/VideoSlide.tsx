@@ -44,7 +44,7 @@ export const VideoSlide = memo(({
       el.currentTime = 0;
       el.play().catch(() => {});
       // Track as meaningful action for rate prompt
-      try { (window as any).__huduma_trackAction?.(); } catch {}
+      try { (window as any).__servio_trackAction?.(); } catch {}
     } else {
       el.pause();
     }

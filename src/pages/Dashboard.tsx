@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
-import hudumaLogo from "@/assets/hudumahub-logo-transparent.png";
+import servioLogo from "@/assets/serviohub-logo-transparent.png";
 import {
   Briefcase, HelpCircle, Map as MapIcon, Search, UserCheck,
   LogOut, User, Shield, List, Grid, FileText, Calendar,
@@ -155,7 +155,7 @@ const Dashboard = () => {
       {/* ─── Top Bar ─── */}
       <div className="sticky top-0 z-30 bg-background/80 backdrop-blur-lg border-b border-border/40">
         <div className="flex items-center justify-between px-5 py-2.5 max-w-lg mx-auto">
-          <img src={hudumaLogo} alt="HudumaHub.ke" className="h-12 w-auto" />
+          <img src={servioLogo} alt="Servio" className="h-12 w-auto" />
           <div className="flex gap-1">
             <Button variant="ghost" size="icon" onClick={() => navigate("/conversations")} className="rounded-full h-9 w-9 relative">
               <MessageCircle className="w-[18px] h-[18px]" />
@@ -446,7 +446,7 @@ const Dashboard = () => {
         </div>
 
         <p className="text-center text-[11px] text-muted-foreground mt-6 mb-2">
-          HudumaHub.ke — Connecting Kenya's Services 🇰🇪
+          Servio — Connecting Kenya's Services 🇰🇪
         </p>
       </div>
 

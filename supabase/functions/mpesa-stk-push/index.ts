@@ -113,7 +113,7 @@ Deno.serve(async (req) => {
           PartyB: shortcode,
           PhoneNumber: normalised,
           CallBackURL: callbackUrl,
-          AccountReference: `HUDUMA-${roleType.toUpperCase()}`,
+          AccountReference: `SERVIO-${roleType.toUpperCase()}`,
           TransactionDesc: `Premium ${roleType} activation`,
         }),
       }

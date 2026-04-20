@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 
-const STORAGE_KEY = "huduma_rate_prompt";
+const STORAGE_KEY = "servio_rate_prompt";
 const MIN_ACTIONS = 5;
 const COOLDOWN_DAYS = 14;
 
