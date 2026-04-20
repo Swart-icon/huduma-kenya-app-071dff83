@@ -1487,6 +1487,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      assign_self_role: {
+        Args: { _role: Database["public"]["Enums"]["app_role"] }
+        Returns: undefined
+      }
       has_active_subscription: {
         Args: { _role_type: string; _user_id: string }
         Returns: boolean
@@ -1612,6 +1616,10 @@ export type Database = {
           video_url: string
           view_count: number
         }[]
+      }
+      remove_self_role: {
+        Args: { _role: Database["public"]["Enums"]["app_role"] }
+        Returns: undefined
       }
     }
     Enums: {

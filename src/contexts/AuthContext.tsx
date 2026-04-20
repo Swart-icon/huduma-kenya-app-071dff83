@@ -158,17 +158,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const existingRoles = (existingData ?? []).map(({ role }) => role as AppRole);
     const newRoles = selectedRoles.filter((r) => !existingRoles.includes(r));
 
-    if (newRoles.length > 0) {
-      const { error } = await supabase
-        .from("user_roles")
-        .insert(newRoles.map((r) => ({ user_id: user.id, role: r })));
-
-      if (error) {
-        // Handle duplicates gracefully
-        if (!/duplicate key|unique/i.test(error.message)) {
-          return { error: new Error(error.message) };
-        }
-      }
+    for (const r of newRoles) {
+      if (r === "admin") continue; // admin can never be self-assigned
+      const { error } = await supabase.rpc("assign_self_role", { _role: r });
+      if (error) return { error: new Error(error.message) };
     }
 
     // Refresh roles
@@ -193,15 +186,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return { error: null }; // Already has this role
     }
 
-    const { error } = await supabase
-      .from("user_roles")
-      .insert({ user_id: user.id, role: newRole });
-
-    if (error) {
-      if (!/duplicate key|unique/i.test(error.message)) {
-        return { error: new Error(error.message) };
-      }
+    if (newRole === "admin") {
+      return { error: new Error("Admin role can only be assigned by an existing admin") };
     }
+
+    const { error } = await supabase.rpc("assign_self_role", { _role: newRole });
+    if (error) return { error: new Error(error.message) };
 
     await fetchRoles(user.id);
     return { error: null };
@@ -215,12 +205,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return { error: new Error("You must have at least one role") };
     }
 
-    const { error } = await supabase
-      .from("user_roles")
-      .delete()
-      .eq("user_id", user.id)
-      .eq("role", roleToRemove);
+    if (roleToRemove === "admin") {
+      return { error: new Error("Admin role can only be removed by an existing admin") };
+    }
 
+    const { error } = await supabase.rpc("remove_self_role", { _role: roleToRemove });
     if (error) return { error: new Error(error.message) };
 
     await fetchRoles(user.id);
