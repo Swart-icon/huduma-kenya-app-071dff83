@@ -359,6 +359,65 @@ export type Database = {
           },
         ]
       }
+      mpesa_transactions: {
+        Row: {
+          amount_kes: number
+          checkout_request_id: string | null
+          created_at: string
+          id: string
+          merchant_request_id: string | null
+          mpesa_receipt: string | null
+          phone_number: string
+          raw_callback: Json | null
+          result_code: number | null
+          result_desc: string | null
+          status: string
+          subscription_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount_kes: number
+          checkout_request_id?: string | null
+          created_at?: string
+          id?: string
+          merchant_request_id?: string | null
+          mpesa_receipt?: string | null
+          phone_number: string
+          raw_callback?: Json | null
+          result_code?: number | null
+          result_desc?: string | null
+          status?: string
+          subscription_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount_kes?: number
+          checkout_request_id?: string | null
+          created_at?: string
+          id?: string
+          merchant_request_id?: string | null
+          mpesa_receipt?: string | null
+          phone_number?: string
+          raw_callback?: Json | null
+          result_code?: number | null
+          result_desc?: string | null
+          status?: string
+          subscription_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mpesa_transactions_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "premium_subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           body: string | null
@@ -459,6 +518,51 @@ export type Database = {
           id?: string
           image_url?: string
           title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      premium_subscriptions: {
+        Row: {
+          amount_kes: number
+          created_at: string
+          expires_at: string | null
+          id: string
+          mpesa_receipt: string | null
+          payment_method: string
+          payment_reference: string | null
+          role_type: string
+          started_at: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount_kes: number
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          mpesa_receipt?: string | null
+          payment_method?: string
+          payment_reference?: string | null
+          role_type: string
+          started_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount_kes?: number
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          mpesa_receipt?: string | null
+          payment_method?: string
+          payment_reference?: string | null
+          role_type?: string
+          started_at?: string | null
+          status?: string
+          updated_at?: string
           user_id?: string
         }
         Relationships: []
@@ -1166,6 +1270,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      has_active_subscription: {
+        Args: { _role_type: string; _user_id: string }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

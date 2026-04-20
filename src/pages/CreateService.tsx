@@ -8,9 +8,10 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowLeft, Save, Navigation, Loader2, MapPin } from "lucide-react";
+import { ArrowLeft, Save, Navigation, Loader2, MapPin, Crown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { KENYAN_LOCATIONS, getCoordinatesForCounty } from "@/lib/kenyanLocations";
+import { useIsPremium } from "@/hooks/useSubscription";
 
 const kenyanCounties = [
   "Baringo", "Bomet", "Bungoma", "Busia", "Elgeyo-Marakwet", "Embu", "Garissa",
@@ -26,6 +27,7 @@ type Category = { id: string; name: string; icon: string | null };
 
 const CreateService = () => {
   const { user, role, loading: authLoading } = useAuth();
+  const { isPremium, loading: subLoading } = useIsPremium("provider");
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -127,7 +129,34 @@ const CreateService = () => {
     }
   };
 
-  if (authLoading) return null;
+  if (authLoading || subLoading) return null;
+
+  // Paywall: providers must have an active premium subscription to publish
+  if (!isPremium) {
+    return (
+      <div className="min-h-screen bg-background px-6 py-6 pb-24">
+        <div className="max-w-sm mx-auto">
+          <button onClick={() => navigate("/my-services")} className="flex items-center gap-2 text-muted-foreground mb-6">
+            <ArrowLeft className="w-5 h-5" /> <span>My Services</span>
+          </button>
+          <div className="text-center mt-12">
+            <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
+              <Crown className="w-8 h-8 text-primary" />
+            </div>
+            <h1 className="font-display text-2xl font-bold text-foreground mb-2">
+              Activate Provider Premium
+            </h1>
+            <p className="text-muted-foreground mb-6">
+              You need an active premium subscription (KSh 500/month) to publish services and receive bookings.
+            </p>
+            <Button onClick={() => navigate("/upgrade?role=provider")} className="w-full h-12 rounded-xl font-semibold">
+              <Crown className="w-4 h-4 mr-2" /> Upgrade Now
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background px-6 py-6 pb-24">
