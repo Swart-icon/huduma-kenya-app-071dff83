@@ -44,6 +44,7 @@ type Category = { id: string; name: string; icon: string | null };
 const JobDetail = () => {
   const { id } = useParams<{ id: string }>();
   const { user, role } = useAuth();
+  const { isPremium } = useIsPremium("job_seeker");
   const navigate = useNavigate();
   const { toast } = useToast();
 
