@@ -9,6 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ArrowLeft, MapPin, DollarSign, Search, Loader2, Send } from "lucide-react";
 import { useCategories } from "@/hooks/useCategories";
 import { JobCardSkeleton, ListSkeletons } from "@/components/Skeletons";
+import { useUserRegion } from "@/hooks/useUserRegion";
+import { RegionBadge } from "@/components/RegionBadge";
 
 type JobPost = {
   id: string;
@@ -21,6 +23,7 @@ type JobPost = {
   status: string;
   created_at: string;
   category_id: string;
+  location_rank?: number;
 };
 
 const PAGE_SIZE = 15;
