@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import hudumaLogo from "@/assets/hudumahub-logo-transparent.png";
+import servioLogo from "@/assets/serviohub-logo-transparent.png";
 import { useState, useEffect, memo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -129,7 +129,7 @@ const Welcome = () => {
           {/* Logo */}
           <div className="mb-8">
             <div className="inline-block bg-white/95 rounded-2xl px-6 py-4 shadow-xl animate-[float_3s_ease-in-out_infinite]">
-              <img src={hudumaLogo} alt="HudumaHub.ke" className="h-24 w-auto" />
+              <img src={servioLogo} alt="Servio" className="h-24 w-auto" />
             </div>
           </div>
 

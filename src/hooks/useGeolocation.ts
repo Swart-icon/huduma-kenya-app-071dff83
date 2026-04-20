@@ -16,7 +16,7 @@ type UseGeolocationReturn = {
   clearLocation: () => void;
 };
 
-const LOCATION_STORAGE_KEY = "huduma_user_location";
+const LOCATION_STORAGE_KEY = "servio_user_location";
 const LOCATION_EXPIRY_MS = 30 * 60 * 1000; // 30 minutes
 
 const getSavedLocation = (): UserLocation | null => {

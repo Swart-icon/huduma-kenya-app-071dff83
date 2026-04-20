@@ -12,7 +12,7 @@ interface FeatureTooltipProps {
   className?: string;
 }
 
-const STORAGE_KEY = "huduma-tooltips-seen";
+const STORAGE_KEY = "servio-tooltips-seen";
 
 function getSeenTooltips(): string[] {
   try {

@@ -44,7 +44,7 @@ const AuthPromptDialog = ({ open, onOpenChange, targetRole }: { open: boolean; o
       <DialogContent className="max-w-sm mx-auto text-center">
         <DialogHeader>
           <DialogTitle className="flex items-center justify-center gap-2 text-lg">
-            <LogIn className="w-5 h-5 text-primary" /> Join Huduma{roleLabel ? ` as ${roleLabel}` : ""}
+            <LogIn className="w-5 h-5 text-primary" /> Join Servio{roleLabel ? ` as ${roleLabel}` : ""}
           </DialogTitle>
           <DialogDescription>
             {roleLabel
@@ -306,7 +306,7 @@ const VideoFeed = () => {
             </div>
           ) : (
             <>
-              <h1 className="text-white font-bold text-lg flex-1">Huduma</h1>
+              <h1 className="text-white font-bold text-lg flex-1">Servio</h1>
               <button onClick={() => setSearchOpen(true)} className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center">
                 <Search className="w-4 h-4 text-white" />
               </button>

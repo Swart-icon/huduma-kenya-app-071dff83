@@ -238,14 +238,14 @@ const HelpCenter = () => {
             </Card>
             <Card
               className="border-0 shadow-sm rounded-2xl cursor-pointer card-hover"
-              onClick={() => window.open("mailto:support@hudumahub.ke", "_blank")}
+              onClick={() => window.open("mailto:support@servio.app", "_blank")}
             >
               <CardContent className="flex flex-col items-center gap-2 p-4 text-center">
                 <div className="w-10 h-10 rounded-xl bg-accent/15 flex items-center justify-center">
                   <Mail className="w-5 h-5 text-accent-foreground" />
                 </div>
                 <span className="text-xs font-bold text-foreground">Email Support</span>
-                <span className="text-[10px] text-muted-foreground">support@hudumahub.ke</span>
+                <span className="text-[10px] text-muted-foreground">support@servio.app</span>
               </CardContent>
             </Card>
           </div>

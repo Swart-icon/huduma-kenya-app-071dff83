@@ -76,7 +76,7 @@ const Register = () => {
       toast({ title: "Failed to set role", description: error.message, variant: "destructive" });
     } else {
       const label = roleOptions.find((o) => o.value === selectedRole)?.label;
-      toast({ title: "Welcome to Huduma! 🎉", description: `You're registered as: ${label}` });
+      toast({ title: "Welcome to Servio! 🎉", description: `You're registered as: ${label}` });
       navigate("/videos");
     }
   };

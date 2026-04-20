@@ -18,7 +18,7 @@ const TermsOfService = () => {
           <section>
             <h2 className="text-base font-bold text-foreground">1. Acceptance of Terms</h2>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              By accessing or using Huduma, you agree to be bound by these Terms of Service. If you do not agree, please do not use the app. These terms apply to all users, including clients, service providers, and job seekers.
+              By accessing or using Servio, you agree to be bound by these Terms of Service. If you do not agree, please do not use the app. These terms apply to all users, including clients, service providers, and job seekers.
             </p>
           </section>
 
@@ -55,7 +55,7 @@ const TermsOfService = () => {
           <section>
             <h2 className="text-base font-bold text-foreground">5. Payments</h2>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              Payments are processed through the platform via M-Pesa or card. Huduma acts as a facilitator and is not responsible for the quality of services rendered. Disputes should be reported through the in-app reporting system.
+              Payments are processed through the platform via M-Pesa or card. Servio acts as a facilitator and is not responsible for the quality of services rendered. Disputes should be reported through the in-app reporting system.
             </p>
           </section>
 
@@ -82,14 +82,14 @@ const TermsOfService = () => {
           <section>
             <h2 className="text-base font-bold text-foreground">8. Limitation of Liability</h2>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              Huduma is a marketplace platform connecting clients and providers. We are not responsible for the quality of services provided, disputes between users, or any damages arising from use of the platform. Our liability is limited to the amount paid for the specific service in question.
+              Servio is a marketplace platform connecting clients and providers. We are not responsible for the quality of services provided, disputes between users, or any damages arising from use of the platform. Our liability is limited to the amount paid for the specific service in question.
             </p>
           </section>
 
           <section>
             <h2 className="text-base font-bold text-foreground">9. Intellectual Property</h2>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              All content, branding, and technology on Huduma is owned by or licensed to us. Users retain ownership of content they upload but grant us a license to display it on the platform.
+              All content, branding, and technology on Servio is owned by or licensed to us. Users retain ownership of content they upload but grant us a license to display it on the platform.
             </p>
           </section>
 
@@ -110,7 +110,7 @@ const TermsOfService = () => {
           <section>
             <h2 className="text-base font-bold text-foreground">12. Contact</h2>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              For questions about these Terms, contact us at legal@huduma.app
+              For questions about these Terms, contact us at legal@servio.app
             </p>
           </section>
         </div>

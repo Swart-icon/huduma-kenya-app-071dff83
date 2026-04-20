@@ -99,7 +99,7 @@ export const RateUsDialog = ({ open, onOpenChange, onDismiss, onRated }: Props) 
               <Star className="w-8 h-8 text-primary fill-primary" />
             </div>
             <DialogHeader className="space-y-1 mb-6">
-              <DialogTitle className="text-xl font-bold">Enjoying Huduma?</DialogTitle>
+              <DialogTitle className="text-xl font-bold">Enjoying Servio?</DialogTitle>
               <DialogDescription className="text-muted-foreground text-sm">
                 Your feedback helps us improve the experience for everyone
               </DialogDescription>
@@ -151,7 +151,7 @@ export const RateUsDialog = ({ open, onOpenChange, onDismiss, onRated }: Props) 
             <DialogHeader className="space-y-1 mb-2">
               <DialogTitle className="text-xl font-bold">Thank You! 🎉</DialogTitle>
               <DialogDescription className="text-muted-foreground text-sm">
-                We're glad you love Huduma! Would you mind rating us on the Play Store?
+                We're glad you love Servio! Would you mind rating us on the Play Store?
               </DialogDescription>
             </DialogHeader>
 
@@ -177,7 +177,7 @@ export const RateUsDialog = ({ open, onOpenChange, onDismiss, onRated }: Props) 
             <DialogHeader className="space-y-1 mb-4 text-center">
               <DialogTitle className="text-xl font-bold">What can we improve?</DialogTitle>
               <DialogDescription className="text-muted-foreground text-sm">
-                Your feedback is valuable — help us make Huduma better
+                Your feedback is valuable — help us make Servio better
               </DialogDescription>
             </DialogHeader>
 

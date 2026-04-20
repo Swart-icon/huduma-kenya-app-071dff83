@@ -37,7 +37,7 @@ const Onboarding = () => {
   const touchEnd = useRef(0);
 
   const complete = useCallback(() => {
-    localStorage.setItem("huduma-onboarded", "true");
+    localStorage.setItem("servio-onboarded", "true");
     navigate("/welcome", { replace: true });
   }, [navigate]);
 

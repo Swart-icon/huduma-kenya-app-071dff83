@@ -29,7 +29,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const ACTIVE_ROLE_KEY = "huduma_active_role";
+const ACTIVE_ROLE_KEY = "servio_active_role";
 
 /** Non-admin roles in priority order for picking a default active role */
 const ROLE_PRIORITY: AppRole[] = ["provider", "client", "job_seeker"];

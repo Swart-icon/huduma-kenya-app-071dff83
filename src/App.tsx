@@ -100,8 +100,8 @@ const AppInner = () => {
 
   // Expose trackAction globally so any page can call it
   useEffect(() => {
-    (window as any).__huduma_trackAction = ratePrompt.trackAction;
-    return () => { delete (window as any).__huduma_trackAction; };
+    (window as any).__servio_trackAction = ratePrompt.trackAction;
+    return () => { delete (window as any).__servio_trackAction; };
   }, [ratePrompt.trackAction]);
 
   return (
@@ -173,7 +173,7 @@ const AppInner = () => {
 const App = () => (
   <ErrorBoundary>
   <QueryClientProvider client={queryClient}>
-    <ThemeProvider attribute="class" defaultTheme="system" storageKey="huduma-theme" enableSystem>
+    <ThemeProvider attribute="class" defaultTheme="system" storageKey="servio-theme" enableSystem>
     <TooltipProvider>
       <Toaster />
       <Sonner />

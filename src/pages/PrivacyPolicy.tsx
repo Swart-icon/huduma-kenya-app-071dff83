@@ -71,7 +71,7 @@ const PrivacyPolicy = () => {
           <section>
             <h2 className="text-base font-bold text-foreground">7. Children's Privacy</h2>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              Huduma is not intended for use by anyone under the age of 18. We do not knowingly collect personal information from children.
+              Servio is not intended for use by anyone under the age of 18. We do not knowingly collect personal information from children.
             </p>
           </section>
 
@@ -85,7 +85,7 @@ const PrivacyPolicy = () => {
           <section>
             <h2 className="text-base font-bold text-foreground">9. Contact Us</h2>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              For questions about this Privacy Policy or your data, contact us at privacy@huduma.app
+              For questions about this Privacy Policy or your data, contact us at privacy@servio.app
             </p>
           </section>
         </div>
