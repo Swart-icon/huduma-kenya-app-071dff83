@@ -1536,6 +1536,83 @@ export type Database = {
           title: string
         }[]
       }
+      ranked_jobs: {
+        Args: {
+          _category_id?: string
+          _limit_count?: number
+          _offset_count?: number
+          _user_city?: string
+          _user_county?: string
+        }
+        Returns: {
+          budget: number
+          budget_type: string
+          category_icon: string
+          category_id: string
+          category_name: string
+          city: string
+          client_id: string
+          county: string
+          created_at: string
+          description: string
+          id: string
+          location_rank: number
+          status: string
+          title: string
+        }[]
+      }
+      ranked_services: {
+        Args: {
+          _category_id?: string
+          _limit_count?: number
+          _offset_count?: number
+          _user_city?: string
+          _user_county?: string
+        }
+        Returns: {
+          business_name: string
+          category_icon: string
+          category_id: string
+          category_name: string
+          city: string
+          county: string
+          created_at: string
+          description: string
+          is_verified: boolean
+          location_rank: number
+          price: number
+          price_type: string
+          profile_image_url: string
+          provider_id: string
+          service_id: string
+          title: string
+        }[]
+      }
+      ranked_videos: {
+        Args: {
+          _category_id?: string
+          _limit_count?: number
+          _offset_count?: number
+          _user_city?: string
+          _user_county?: string
+        }
+        Returns: {
+          category_id: string
+          city: string
+          comment_count: number
+          county: string
+          created_at: string
+          duration_seconds: number
+          id: string
+          like_count: number
+          location_rank: number
+          thumbnail_url: string
+          title: string
+          user_id: string
+          video_url: string
+          view_count: number
+        }[]
+      }
     }
     Enums: {
       app_role: "provider" | "job_seeker" | "client" | "admin"
