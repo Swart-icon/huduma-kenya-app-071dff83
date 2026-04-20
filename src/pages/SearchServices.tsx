@@ -101,49 +101,63 @@ const SearchServices = () => {
   const fetchServices = useCallback(async (pageNum: number, append = false) => {
     setLoading(true);
 
-    let q = supabase
-      .from("services")
-      .select("*,latitude,longitude", { count: "exact" })
-      .eq("is_active", true);
+    let results: Service[] = [];
+    let count = 0;
 
-    // Keyword search
-    if (query.trim()) {
-      q = q.or(`title.ilike.%${query.trim()}%,description.ilike.%${query.trim()}%`);
-    }
+    // Region-aware default: use ranked_services RPC when sortBy === "region" and no keyword/price filters
+    const useRankedRpc =
+      sortBy === "region" &&
+      !query.trim() &&
+      county === "all" &&
+      priceRange[0] === 0 &&
+      priceRange[1] >= 100000 &&
+      (region.city || region.county);
 
-    // Category filter
-    if (categoryId && categoryId !== "all") {
-      q = q.eq("category_id", categoryId);
-    }
-
-    // County filter
-    if (county && county !== "all") {
-      q = q.eq("county", county);
-    }
-
-    // Price filter
-    if (priceRange[0] > 0) {
-      q = q.gte("price", priceRange[0]);
-    }
-    if (priceRange[1] < 100000) {
-      q = q.lte("price", priceRange[1]);
-    }
-
-    // Sorting
-    if (sortBy === "price_low") {
-      q = q.order("price", { ascending: true, nullsFirst: false });
-    } else if (sortBy === "price_high") {
-      q = q.order("price", { ascending: false, nullsFirst: false });
+    if (useRankedRpc) {
+      const { data } = await supabase.rpc("ranked_services", {
+        _user_city: region.city,
+        _user_county: region.county,
+        _category_id: categoryId !== "all" ? categoryId : null,
+        _limit_count: PAGE_SIZE,
+        _offset_count: pageNum * PAGE_SIZE,
+      });
+      results = ((data as any[]) || []).map((r) => ({
+        id: r.service_id,
+        title: r.title,
+        description: r.description,
+        price: r.price,
+        price_type: r.price_type,
+        city: r.city,
+        county: r.county,
+        provider_id: r.provider_id,
+        category_id: r.category_id,
+        created_at: r.created_at,
+        location_rank: r.location_rank,
+      }));
+      count = results.length;
     } else {
-      q = q.order("created_at", { ascending: false });
+      let q = supabase
+        .from("services")
+        .select("*,latitude,longitude", { count: "exact" })
+        .eq("is_active", true);
+
+      if (query.trim()) q = q.or(`title.ilike.%${query.trim()}%,description.ilike.%${query.trim()}%`);
+      if (categoryId && categoryId !== "all") q = q.eq("category_id", categoryId);
+      if (county && county !== "all") q = q.eq("county", county);
+      if (priceRange[0] > 0) q = q.gte("price", priceRange[0]);
+      if (priceRange[1] < 100000) q = q.lte("price", priceRange[1]);
+
+      if (sortBy === "price_low") q = q.order("price", { ascending: true, nullsFirst: false });
+      else if (sortBy === "price_high") q = q.order("price", { ascending: false, nullsFirst: false });
+      else q = q.order("created_at", { ascending: false });
+
+      const from = pageNum * PAGE_SIZE;
+      q = q.range(from, from + PAGE_SIZE - 1);
+
+      const { data, count: c } = await q;
+      results = (data as Service[]) || [];
+      count = c || 0;
     }
-
-    // Pagination
-    const from = pageNum * PAGE_SIZE;
-    q = q.range(from, from + PAGE_SIZE - 1);
-
-    const { data, count } = await q;
-    const results = data || [];
 
     if (append) {
       setServices((prev) => [...prev, ...results]);
@@ -151,7 +165,7 @@ const SearchServices = () => {
       setServices(results);
     }
 
-    setTotalHint(count || 0);
+    setTotalHint(count);
     setHasMore(results.length === PAGE_SIZE);
     setLoading(false);
 
