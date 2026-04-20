@@ -126,6 +126,14 @@ export const RateUsDialog = ({ open, onOpenChange, onDismiss, onRated }: Props) 
               ))}
             </div>
 
+            <Button
+              className="w-full rounded-xl mb-3"
+              onClick={handleConfirmRating}
+              disabled={rating === 0 || submitting}
+            >
+              {rating === 0 ? "Tap a star to rate" : "Continue"}
+            </Button>
+
             <button
               onClick={handleClose}
               className="text-xs text-muted-foreground hover:text-foreground transition-colors"
