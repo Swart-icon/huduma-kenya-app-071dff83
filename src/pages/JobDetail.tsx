@@ -8,9 +8,10 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, MapPin, DollarSign, Clock, Send, CheckCircle, XCircle, Bookmark, BookmarkCheck, User, MessageSquare, Phone } from "lucide-react";
+import { ArrowLeft, MapPin, DollarSign, Clock, Send, CheckCircle, XCircle, Bookmark, BookmarkCheck, User, MessageSquare, Phone, Crown } from "lucide-react";
 import { getOrCreateConversation } from "@/lib/conversations";
 import { useToast } from "@/hooks/use-toast";
+import { useIsPremium } from "@/hooks/useSubscription";
 
 type JobPost = {
   id: string;
@@ -143,6 +144,15 @@ const JobDetail = () => {
   const handleApply = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user || role !== "job_seeker") return;
+    // Paywall: job seekers must have an active premium subscription to apply
+    if (!isPremium) {
+      toast({
+        title: "Premium required",
+        description: "Activate Job Seeker Premium (KSh 200/month) to apply.",
+      });
+      navigate("/upgrade?role=job_seeker");
+      return;
+    }
     setApplySubmitting(true);
     const { error } = await supabase.from("job_applications").insert({
       job_post_id: id!,
