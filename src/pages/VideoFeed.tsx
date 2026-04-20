@@ -13,13 +13,14 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from "@/components/ui/dialog";
 import {
-  Home, Plus, MessageCircle, User, Loader2, Video, Search, X, LogIn, MapPin,
+  Home, Plus, MessageCircle, User, Loader2, Video, Search, X, LogIn, MapPin, Radio,
 } from "lucide-react";
 import { UploadVideoDialog } from "@/components/video/UploadVideoDialog";
 import { CommentsSheet } from "@/components/video/CommentsSheet";
 import { VideoSlide } from "@/components/video/VideoSlide";
 import type { VideoItem, FeedTab } from "@/components/video/types";
 import { VideoSearchSuggestions, saveSearchTerm } from "@/components/video/VideoSearchSuggestions";
+import { LiveNowBar } from "@/components/live/LiveNowBar";
 
 const PAGE_SIZE = 10;
 const GUEST_VIDEO_LIMIT = 5;
@@ -280,6 +281,16 @@ const VideoFeed = () => {
               <button onClick={() => setSearchOpen(true)} className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center">
                 <Search className="w-4 h-4 text-white" />
               </button>
+              {canUpload && (
+                <button
+                  onClick={() => navigate("/go-live")}
+                  className="ml-1 px-2.5 h-9 rounded-full bg-destructive text-destructive-foreground text-xs font-bold flex items-center gap-1.5"
+                  aria-label="Go Live"
+                >
+                  <Radio className="w-3.5 h-3.5" />
+                  Live
+                </button>
+              )}
               {isGuest ? (
                 <button onClick={() => navigate("/login")} className="ml-1 px-3 py-1.5 rounded-full bg-primary text-primary-foreground text-xs font-semibold">
                   Sign In
@@ -333,6 +344,9 @@ const VideoFeed = () => {
           ))}
         </div>
       </div>
+
+      {/* Live now (only renders when streams are live) */}
+      <LiveNowBar />
 
       {/* ─── Video Feed ─── */}
       {activeTab === "nearby" && !userLocation ? (
