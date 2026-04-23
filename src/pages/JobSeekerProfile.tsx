@@ -39,12 +39,12 @@ const JobSeekerProfile = () => {
   const [hasProfile, setHasProfile] = useState(false);
 
   useEffect(() => {
-    if (!authLoading && (!user || role !== "job_seeker")) {
-      navigate("/dashboard");
+    if (!authLoading && !user) {
+      navigate("/login");
       return;
     }
     if (user) loadProfile();
-  }, [authLoading, user, role]);
+  }, [authLoading, user]);
 
   const loadProfile = async () => {
     const { data } = await supabase
