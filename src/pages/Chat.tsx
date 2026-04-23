@@ -41,7 +41,8 @@ const parseMessageContent = (content: string): ParsedContent => {
   return { type: "text", text: content };
 };
 
-const VoicePlayer = ({ url, isMe }: { url: string; isMe: boolean }) => {
+// eslint-disable-next-line react-refresh/only-export-components
+const VoicePlayerInner = ({ url, isMe }: { url: string; isMe: boolean }) => {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [playing, setPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
