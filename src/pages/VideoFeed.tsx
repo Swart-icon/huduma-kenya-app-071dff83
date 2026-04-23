@@ -422,8 +422,10 @@ const VideoFeed = () => {
                   else if (activeRole === "provider") { navigate("/dashboard"); }
                   else { navigate("/categories"); }
                 } else if (tab.key === "jobseeker") {
+                  // Filter feed in place — only navigate to the hub if the user is actually a job seeker
                   if (isGuest) { handleAuthRequired("job_seeker"); }
-                  else { navigate("/job-seeker"); }
+                  else if (activeRole === "job_seeker") { navigate("/job-seeker"); }
+                  else { setActiveTab("jobseeker"); }
                 } else if (tab.key === "client") {
                   if (isGuest) { handleAuthRequired("client"); }
                   else if (activeRole === "client") { navigate("/dashboard"); }
