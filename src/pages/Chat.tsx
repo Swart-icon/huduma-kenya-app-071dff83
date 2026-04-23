@@ -292,6 +292,8 @@ const Chat = () => {
     }
 
     const { data: urlData } = supabase.storage.from("chat-attachments").getPublicUrl(path);
+    // Store the canonical (legacy public) URL — useSignedChatAttachment extracts
+    // the storage path from it and signs at render time. Old messages keep working too.
     const content = JSON.stringify({ __type: true, type, url: urlData.publicUrl, fileName, mimeType });
     await sendContent(content);
     setUploading(false);
