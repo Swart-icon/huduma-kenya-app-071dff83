@@ -367,7 +367,7 @@ const ProviderProfileEdit = () => {
       <div className="max-w-sm mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
-          <button onClick={() => navigate("/dashboard")} className="flex items-center gap-2 text-muted-foreground">
+          <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-muted-foreground">
             <ArrowLeft className="w-5 h-5" />
             <span>Dashboard</span>
           </button>

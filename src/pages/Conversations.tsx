@@ -135,7 +135,7 @@ const Conversations = () => {
     <div className="min-h-screen bg-background px-4 py-4">
       <div className="max-w-sm mx-auto">
         <div className="flex items-center gap-3 mb-6">
-          <Button variant="ghost" size="icon" onClick={() => navigate("/dashboard")} className="rounded-xl">
+          <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="rounded-xl">
             <ArrowLeft className="w-5 h-5" />
           </Button>
           <h1 className="font-display font-bold text-xl text-foreground">Messages</h1>

@@ -92,7 +92,7 @@ const ProviderProfilePreview = () => {
     return (
       <div className="min-h-screen bg-background px-6 py-8">
         <div className="max-w-sm mx-auto text-center">
-          <button onClick={() => navigate("/dashboard")} className="flex items-center gap-2 text-muted-foreground mb-8">
+          <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-muted-foreground mb-8">
             <ArrowLeft className="w-5 h-5" /><span>Dashboard</span>
           </button>
           <Briefcase className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
@@ -110,7 +110,7 @@ const ProviderProfilePreview = () => {
     <div className="min-h-screen bg-background">
       {/* Header image area */}
       <div className="relative h-48 bg-gradient-to-br from-primary to-primary/70">
-        <button onClick={() => navigate("/dashboard")} className="absolute top-4 left-4 w-10 h-10 rounded-xl bg-black/20 backdrop-blur-sm flex items-center justify-center text-white">
+        <button onClick={() => navigate(-1)} className="absolute top-4 left-4 w-10 h-10 rounded-xl bg-black/20 backdrop-blur-sm flex items-center justify-center text-white">
           <ArrowLeft className="w-5 h-5" />
         </button>
         <button onClick={() => navigate("/provider-profile/edit")} className="absolute top-4 right-4 w-10 h-10 rounded-xl bg-black/20 backdrop-blur-sm flex items-center justify-center text-white">
