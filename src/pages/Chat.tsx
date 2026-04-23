@@ -312,13 +312,13 @@ const Chat = () => {
       case "image":
         return (
           <div>
-            <img src={parsed.url} alt={parsed.fileName || "Image"} className="max-w-full rounded-lg max-h-48 object-cover" />
+            <SignedImage url={parsed.url} alt={parsed.fileName || "Image"} className="max-w-full rounded-lg max-h-48 object-cover" />
             {parsed.fileName && <p className="text-[10px] mt-1 opacity-60 truncate">{parsed.fileName}</p>}
           </div>
         );
       case "file":
         return (
-          <a href={parsed.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 min-w-[140px]">
+          <SignedFileLink url={parsed.url} className="flex items-center gap-2 min-w-[140px]">
             <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${isMe ? "bg-primary-foreground/20" : "bg-primary/10"}`}>
               <FileText className="w-4 h-4" />
             </div>
@@ -327,7 +327,7 @@ const Chat = () => {
               <p className="text-[10px] opacity-60">Tap to download</p>
             </div>
             <Download className="w-4 h-4 shrink-0 opacity-60" />
-          </a>
+          </SignedFileLink>
         );
       case "story_reply":
         return (
