@@ -1,6 +1,7 @@
 import { useNetworkStatus } from "@/hooks/useNetworkStatus";
-import { WifiOff, RefreshCw } from "lucide-react";
 import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import offlineIllustration from "@/assets/offline-illustration.png";
 
 export const OfflineBanner = () => {
   const { isOnline, isOffline } = useNetworkStatus();
@@ -8,9 +9,7 @@ export const OfflineBanner = () => {
   const [wasOffline, setWasOffline] = useState(false);
 
   useEffect(() => {
-    if (isOffline) {
-      setWasOffline(true);
-    }
+    if (isOffline) setWasOffline(true);
     if (isOnline && wasOffline) {
       setShowReconnected(true);
       const timer = setTimeout(() => {
@@ -23,19 +22,28 @@ export const OfflineBanner = () => {
 
   if (isOffline) {
     return (
-      <div className="sticky top-0 z-[60] bg-destructive text-destructive-foreground px-4 py-2.5 flex items-center gap-3 shadow-md animate-in slide-in-from-top-2">
-        <WifiOff className="w-4 h-4 shrink-0" />
-        <div className="flex-1 min-w-0">
-          <p className="text-xs font-bold leading-tight">You're offline</p>
-          <p className="text-[10px] opacity-80 leading-tight">Some features may be limited</p>
-        </div>
-        <button
+      <div className="fixed inset-0 z-[100] bg-background flex flex-col items-center justify-center px-6 text-center">
+        <img
+          src={offlineIllustration}
+          alt="No internet connection"
+          width={280}
+          height={280}
+          className="w-64 h-64 object-contain mb-6 select-none pointer-events-none"
+          draggable={false}
+        />
+        <h2 className="text-xl font-bold text-foreground mb-2">
+          No internet connection
+        </h2>
+        <p className="text-sm text-muted-foreground mb-6 max-w-xs">
+          Check your connection, then refresh the page.
+        </p>
+        <Button
           onClick={() => window.location.reload()}
-          className="flex items-center gap-1 text-[11px] font-semibold opacity-80 hover:opacity-100 shrink-0"
+          variant="outline"
+          className="rounded-full px-8 h-11 font-semibold border-2 border-primary text-primary hover:bg-primary/10"
         >
-          <RefreshCw className="w-3.5 h-3.5" />
-          Retry
-        </button>
+          Refresh
+        </Button>
       </div>
     );
   }
