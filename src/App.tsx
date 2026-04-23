@@ -61,6 +61,7 @@ import { OfflineBanner } from "@/components/OfflineBanner";
 import ProfileGuard from "@/components/ProfileGuard";
 import { RateUsDialog } from "@/components/RateUsDialog";
 import { useRatePrompt } from "@/hooks/useRatePrompt";
+import { useAndroidBackButton } from "@/hooks/useAndroidBackButton";
 
 // Keep React Query's online status in sync with browser events
 onlineManager.setEventListener((setOnline) => {
@@ -97,6 +98,7 @@ const queryClient = new QueryClient({
 
 const AppInner = () => {
   const ratePrompt = useRatePrompt();
+  useAndroidBackButton();
 
   // Expose trackAction globally so any page can call it
   useEffect(() => {
