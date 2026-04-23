@@ -241,10 +241,84 @@ const VideoFeed = () => {
   // Limit guest users to 3 videos
   const displayVideos = isGuest ? allVideos.slice(0, GUEST_VIDEO_LIMIT) : allVideos;
 
+  // Persist & restore feed position (tab + active video index + scroll) so
+  // returning to /videos via the browser back button keeps the user where they
+  // were instead of jumping to the top.
+  const FEED_STATE_KEY = "servio-video-feed-state";
+
+  // Restore tab once on mount (before queries fire)
   useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem(FEED_STATE_KEY);
+      if (!raw) return;
+      const saved = JSON.parse(raw) as { tab?: FeedTab };
+      if (saved.tab && saved.tab !== activeTab) setActiveTab(saved.tab);
+    } catch { /* ignore */ }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Reset to top when tab/search changes — but skip the very first render so we
+  // can restore scroll position from sessionStorage instead.
+  const didInitialReset = useRef(false);
+  useEffect(() => {
+    if (!didInitialReset.current) {
+      didInitialReset.current = true;
+      return;
+    }
     setActiveIndex(0);
     containerRef.current?.scrollTo({ top: 0 });
   }, [activeTab, searchQuery]);
+
+  // Restore scroll position once the first batch of videos is rendered
+  const didRestoreScroll = useRef(false);
+  useEffect(() => {
+    if (didRestoreScroll.current) return;
+    if (!displayVideos.length || !containerRef.current) return;
+    try {
+      const raw = sessionStorage.getItem(FEED_STATE_KEY);
+      if (raw) {
+        const saved = JSON.parse(raw) as { scrollTop?: number; activeIndex?: number; tab?: FeedTab };
+        if (saved.tab === activeTab && typeof saved.scrollTop === "number") {
+          containerRef.current.scrollTo({ top: saved.scrollTop });
+          if (typeof saved.activeIndex === "number") setActiveIndex(saved.activeIndex);
+        }
+      }
+    } catch { /* ignore */ }
+    didRestoreScroll.current = true;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [displayVideos.length]);
+
+  // Save state on scroll & before unmount/navigate-away
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const save = () => {
+      try {
+        sessionStorage.setItem(
+          FEED_STATE_KEY,
+          JSON.stringify({
+            tab: activeTab,
+            activeIndex,
+            scrollTop: container.scrollTop,
+          })
+        );
+      } catch { /* quota / private mode */ }
+    };
+
+    let raf = 0;
+    const onScroll = () => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(save);
+    };
+    container.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("pagehide", save);
+    return () => {
+      container.removeEventListener("scroll", onScroll);
+      window.removeEventListener("pagehide", save);
+      save();
+    };
+  }, [activeTab, activeIndex]);
 
   useEffect(() => {
     const container = containerRef.current;

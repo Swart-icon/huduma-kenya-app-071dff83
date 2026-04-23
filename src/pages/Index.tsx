@@ -9,7 +9,7 @@ const Index = () => {
   useEffect(() => {
     if (loading) return;
     // Always land on the video feed — it's the primary entry point
-    navigate("/videos");
+    navigate("/videos", { replace: true });
   }, [loading, navigate]);
 
   return (
