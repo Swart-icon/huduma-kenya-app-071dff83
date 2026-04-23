@@ -98,6 +98,7 @@ const queryClient = new QueryClient({
 
 const AppInner = () => {
   const ratePrompt = useRatePrompt();
+  useAndroidBackButton();
 
   // Expose trackAction globally so any page can call it
   useEffect(() => {
