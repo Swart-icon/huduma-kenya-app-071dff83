@@ -92,6 +92,13 @@ const VoicePlayerInner = ({ url, isMe }: { url: string; isMe: boolean }) => {
   );
 };
 
+// Resolves the (possibly legacy) URL to a signed URL before mounting the audio element
+const VoicePlayer = ({ url, isMe }: { url: string; isMe: boolean }) => {
+  const signed = useSignedChatAttachment(url);
+  if (!signed) return <div className="h-8 w-[180px] bg-current/10 rounded-full animate-pulse" />;
+  return <VoicePlayerInner url={signed} isMe={isMe} />;
+};
+
 const Chat = () => {
   const { conversationId } = useParams<{ conversationId: string }>();
   const { user, loading: authLoading } = useAuth();
