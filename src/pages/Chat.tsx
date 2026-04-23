@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useNotificationSound } from "@/hooks/useNotificationSound";
 
 const VideoCall = lazy(() => import("@/components/chat/VideoCall"));
+import { useSignedChatAttachment, SignedImage, SignedFileLink } from "@/components/chat/SignedAttachment";
 
 interface Message {
   id: string;
