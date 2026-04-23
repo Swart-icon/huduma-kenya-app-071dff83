@@ -14,6 +14,7 @@ const EXEMPT_PATHS = [
   "/profile",                    // basic profile edit
   "/provider-profile/edit",      // provider profile edit
   "/job-seeker-profile",         // job seeker profile edit
+  "/job-seeker",                 // job seeker hub (accessible from video feed tab)
   "/videos",                     // public video feed
   "/live",                       // public live stream viewer
   "/help",
