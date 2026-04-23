@@ -412,7 +412,7 @@ const Chat = () => {
 
       {/* Header */}
       <div className="flex items-center gap-3 px-4 py-3 border-b bg-card">
-        <Button variant="ghost" size="icon" onClick={() => navigate("/conversations")} className="rounded-xl shrink-0">
+        <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="rounded-xl shrink-0">
           <ArrowLeft className="w-5 h-5" />
         </Button>
         <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">

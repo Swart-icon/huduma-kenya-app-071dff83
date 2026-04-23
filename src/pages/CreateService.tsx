@@ -136,7 +136,7 @@ const CreateService = () => {
     return (
       <div className="min-h-screen bg-background px-6 py-6 pb-24">
         <div className="max-w-sm mx-auto">
-          <button onClick={() => navigate("/my-services")} className="flex items-center gap-2 text-muted-foreground mb-6">
+          <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-muted-foreground mb-6">
             <ArrowLeft className="w-5 h-5" /> <span>My Services</span>
           </button>
           <div className="text-center mt-12">
@@ -161,7 +161,7 @@ const CreateService = () => {
   return (
     <div className="min-h-screen bg-background px-6 py-6 pb-24">
       <div className="max-w-sm mx-auto">
-        <button onClick={() => navigate("/my-services")} className="flex items-center gap-2 text-muted-foreground mb-6">
+        <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-muted-foreground mb-6">
           <ArrowLeft className="w-5 h-5" />
           <span>My Services</span>
         </button>

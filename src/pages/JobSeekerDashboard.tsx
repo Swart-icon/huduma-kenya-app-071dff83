@@ -136,7 +136,7 @@ const JobSeekerDashboard = () => {
       {/* Header */}
       <div className="sticky top-0 z-30 bg-background/80 backdrop-blur-lg border-b border-border/40">
         <div className="flex items-center gap-3 px-5 py-3 max-w-lg mx-auto">
-          <button onClick={() => navigate("/dashboard")} className="w-9 h-9 rounded-full bg-muted flex items-center justify-center">
+          <button onClick={() => navigate(-1)} className="w-9 h-9 rounded-full bg-muted flex items-center justify-center">
             <ArrowLeft className="w-4 h-4 text-foreground" />
           </button>
           <h1 className="font-display text-lg font-bold text-foreground">Job Seeker Hub</h1>

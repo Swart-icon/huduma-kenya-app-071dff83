@@ -498,7 +498,7 @@ const AdminPanel = () => {
       {/* Header */}
       <div className="sticky top-0 z-20 bg-background border-b border-border px-4 py-3">
         <div className="max-w-lg mx-auto flex items-center gap-3">
-          <button onClick={() => navigate("/dashboard")} className="text-muted-foreground">
+          <button onClick={() => navigate(-1)} className="text-muted-foreground">
             <ArrowLeft className="w-5 h-5" />
           </button>
           <Shield className="w-5 h-5 text-destructive" />
