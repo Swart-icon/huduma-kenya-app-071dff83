@@ -128,8 +128,16 @@ const Welcome = () => {
         <div className="relative z-10 px-5 pb-8 pt-16">
           {/* Logo */}
           <div className="mb-8">
-            <div className="inline-block bg-white/95 rounded-2xl px-6 py-4 shadow-xl animate-[float_3s_ease-in-out_infinite]">
-              <img src={servioLogo} alt="Servio" className="h-24 w-auto" />
+            <div className="inline-block bg-white/95 rounded-2xl shadow-xl animate-[float_3s_ease-in-out_infinite] overflow-hidden">
+              <img
+                src={servioLogo}
+                alt="Servio"
+                className="block h-28 w-28 object-contain select-none pointer-events-none"
+                draggable={false}
+                onContextMenu={(e) => e.preventDefault()}
+                onDragStart={(e) => e.preventDefault()}
+                style={{ WebkitUserSelect: "none", WebkitTouchCallout: "none" } as React.CSSProperties}
+              />
             </div>
           </div>
 
