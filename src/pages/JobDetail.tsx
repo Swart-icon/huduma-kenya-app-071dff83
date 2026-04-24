@@ -302,6 +302,26 @@ const JobDetail = () => {
                   <CheckCircle className="w-5 h-5" />
                   <span className="font-semibold">You've applied to this job</span>
                 </div>
+              ) : !isPremium ? (
+                <div className="space-y-4">
+                  <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                      <Crown className="w-5 h-5 text-primary" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-foreground">Premium required to apply</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Pay KSh 200/month to apply to unlimited jobs and message employers directly.
+                      </p>
+                    </div>
+                  </div>
+                  <Button
+                    onClick={() => navigate("/upgrade?role=job_seeker")}
+                    className="w-full rounded-xl h-12"
+                  >
+                    <Crown className="w-4 h-4 mr-2" /> Unlock for KSh 200/month
+                  </Button>
+                </div>
               ) : (
                 <form onSubmit={handleApply} className="space-y-4">
                   <h3 className="font-semibold text-foreground">Apply for this Job</h3>
