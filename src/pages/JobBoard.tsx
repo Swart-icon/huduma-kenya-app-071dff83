@@ -186,10 +186,10 @@ const JobBoard = () => {
                     <div className="flex gap-2">
                       <Button size="sm" className="rounded-xl flex-1 gap-1.5" onClick={() => handleJobClick(job.id)} disabled={checkingPremiumAccess}>
                         {requirePremium ? <Crown className="w-3.5 h-3.5" /> : <Send className="w-3.5 h-3.5" />}
-                        {requirePremium ? "Pay KSh 200" : checkingPremiumAccess ? "Checking..." : "Apply"}
+                        {checkingPremiumAccess ? "Checking..." : "APPLY"}
                       </Button>
                       <Button size="sm" variant="outline" className="rounded-xl" onClick={() => handleJobClick(job.id)} disabled={checkingPremiumAccess}>
-                        {requirePremium ? "Pay KSh 200" : checkingPremiumAccess ? "Checking..." : "View"}
+                        {checkingPremiumAccess ? "Checking..." : "VIEW"}
                       </Button>
                     </div>
                   </CardContent>
