@@ -43,7 +43,7 @@ type Category = { id: string; name: string; icon: string | null };
 
 const JobDetail = () => {
   const { id } = useParams<{ id: string }>();
-  const { user, role, loading: authLoading } = useAuth();
+  const { user, role, roles, loading: authLoading } = useAuth();
   const { isPremium, loading: premiumLoading } = useIsPremium("job_seeker");
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -144,12 +144,12 @@ const JobDetail = () => {
 
   const handleApply = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user || role !== "job_seeker") return;
-    // Paywall: job seekers must have an active premium subscription to apply
+    if (!user || !(role === "job_seeker" || roles.includes("job_seeker"))) return;
+    if (authLoading || premiumLoading) return;
     if (!isPremium) {
       toast({
         title: "Premium required",
-        description: "Activate Job Seeker Premium (KSh 200/month) to apply.",
+        description: "Pay KSh 200 for 30 days to apply for jobs.",
       });
       navigate("/upgrade?role=job_seeker");
       return;
@@ -200,7 +200,9 @@ const JobDetail = () => {
     fetchJob();
   };
 
-  if (loading || authLoading || (role === "job_seeker" && premiumLoading)) {
+  const isJobSeeker = role === "job_seeker" || roles.includes("job_seeker");
+
+  if (loading || authLoading || (isJobSeeker && premiumLoading)) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
@@ -212,8 +214,7 @@ const JobDetail = () => {
 
   const isOwner = user?.id === job.client_id;
 
-  // Hard paywall: job seekers (non-owners) must be premium to view details
-  if (role === "job_seeker" && !isOwner && !isPremium) {
+  if (isJobSeeker && !isOwner && !isPremium) {
     return (
       <div className="min-h-screen bg-background px-6 py-6 pb-24">
         <div className="max-w-sm mx-auto">
@@ -329,7 +330,7 @@ const JobDetail = () => {
         )}
 
         {/* Job Seeker Apply Form */}
-        {role === "job_seeker" && job.status === "open" && !isOwner && (
+        {isJobSeeker && job.status === "open" && !isOwner && (
           <Card className="mb-6">
             <CardContent className="p-4">
               {hasApplied ? (
@@ -343,18 +344,18 @@ const JobDetail = () => {
                     <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
                       <Crown className="w-5 h-5 text-primary" />
                     </div>
-                    <div>
-                      <h3 className="font-semibold text-foreground">Premium required to apply</h3>
-                      <p className="text-sm text-muted-foreground">
-                        Pay KSh 200/month to apply to unlimited jobs and message employers directly.
-                      </p>
+                      <div>
+                        <h3 className="font-semibold text-foreground">Premium required to apply</h3>
+                        <p className="text-sm text-muted-foreground">
+                          Pay KSh 200 for 30 days to apply for jobs and view full job details.
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                  <Button
-                    onClick={() => navigate("/upgrade?role=job_seeker")}
-                    className="w-full rounded-xl h-12"
-                  >
-                    <Crown className="w-4 h-4 mr-2" /> Unlock for KSh 200/month
+                    <Button
+                      onClick={() => navigate("/upgrade?role=job_seeker")}
+                      className="w-full rounded-xl h-12"
+                    >
+                      <Crown className="w-4 h-4 mr-2" /> Pay KSh 200
                   </Button>
                 </div>
               ) : (
