@@ -35,9 +35,25 @@ const JobBoard = () => {
   const navigate = useNavigate();
   const { data: categoriesArr = [] } = useCategories();
   const region = useUserRegion();
+  const { role } = useAuth();
+  const { isPremium, loading: premiumLoading } = useIsPremium("job_seeker");
+  const { toast } = useToast();
   const [jobs, setJobs] = useState<JobPost[]>([]);
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
+
+  const requirePremium = role === "job_seeker" && !premiumLoading && !isPremium;
+  const handleJobClick = (jobId: string) => {
+    if (requirePremium) {
+      toast({
+        title: "Premium required",
+        description: "Pay KSh 200/month to apply and view job details.",
+      });
+      navigate("/upgrade?role=job_seeker");
+      return;
+    }
+    navigate(`/jobs/${jobId}`);
+  };
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
