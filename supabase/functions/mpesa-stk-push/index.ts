@@ -1,52 +1,65 @@
-// M-Pesa Daraja STK Push initiator
-// Returns 503 with a clear message if Daraja credentials are not configured yet.
+// PayHero STK push for premium subscriptions
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const PRICES = { provider: 500, job_seeker: 200 } as const;
+const SUBSCRIPTION_PRICES: Record<string, number> = {
+  provider: 500,
+  job_seeker: 200,
+};
+
+function normalizePhone(input: string): string | null {
+  const digits = input.replace(/\D/g, "");
+  if (/^2547\d{8}$/.test(digits)) return digits;
+  if (/^07\d{8}$/.test(digits)) return "254" + digits.slice(1);
+  if (/^7\d{8}$/.test(digits)) return "254" + digits;
+  return null;
+}
+
+function json(body: unknown, status = 200) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) return json({ error: "Unauthorized" }, 401);
+    if (!authHeader) return json({ error: "Missing authorization" }, 401);
 
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_ANON_KEY")!,
-      { global: { headers: { Authorization: authHeader } } }
-    );
-    const admin = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-    );
+    const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+    const ANON = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const PAYHERO_BASIC_AUTH = Deno.env.get("PAYHERO_BASIC_AUTH");
+    const PAYHERO_CHANNEL_ID = Deno.env.get("PAYHERO_CHANNEL_ID");
 
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return json({ error: "Unauthorized" }, 401);
+    if (!PAYHERO_BASIC_AUTH || !PAYHERO_CHANNEL_ID) {
+      return json({ error: "PayHero credentials not configured" }, 500);
+    }
+
+    const userClient = createClient(SUPABASE_URL, ANON, {
+      global: { headers: { Authorization: authHeader } },
+    });
+    const { data: { user }, error: userErr } = await userClient.auth.getUser();
+    if (userErr || !user) return json({ error: "Unauthorized" }, 401);
 
     const { roleType, phone } = await req.json();
-    if (!["provider", "job_seeker"].includes(roleType)) {
-      return json({ error: "Invalid role type" }, 400);
+    if (roleType !== "provider" && roleType !== "job_seeker") {
+      return json({ error: "Invalid roleType" }, 400);
     }
-    if (!phone || !/^(?:\+?254|0)?7\d{8}$/.test(String(phone).replace(/\s/g, ""))) {
-      return json({ error: "Invalid phone number. Use 07XXXXXXXX format" }, 400);
-    }
+    const msisdn = normalizePhone(String(phone || ""));
+    if (!msisdn) return json({ error: "Invalid phone number" }, 400);
 
-    const amount = PRICES[roleType as keyof typeof PRICES];
+    const amount = SUBSCRIPTION_PRICES[roleType];
+    const admin = createClient(SUPABASE_URL, SERVICE_ROLE);
 
-    // Normalise phone to 254XXXXXXXXX
-    let normalised = String(phone).replace(/\s|\+/g, "");
-    if (normalised.startsWith("0")) normalised = "254" + normalised.slice(1);
-    if (!normalised.startsWith("254")) normalised = "254" + normalised;
-
-    // Create pending subscription
-    const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 30);
     const { data: sub, error: subErr } = await admin
       .from("premium_subscriptions")
       .insert({
@@ -55,101 +68,61 @@ Deno.serve(async (req) => {
         amount_kes: amount,
         status: "pending",
         payment_method: "mpesa",
-        expires_at: expiresAt.toISOString(),
       })
       .select()
       .single();
-    if (subErr) return json({ error: subErr.message }, 500);
-
-    // Daraja credentials check
-    const consumerKey = Deno.env.get("MPESA_CONSUMER_KEY");
-    const consumerSecret = Deno.env.get("MPESA_CONSUMER_SECRET");
-    const shortcode = Deno.env.get("MPESA_SHORTCODE");
-    const passkey = Deno.env.get("MPESA_PASSKEY");
-
-    if (!consumerKey || !consumerSecret || !shortcode || !passkey) {
-      // Log a placeholder transaction so admins can see the attempt
-      await admin.from("mpesa_transactions").insert({
-        user_id: user.id,
-        subscription_id: sub.id,
-        phone_number: normalised,
-        amount_kes: amount,
-        status: "failed",
-        result_desc: "Daraja credentials not configured",
-      });
-      return json({
-        error: "M-Pesa is not yet configured. Please contact support.",
-        configured: false,
-        subscriptionId: sub.id,
-      }, 503);
+    if (subErr || !sub) {
+      console.error("subscription insert error:", subErr);
+      return json({ error: "Could not create subscription" }, 500);
     }
 
-    // === Daraja STK Push ===
-    // 1. OAuth token
-    const tokenRes = await fetch(
-      "https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials",
-      { headers: { Authorization: "Basic " + btoa(`${consumerKey}:${consumerSecret}`) } }
-    );
-    const { access_token } = await tokenRes.json();
-    if (!access_token) return json({ error: "M-Pesa auth failed" }, 502);
+    const callbackUrl = `${SUPABASE_URL}/functions/v1/mpesa-callback`;
+    const externalRef = `sub_${sub.id}`;
 
-    // 2. STK Push
-    const timestamp = new Date().toISOString().replace(/[-T:.Z]/g, "").slice(0, 14);
-    const password = btoa(`${shortcode}${passkey}${timestamp}`);
-    const callbackUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/mpesa-callback`;
+    const phResp = await fetch("https://backend.payhero.co.ke/api/v2/payments", {
+      method: "POST",
+      headers: {
+        Authorization: `Basic ${PAYHERO_BASIC_AUTH}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        amount,
+        phone_number: msisdn,
+        channel_id: Number(PAYHERO_CHANNEL_ID),
+        provider: "m-pesa",
+        external_reference: externalRef,
+        customer_name: user.email ?? "Customer",
+        callback_url: callbackUrl,
+      }),
+    });
 
-    const stkRes = await fetch(
-      "https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest",
-      {
-        method: "POST",
-        headers: { Authorization: `Bearer ${access_token}`, "Content-Type": "application/json" },
-        body: JSON.stringify({
-          BusinessShortCode: shortcode,
-          Password: password,
-          Timestamp: timestamp,
-          TransactionType: "CustomerPayBillOnline",
-          Amount: amount,
-          PartyA: normalised,
-          PartyB: shortcode,
-          PhoneNumber: normalised,
-          CallBackURL: callbackUrl,
-          AccountReference: `SERVIO-${roleType.toUpperCase()}`,
-          TransactionDesc: `Premium ${roleType} activation`,
-        }),
-      }
-    );
-    const stkData = await stkRes.json();
+    const phData = await phResp.json().catch(() => ({}));
+    console.log("PayHero response:", phResp.status, JSON.stringify(phData));
+
+    if (!phResp.ok || phData?.success === false) {
+      await admin.from("premium_subscriptions").update({ status: "failed" }).eq("id", sub.id);
+      return json(
+        { error: phData?.error_message || phData?.message || "PayHero request failed" },
+        502
+      );
+    }
+
+    const checkoutRequestId =
+      phData?.CheckoutRequestID ?? phData?.reference ?? phData?.transaction_reference ?? externalRef;
 
     await admin.from("mpesa_transactions").insert({
       user_id: user.id,
       subscription_id: sub.id,
-      phone_number: normalised,
       amount_kes: amount,
-      checkout_request_id: stkData.CheckoutRequestID,
-      merchant_request_id: stkData.MerchantRequestID,
-      status: stkData.ResponseCode === "0" ? "initiated" : "failed",
-      result_desc: stkData.ResponseDescription || stkData.errorMessage,
+      phone_number: msisdn,
+      checkout_request_id: checkoutRequestId,
+      merchant_request_id: phData?.MerchantRequestID ?? null,
+      status: "pending",
     });
 
-    if (stkData.ResponseCode !== "0") {
-      return json({ error: stkData.errorMessage || "STK push failed" }, 502);
-    }
-
-    return json({
-      success: true,
-      subscriptionId: sub.id,
-      checkoutRequestId: stkData.CheckoutRequestID,
-      message: "Check your phone to complete payment",
-    });
+    return json({ checkoutRequestId, success: true });
   } catch (e) {
-    console.error("STK push error:", e);
-    return json({ error: e instanceof Error ? e.message : "Internal error" }, 500);
+    console.error("mpesa-stk-push error:", e);
+    return json({ error: e instanceof Error ? e.message : "Unknown error" }, 500);
   }
 });
-
-function json(body: unknown, status = 200) {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
-  });
-}
