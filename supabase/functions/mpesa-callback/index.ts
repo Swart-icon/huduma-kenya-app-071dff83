@@ -1,67 +1,85 @@
-// M-Pesa Daraja callback receiver (no JWT verification — Safaricom calls this)
+// PayHero callback receiver (no JWT verification — PayHero calls this)
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 Deno.serve(async (req) => {
   try {
     const body = await req.json();
-    console.log("M-Pesa callback:", JSON.stringify(body));
+    console.log("PayHero callback:", JSON.stringify(body));
 
-    const stk = body?.Body?.stkCallback;
-    if (!stk) return new Response("OK", { status: 200 });
+    // PayHero v2 callback shape: { response: { Status, MpesaReceiptNumber, ResultCode, ResultDesc, ExternalReference, CheckoutRequestID, ... } }
+    const resp = body?.response ?? body;
+    const externalRef: string | undefined = resp?.ExternalReference ?? resp?.external_reference;
+    const checkoutRequestId: string | undefined =
+      resp?.CheckoutRequestID ?? resp?.checkout_request_id ?? resp?.reference;
+    const resultCode: number | undefined = resp?.ResultCode ?? resp?.result_code;
+    const resultDesc: string | undefined = resp?.ResultDesc ?? resp?.result_desc ?? resp?.Status;
+    const mpesaReceipt: string | null =
+      resp?.MpesaReceiptNumber ?? resp?.mpesa_receipt_number ?? null;
+    const status: string | undefined = (resp?.Status ?? "").toString().toLowerCase();
 
-    const checkoutRequestId = stk.CheckoutRequestID;
-    const resultCode = stk.ResultCode;
-    const resultDesc = stk.ResultDesc;
+    const isSuccess =
+      resultCode === 0 || status === "success" || status === "completed";
 
     const admin = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // Find transaction
-    const { data: tx } = await admin
-      .from("mpesa_transactions")
-      .select("*")
-      .eq("checkout_request_id", checkoutRequestId)
-      .maybeSingle();
-
-    if (!tx) {
-      console.warn("No transaction found for", checkoutRequestId);
-      return new Response("OK", { status: 200 });
+    // Locate transaction by checkoutRequestId or by externalRef → subscription_id
+    let tx: any = null;
+    if (checkoutRequestId) {
+      const { data } = await admin
+        .from("mpesa_transactions")
+        .select("*")
+        .eq("checkout_request_id", checkoutRequestId)
+        .maybeSingle();
+      tx = data;
+    }
+    if (!tx && externalRef?.startsWith("sub_")) {
+      const subId = externalRef.slice(4);
+      const { data } = await admin
+        .from("mpesa_transactions")
+        .select("*")
+        .eq("subscription_id", subId)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      tx = data;
     }
 
-    let mpesaReceipt: string | null = null;
-    if (resultCode === 0) {
-      const items = stk.CallbackMetadata?.Item ?? [];
-      mpesaReceipt = items.find((i: any) => i.Name === "MpesaReceiptNumber")?.Value ?? null;
+    if (!tx) {
+      console.warn("No transaction found for", checkoutRequestId, externalRef);
+      return new Response("OK", { status: 200 });
     }
 
     // Update transaction
     await admin.from("mpesa_transactions").update({
-      result_code: resultCode,
-      result_desc: resultDesc,
+      result_code: resultCode ?? (isSuccess ? 0 : 1),
+      result_desc: resultDesc ?? null,
       mpesa_receipt: mpesaReceipt,
-      status: resultCode === 0 ? "success" : "failed",
+      status: isSuccess ? "success" : "failed",
       raw_callback: body,
     }).eq("id", tx.id);
 
-    // Activate subscription on success
-    if (resultCode === 0 && tx.subscription_id) {
-      const startedAt = new Date();
-      const expiresAt = new Date();
-      expiresAt.setDate(expiresAt.getDate() + 30);
+    // Activate or fail subscription
+    if (tx.subscription_id) {
+      if (isSuccess) {
+        const startedAt = new Date();
+        const expiresAt = new Date();
+        expiresAt.setDate(expiresAt.getDate() + 30);
 
-      await admin.from("premium_subscriptions").update({
-        status: "active",
-        started_at: startedAt.toISOString(),
-        expires_at: expiresAt.toISOString(),
-        mpesa_receipt: mpesaReceipt,
-        payment_reference: checkoutRequestId,
-      }).eq("id", tx.subscription_id);
-    } else if (tx.subscription_id) {
-      await admin.from("premium_subscriptions").update({
-        status: "failed",
-      }).eq("id", tx.subscription_id);
+        await admin.from("premium_subscriptions").update({
+          status: "active",
+          started_at: startedAt.toISOString(),
+          expires_at: expiresAt.toISOString(),
+          mpesa_receipt: mpesaReceipt,
+          payment_reference: checkoutRequestId ?? externalRef ?? null,
+        }).eq("id", tx.subscription_id);
+      } else {
+        await admin.from("premium_subscriptions").update({
+          status: "failed",
+        }).eq("id", tx.subscription_id);
+      }
     }
 
     return new Response("OK", { status: 200 });
