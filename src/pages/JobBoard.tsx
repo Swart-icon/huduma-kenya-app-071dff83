@@ -6,11 +6,14 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, MapPin, DollarSign, Search, Loader2, Send } from "lucide-react";
+import { ArrowLeft, MapPin, DollarSign, Search, Loader2, Send, Crown } from "lucide-react";
 import { useCategories } from "@/hooks/useCategories";
 import { JobCardSkeleton, ListSkeletons } from "@/components/Skeletons";
 import { useUserRegion } from "@/hooks/useUserRegion";
 import { RegionBadge } from "@/components/RegionBadge";
+import { useAuth } from "@/contexts/AuthContext";
+import { useIsPremium } from "@/hooks/useSubscription";
+import { useToast } from "@/hooks/use-toast";
 
 type JobPost = {
   id: string;
