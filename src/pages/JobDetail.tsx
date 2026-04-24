@@ -43,8 +43,8 @@ type Category = { id: string; name: string; icon: string | null };
 
 const JobDetail = () => {
   const { id } = useParams<{ id: string }>();
-  const { user, role } = useAuth();
-  const { isPremium } = useIsPremium("job_seeker");
+  const { user, role, loading: authLoading } = useAuth();
+  const { isPremium, loading: premiumLoading } = useIsPremium("job_seeker");
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -200,7 +200,7 @@ const JobDetail = () => {
     fetchJob();
   };
 
-  if (loading) {
+  if (loading || authLoading || (role === "job_seeker" && premiumLoading)) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
@@ -211,6 +211,41 @@ const JobDetail = () => {
   if (!job) return null;
 
   const isOwner = user?.id === job.client_id;
+
+  // Hard paywall: job seekers (non-owners) must be premium to view details
+  if (role === "job_seeker" && !isOwner && !isPremium) {
+    return (
+      <div className="min-h-screen bg-background px-6 py-6 pb-24">
+        <div className="max-w-sm mx-auto">
+          <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-muted-foreground mb-6">
+            <ArrowLeft className="w-5 h-5" /> <span>Back</span>
+          </button>
+          <Card className="border-2 border-primary/20 bg-primary/5">
+            <CardContent className="p-6 text-center space-y-4">
+              <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto">
+                <Crown className="w-8 h-8 text-primary" />
+              </div>
+              <div>
+                <h2 className="font-display text-xl font-bold text-foreground mb-1">
+                  Premium required
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  Pay <strong>KSh 200/month</strong> to view full job details and apply.
+                  Subscription auto-expires after 30 days.
+                </p>
+              </div>
+              <Button
+                onClick={() => navigate("/upgrade?role=job_seeker")}
+                className="w-full h-12 rounded-xl"
+              >
+                <Crown className="w-4 h-4 mr-2" /> Unlock for KSh 200/month
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background px-6 py-6 pb-24">

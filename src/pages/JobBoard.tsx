@@ -6,11 +6,14 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, MapPin, DollarSign, Search, Loader2, Send } from "lucide-react";
+import { ArrowLeft, MapPin, DollarSign, Search, Loader2, Send, Crown } from "lucide-react";
 import { useCategories } from "@/hooks/useCategories";
 import { JobCardSkeleton, ListSkeletons } from "@/components/Skeletons";
 import { useUserRegion } from "@/hooks/useUserRegion";
 import { RegionBadge } from "@/components/RegionBadge";
+import { useAuth } from "@/contexts/AuthContext";
+import { useIsPremium } from "@/hooks/useSubscription";
+import { useToast } from "@/hooks/use-toast";
 
 type JobPost = {
   id: string;
@@ -32,9 +35,25 @@ const JobBoard = () => {
   const navigate = useNavigate();
   const { data: categoriesArr = [] } = useCategories();
   const region = useUserRegion();
+  const { role } = useAuth();
+  const { isPremium, loading: premiumLoading } = useIsPremium("job_seeker");
+  const { toast } = useToast();
   const [jobs, setJobs] = useState<JobPost[]>([]);
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
+
+  const requirePremium = role === "job_seeker" && !premiumLoading && !isPremium;
+  const handleJobClick = (jobId: string) => {
+    if (requirePremium) {
+      toast({
+        title: "Premium required",
+        description: "Pay KSh 200/month to apply and view job details.",
+      });
+      navigate("/upgrade?role=job_seeker");
+      return;
+    }
+    navigate(`/jobs/${jobId}`);
+  };
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
@@ -153,10 +172,11 @@ const JobBoard = () => {
                       )}
                     </div>
                     <div className="flex gap-2">
-                      <Button size="sm" className="rounded-xl flex-1 gap-1.5" onClick={() => navigate(`/jobs/${job.id}`)}>
-                        <Send className="w-3.5 h-3.5" /> Apply
+                      <Button size="sm" className="rounded-xl flex-1 gap-1.5" onClick={() => handleJobClick(job.id)}>
+                        {requirePremium ? <Crown className="w-3.5 h-3.5" /> : <Send className="w-3.5 h-3.5" />}
+                        {requirePremium ? "Unlock to Apply" : "Apply"}
                       </Button>
-                      <Button size="sm" variant="outline" className="rounded-xl" onClick={() => navigate(`/jobs/${job.id}`)}>
+                      <Button size="sm" variant="outline" className="rounded-xl" onClick={() => handleJobClick(job.id)}>
                         View
                       </Button>
                     </div>
