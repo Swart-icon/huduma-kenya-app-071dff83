@@ -35,23 +35,35 @@ const JobBoard = () => {
   const navigate = useNavigate();
   const { data: categoriesArr = [] } = useCategories();
   const region = useUserRegion();
-  const { role } = useAuth();
+  const { user, role, roles, loading: authLoading } = useAuth();
   const { isPremium, loading: premiumLoading } = useIsPremium("job_seeker");
   const { toast } = useToast();
   const [jobs, setJobs] = useState<JobPost[]>([]);
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
 
-  const requirePremium = role === "job_seeker" && !premiumLoading && !isPremium;
+  const isJobSeeker = role === "job_seeker" || roles.includes("job_seeker");
+  const checkingPremiumAccess = !!user && isJobSeeker && (authLoading || premiumLoading);
+  const requirePremium = !!user && isJobSeeker && !checkingPremiumAccess && !isPremium;
+
   const handleJobClick = (jobId: string) => {
+    if (checkingPremiumAccess) {
+      toast({
+        title: "Checking subscription",
+        description: "Please wait a moment.",
+      });
+      return;
+    }
+
     if (requirePremium) {
       toast({
         title: "Premium required",
-        description: "Pay KSh 200/month to apply and view job details.",
+        description: "Pay KSh 200 for 30 days to view job details and apply.",
       });
       navigate("/upgrade?role=job_seeker");
       return;
     }
+
     navigate(`/jobs/${jobId}`);
   };
   const [loading, setLoading] = useState(true);
@@ -172,12 +184,12 @@ const JobBoard = () => {
                       )}
                     </div>
                     <div className="flex gap-2">
-                      <Button size="sm" className="rounded-xl flex-1 gap-1.5" onClick={() => handleJobClick(job.id)}>
+                      <Button size="sm" className="rounded-xl flex-1 gap-1.5" onClick={() => handleJobClick(job.id)} disabled={checkingPremiumAccess}>
                         {requirePremium ? <Crown className="w-3.5 h-3.5" /> : <Send className="w-3.5 h-3.5" />}
-                        {requirePremium ? "Unlock to Apply" : "Apply"}
+                        {requirePremium ? "Pay KSh 200" : checkingPremiumAccess ? "Checking..." : "Apply"}
                       </Button>
-                      <Button size="sm" variant="outline" className="rounded-xl" onClick={() => handleJobClick(job.id)}>
-                        View
+                      <Button size="sm" variant="outline" className="rounded-xl" onClick={() => handleJobClick(job.id)} disabled={checkingPremiumAccess}>
+                        {requirePremium ? "Pay KSh 200" : checkingPremiumAccess ? "Checking..." : "View"}
                       </Button>
                     </div>
                   </CardContent>
