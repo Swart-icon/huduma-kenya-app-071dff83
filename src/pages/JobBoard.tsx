@@ -172,10 +172,11 @@ const JobBoard = () => {
                       )}
                     </div>
                     <div className="flex gap-2">
-                      <Button size="sm" className="rounded-xl flex-1 gap-1.5" onClick={() => navigate(`/jobs/${job.id}`)}>
-                        <Send className="w-3.5 h-3.5" /> Apply
+                      <Button size="sm" className="rounded-xl flex-1 gap-1.5" onClick={() => handleJobClick(job.id)}>
+                        {requirePremium ? <Crown className="w-3.5 h-3.5" /> : <Send className="w-3.5 h-3.5" />}
+                        {requirePremium ? "Unlock to Apply" : "Apply"}
                       </Button>
-                      <Button size="sm" variant="outline" className="rounded-xl" onClick={() => navigate(`/jobs/${job.id}`)}>
+                      <Button size="sm" variant="outline" className="rounded-xl" onClick={() => handleJobClick(job.id)}>
                         View
                       </Button>
                     </div>
