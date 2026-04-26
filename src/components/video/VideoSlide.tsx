@@ -390,6 +390,80 @@ export const VideoSlide = memo(({
           </div>
         )}
       </div>
+
+      {/* Long-press / more options sheet */}
+      <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
+        <SheetContent side="bottom" className="rounded-t-2xl">
+          <SheetHeader>
+            <SheetTitle>Video options</SheetTitle>
+          </SheetHeader>
+          <div className="mt-3 space-y-1">
+            {(isOwner || video.allow_downloads) ? (
+              <button
+                onClick={handleDownload}
+                disabled={downloading}
+                className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-muted text-left disabled:opacity-50"
+              >
+                <Download className="w-5 h-5 text-primary" />
+                <div className="flex-1">
+                  <p className="text-sm font-medium">{downloading ? "Downloading..." : "Download video"}</p>
+                  <p className="text-[11px] text-muted-foreground">Save to your device</p>
+                </div>
+              </button>
+            ) : (
+              <div className="w-full flex items-center gap-3 p-3 rounded-xl bg-muted/40 opacity-70">
+                <Download className="w-5 h-5 text-muted-foreground" />
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-muted-foreground">Download disabled</p>
+                  <p className="text-[11px] text-muted-foreground">The owner has not enabled downloads</p>
+                </div>
+              </div>
+            )}
+
+            <button
+              onClick={handleShare}
+              className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-muted text-left"
+            >
+              <Share2 className="w-5 h-5 text-primary" />
+              <div className="flex-1">
+                <p className="text-sm font-medium">Share</p>
+                <p className="text-[11px] text-muted-foreground">Send link to others</p>
+              </div>
+            </button>
+
+            {isOwner && (
+              <button
+                onClick={() => { setMenuOpen(false); setConfirmDelete(true); }}
+                className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-destructive/10 text-left"
+              >
+                <Trash2 className="w-5 h-5 text-destructive" />
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-destructive">Delete video</p>
+                  <p className="text-[11px] text-muted-foreground">Permanently remove this video</p>
+                </div>
+              </button>
+            )}
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      {/* Delete confirmation */}
+      <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this video?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently remove the video, its likes, and comments. This cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 });
