@@ -13,8 +13,9 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from "@/components/ui/dialog";
 import {
-  Home, Plus, MessageCircle, User, Loader2, Video, Search, X, LogIn, MapPin, Radio,
+  Home, Plus, MessageCircle, User, Loader2, Video, Search, X, LogIn, MapPin, Radio, ArrowDown,
 } from "lucide-react";
+import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { UploadVideoDialog } from "@/components/video/UploadVideoDialog";
 import { CommentsSheet } from "@/components/video/CommentsSheet";
 import { VideoSlide } from "@/components/video/VideoSlide";
