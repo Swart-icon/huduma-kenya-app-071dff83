@@ -321,21 +321,19 @@ const Dashboard = () => {
                   <PlusCircle className="w-6 h-6" />
                   <span className="text-xs font-semibold">Post a Job</span>
                 </Button>
-                <Button variant="outline" className="h-auto py-4 rounded-2xl flex flex-col gap-1.5 shadow-sm border-0 bg-muted/50" onClick={() => navigate("/nearby")}>
-                  <MapPin className="w-6 h-6 text-primary" />
-                  <span className="text-xs font-semibold">Near Me</span>
+                <Button variant="outline" className="h-auto py-4 rounded-2xl flex flex-col gap-1.5 shadow-sm border-0 bg-muted/50" onClick={() => navigate("/client-applications")}>
+                  <ClipboardList className="w-6 h-6 text-primary" />
+                  <span className="text-xs font-semibold">My Applications</span>
                 </Button>
               </div>
             </div>
-
-            {/* Story Bar */}
-            <StoryBar />
 
             {/* Your Activity */}
             <div>
               <SectionHeader title="Your Activity" />
               <div className="space-y-2.5">
                 <ActionCard icon={<FileText className="w-5 h-5" />} label="My Job Posts" description="Post & manage jobs" onClick={() => navigate("/my-jobs")} accent="bg-secondary/10 text-secondary" />
+                <ActionCard icon={<ClipboardList className="w-5 h-5" />} label="My Applications" description="Track applicants for your jobs" onClick={() => navigate("/client-applications")} accent="bg-primary/10 text-primary" />
                 <ActionCard icon={<Calendar className="w-5 h-5" />} label="My Bookings" description="Track service bookings" onClick={() => navigate("/my-bookings")} />
               </div>
             </div>
