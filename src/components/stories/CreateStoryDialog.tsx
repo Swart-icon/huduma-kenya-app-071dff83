@@ -21,6 +21,8 @@ export const CreateStoryDialog = ({ open, onClose }: Props) => {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [postedStatusId, setPostedStatusId] = useState<string | null>(null);
+  const [showBoost, setShowBoost] = useState(false);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
