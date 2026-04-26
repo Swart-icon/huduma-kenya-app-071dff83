@@ -332,15 +332,7 @@ const Dashboard = () => {
             {/* Story Bar */}
             <StoryBar />
 
-            {/* Your Business */}
-            <div>
-              <SectionHeader title="Your Business" icon={<Briefcase className="w-3.5 h-3.5" />} />
-              <div className="space-y-2.5">
-                <ActionCard icon={<Eye className="w-5 h-5" />} label="Business Profile" description="View & edit your profile" onClick={() => navigate("/provider-profile/preview")} />
-                <ActionCard icon={<List className="w-5 h-5" />} label="My Services" description="Manage your service listings" onClick={() => navigate("/my-services")} accent="bg-accent/15 text-accent-foreground" />
-                <ActionCard icon={<Calendar className="w-5 h-5" />} label="My Bookings" description="View & manage bookings" onClick={() => navigate("/my-bookings")} accent="bg-secondary/10 text-secondary" />
-              </div>
-            </div>
+            {/* Your Business — moved into the Quick Actions sheet */}
 
             {/* Job Board */}
             <div>
