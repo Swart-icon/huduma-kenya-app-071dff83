@@ -193,7 +193,7 @@ const Dashboard = () => {
                 </Button>
               </div>
             </div>
-            <h2 className="font-display text-xl font-bold text-primary-foreground mt-1">Karibu, {firstName}! 👋</h2>
+            <h2 className="font-display text-xl font-bold text-primary-foreground mt-1">Welcome, {firstName}! 👋</h2>
             <p className="text-xs text-primary-foreground/60 mt-0.5 mb-4">{config.subtitle}</p>
 
             {/* Inline Stats */}
