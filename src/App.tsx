@@ -58,6 +58,7 @@ import HelpCenter from "./pages/HelpCenter";
 import Upgrade from "./pages/Upgrade";
 import GoLive from "./pages/GoLive";
 import LiveViewer from "./pages/LiveViewer";
+import Inbox from "./pages/Inbox";
 import { OfflineBanner } from "@/components/OfflineBanner";
 import ProfileGuard from "@/components/ProfileGuard";
 import { RateUsDialog } from "@/components/RateUsDialog";
@@ -161,6 +162,7 @@ const AppInner = () => {
           <Route path="/upgrade" element={<Upgrade />} />
           <Route path="/go-live" element={<GoLive />} />
           <Route path="/live/:streamId" element={<LiveViewer />} />
+          <Route path="/inbox" element={<Inbox />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </ProfileGuard>
