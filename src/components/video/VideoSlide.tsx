@@ -6,7 +6,15 @@ import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import {
   Play, Heart, MessageCircle, User, Phone, MapPin, Briefcase, Wrench, Flag,
+  MoreVertical, Download, Share2, Trash2,
 } from "lucide-react";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  Sheet, SheetContent, SheetHeader, SheetTitle,
+} from "@/components/ui/sheet";
 import { toast } from "sonner";
 import type { VideoItem } from "./types";
 
@@ -24,6 +32,19 @@ export const VideoSlide = memo(({
   const [paused, setPaused] = useState(false);
   const [liked, setLiked] = useState(false);
   const [localLikeCount, setLocalLikeCount] = useState(video.like_count);
+  const [showHeart, setShowHeart] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleted, setDeleted] = useState(false);
+  const [downloading, setDownloading] = useState(false);
+
+  // Tap detection
+  const lastTapRef = useRef<number>(0);
+  const singleTapTimerRef = useRef<number | null>(null);
+  const longPressTimerRef = useRef<number | null>(null);
+  const longPressTriggeredRef = useRef(false);
+
+  const isOwner = !!user && user.id === video.user_id;
 
   const requireAuth = () => {
     if (!user && onAuthRequired) { onAuthRequired(); return true; }
