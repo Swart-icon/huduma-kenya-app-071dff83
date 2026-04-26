@@ -96,6 +96,14 @@ const VideoFeed = () => {
   const { data: profile } = useProfile();
   const { location: userLocation, status: locationStatus, requestLocation } = useLocation();
   const [uploadOpen, setUploadOpen] = useState(false);
+
+  // Auto-open the upload dialog after returning from the full-screen recorder
+  useEffect(() => {
+    if (sessionStorage.getItem("open_upload_dialog") === "1") {
+      sessionStorage.removeItem("open_upload_dialog");
+      setUploadOpen(true);
+    }
+  }, []);
   const [commentVideoId, setCommentVideoId] = useState<string | null>(null);
   const [commentsOpen, setCommentsOpen] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
