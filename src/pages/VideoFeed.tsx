@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { useInfiniteQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { useProfile } from "@/hooks/useProfile";
 import { useLocation } from "@/contexts/LocationContext";
 import { KENYAN_LOCATIONS } from "@/lib/kenyanLocations";
@@ -13,8 +13,9 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from "@/components/ui/dialog";
 import {
-  Home, Plus, MessageCircle, User, Loader2, Video, Search, X, LogIn, MapPin, Radio,
+  Home, Plus, MessageCircle, User, Loader2, Video, Search, X, LogIn, MapPin, Radio, ArrowDown,
 } from "lucide-react";
+import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { UploadVideoDialog } from "@/components/video/UploadVideoDialog";
 import { CommentsSheet } from "@/components/video/CommentsSheet";
 import { VideoSlide } from "@/components/video/VideoSlide";
@@ -114,6 +115,16 @@ const VideoFeed = () => {
   const [authPromptOpen, setAuthPromptOpen] = useState(false);
   const [authPromptRole, setAuthPromptRole] = useState<string | undefined>(undefined);
   const containerRef = useRef<HTMLDivElement>(null);
+  const queryClient = useQueryClient();
+
+  const handleRefresh = async () => {
+    await queryClient.invalidateQueries({ queryKey: ["videos-feed"] });
+    toast.success("Feed updated");
+  };
+
+  const { pull, refreshing, progress } = usePullToRefresh(containerRef, {
+    onRefresh: handleRefresh,
+  });
 
   const isGuest = !user;
   const canUpload = !isGuest && (roles.includes("provider") || roles.includes("job_seeker"));
@@ -515,31 +526,60 @@ const VideoFeed = () => {
           </p>
         </div>
       ) : (
-        <div
-          ref={containerRef}
-          className="flex-1 overflow-y-scroll snap-y snap-mandatory scrollbar-hide"
-          style={{ scrollSnapType: "y mandatory", WebkitOverflowScrolling: "touch" }}
-        >
-          {displayVideos.map((v, i) => (
-            <div key={v.id} data-index={i} className="h-screen w-full" style={{ scrollSnapAlign: "start" }}>
-              <VideoSlide
-                video={v}
-                isActive={i === activeIndex}
-                isMuted={isMuted}
-                onToggleMute={() => setIsMuted((m) => !m)}
-                onOpenComments={openComments}
-                globalIndex={i - activeIndex}
-                onAuthRequired={isGuest ? handleAuthRequired : undefined}
-                activeRole={activeRole}
-              />
+        <div className="flex-1 relative overflow-hidden">
+          {/* Pull-to-refresh indicator */}
+          <div
+            className="absolute left-0 right-0 flex justify-center pointer-events-none z-50"
+            style={{
+              top: 8,
+              transform: `translateY(${Math.max(0, pull - 30)}px)`,
+              opacity: pull > 4 || refreshing ? 1 : 0,
+              transition: refreshing || pull > 0 ? "none" : "opacity 200ms",
+            }}
+          >
+            <div
+              className="w-10 h-10 rounded-full bg-white/15 backdrop-blur-md flex items-center justify-center shadow-lg"
+              style={{ transform: `rotate(${progress * 180}deg)` }}
+            >
+              {refreshing ? (
+                <Loader2 className="w-4 h-4 animate-spin text-white" />
+              ) : (
+                <ArrowDown className="w-4 h-4 text-white" />
+              )}
             </div>
-          ))}
-          {/* Guest limit: show signup CTA after last preview video */}
-          {isGuest && displayVideos.length > 0 && (
-            <div data-index={displayVideos.length}>
-              <GuestLimitOverlay />
-            </div>
-          )}
+          </div>
+
+          <div
+            ref={containerRef}
+            className="w-full h-full overflow-y-scroll snap-y snap-mandatory scrollbar-hide"
+            style={{
+              scrollSnapType: "y mandatory",
+              WebkitOverflowScrolling: "touch",
+              transform: pull > 0 ? `translateY(${pull}px)` : undefined,
+              transition: pull > 0 || refreshing ? "none" : "transform 220ms ease-out",
+            }}
+          >
+            {displayVideos.map((v, i) => (
+              <div key={v.id} data-index={i} className="h-screen w-full" style={{ scrollSnapAlign: "start" }}>
+                <VideoSlide
+                  video={v}
+                  isActive={i === activeIndex}
+                  isMuted={isMuted}
+                  onToggleMute={() => setIsMuted((m) => !m)}
+                  onOpenComments={openComments}
+                  globalIndex={i - activeIndex}
+                  onAuthRequired={isGuest ? handleAuthRequired : undefined}
+                  activeRole={activeRole}
+                />
+              </div>
+            ))}
+            {/* Guest limit: show signup CTA after last preview video */}
+            {isGuest && displayVideos.length > 0 && (
+              <div data-index={displayVideos.length}>
+                <GuestLimitOverlay />
+              </div>
+            )}
+          </div>
         </div>
       )}
 
