@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, Check, Smartphone, Crown, Loader2, CheckCircle2, ShieldCheck } from "lucide-react";
+import { ArrowLeft, Check, Smartphone, Crown, Loader2, CheckCircle2, ShieldCheck, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useIsPremium, SUBSCRIPTION_PRICES, type RoleType } from "@/hooks/useSubscription";
 import { useQueryClient } from "@tanstack/react-query";
