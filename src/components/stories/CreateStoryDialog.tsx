@@ -66,20 +66,33 @@ export const CreateStoryDialog = ({ open, onClose }: Props) => {
       image_url = urlData.publicUrl;
     }
 
-    const { error } = await supabase.from("provider_statuses").insert({
-      user_id: user.id,
-      text_content: text.trim() || null,
-      image_url,
-    });
+    const { data: inserted, error } = await supabase
+      .from("provider_statuses")
+      .insert({
+        user_id: user.id,
+        text_content: text.trim() || null,
+        image_url,
+      })
+      .select("id")
+      .single();
 
     setSubmitting(false);
 
-    if (error) {
-      toast({ title: "Failed to post story", description: error.message, variant: "destructive" });
+    if (error || !inserted) {
+      toast({ title: "Failed to post story", description: error?.message, variant: "destructive" });
     } else {
       toast({ title: "Story posted!" });
-      onClose();
+      setPostedStatusId(inserted.id);
     }
+  };
+
+  const resetAll = () => {
+    setText("");
+    setImageFile(null);
+    setPreview(null);
+    setPostedStatusId(null);
+    setShowBoost(false);
+    onClose();
   };
 
   return (
