@@ -54,6 +54,7 @@ import SavedJobs from "./pages/SavedJobs";
 import ProviderPublicProfile from "./pages/ProviderPublicProfile";
 import VideoFeed from "./pages/VideoFeed";
 import UserVideos from "./pages/UserVideos";
+import RecordVideo from "./pages/RecordVideo";
 import HelpCenter from "./pages/HelpCenter";
 import Upgrade from "./pages/Upgrade";
 import GoLive from "./pages/GoLive";
