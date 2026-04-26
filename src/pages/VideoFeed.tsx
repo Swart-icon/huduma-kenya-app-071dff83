@@ -20,7 +20,7 @@ import { CommentsSheet } from "@/components/video/CommentsSheet";
 import { VideoSlide } from "@/components/video/VideoSlide";
 import type { VideoItem, FeedTab } from "@/components/video/types";
 import { VideoSearchSuggestions, saveSearchTerm } from "@/components/video/VideoSearchSuggestions";
-import { LiveNowBar } from "@/components/live/LiveNowBar";
+import { toast } from "sonner";
 
 const PAGE_SIZE = 10;
 const GUEST_VIDEO_LIMIT = 5;
@@ -386,12 +386,12 @@ const VideoFeed = () => {
               </button>
               {canUpload && (
                 <button
-                  onClick={() => navigate("/go-live")}
-                  className="ml-1 px-2.5 h-9 rounded-full bg-destructive text-destructive-foreground text-xs font-bold flex items-center gap-1.5"
-                  aria-label="Go Live"
+                  onClick={() => toast.info("Live streaming coming soon!")}
+                  className="ml-1 px-2.5 h-9 rounded-full bg-white/10 text-white/80 text-xs font-bold flex items-center gap-1.5"
+                  aria-label="Live coming soon"
                 >
                   <Radio className="w-3.5 h-3.5" />
-                  Live
+                  Coming Soon
                 </button>
               )}
               {isGuest ? (
@@ -448,8 +448,7 @@ const VideoFeed = () => {
         </div>
       </div>
 
-      {/* Live now (only renders when streams are live) */}
-      <LiveNowBar />
+      {/* Live now bar disabled — feature coming soon */}
 
       {/* ─── Video Feed ─── */}
       {activeTab === "nearby" && !userLocation ? (
