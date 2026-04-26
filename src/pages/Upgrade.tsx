@@ -257,6 +257,19 @@ const Upgrade = () => {
           )}
         </Button>
 
+        {/* Fallback: manual refresh in case the callback was delayed */}
+        <Button
+          variant="outline"
+          onClick={async () => {
+            await qc.invalidateQueries({ queryKey: ["subscription"] });
+            await qc.refetchQueries({ queryKey: ["subscription"] });
+            toast({ title: "Status refreshed", description: "Checked your payment status." });
+          }}
+          className="w-full h-11 rounded-xl mt-3"
+        >
+          <RefreshCw className="w-4 h-4 mr-2" /> Refresh Status
+        </Button>
+
         <p className="text-xs text-center text-muted-foreground mt-4">
           By paying, you agree to our Terms of Service. Cancel anytime.
         </p>
