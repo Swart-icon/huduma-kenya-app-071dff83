@@ -26,7 +26,7 @@ export const VideoSlide = memo(({
   onAuthRequired?: (targetRole?: string) => void;
   activeRole?: AppRole | null;
 }) => {
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const navigate = useNavigate();
   const videoRef = useRef<HTMLVideoElement>(null);
   const [paused, setPaused] = useState(false);
