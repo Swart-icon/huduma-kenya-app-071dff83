@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
@@ -13,7 +14,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Video, Upload, Loader2, X, AlertCircle, Camera, Square, CircleDot, SwitchCamera, Download } from "lucide-react";
+import { Video, Upload, Loader2, X, AlertCircle, Camera, Square, CircleDot, SwitchCamera, Download, Maximize2 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { KENYAN_COUNTIES, getCitiesByCounty } from "@/lib/kenyanLocations";
@@ -30,6 +31,7 @@ type ValidationErrors = {
 };
 
 export const UploadVideoDialog = ({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) => {
+  const navigate = useNavigate();
   const { user, roles } = useAuth();
   const queryClient = useQueryClient();
   const { data: categories } = useCategories();
@@ -68,6 +70,33 @@ export const UploadVideoDialog = ({ open, onOpenChange }: { open: boolean; onOpe
   useEffect(() => {
     if (!open) {
       stopCamera();
+    }
+  }, [open]);
+
+  // Ingest a pending recording handed off from the full-screen recorder
+  useEffect(() => {
+    if (!open) return;
+    try {
+      const raw = sessionStorage.getItem("pending_recorded_video");
+      const memRef = sessionStorage.getItem("pending_recorded_video_ref");
+      if (raw) {
+        const meta = JSON.parse(raw) as { name: string; type: string; data: string };
+        const bin = atob(meta.data);
+        const bytes = new Uint8Array(bin.length);
+        for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+        const recordedFile = new File([bytes], meta.name, { type: meta.type });
+        setFile(recordedFile);
+        setPreview(URL.createObjectURL(recordedFile));
+        sessionStorage.removeItem("pending_recorded_video");
+      } else if (memRef === "memory" && (window as any).__pendingRecordedVideo) {
+        const recordedFile = (window as any).__pendingRecordedVideo as File;
+        setFile(recordedFile);
+        setPreview(URL.createObjectURL(recordedFile));
+        delete (window as any).__pendingRecordedVideo;
+        sessionStorage.removeItem("pending_recorded_video_ref");
+      }
+    } catch {
+      // ignore malformed handoff
     }
   }, [open]);
 
@@ -279,14 +308,22 @@ export const UploadVideoDialog = ({ open, onOpenChange }: { open: boolean; onOpe
 
               <TabsContent value="record">
                 <div className="space-y-3">
+                  <button
+                    onClick={() => { stopCamera(); onOpenChange(false); navigate("/videos/record"); }}
+                    className="flex flex-col items-center justify-center w-full h-36 border-2 border-dashed rounded-2xl border-primary/40 hover:border-primary/70 bg-gradient-to-br from-primary/10 to-primary/5 transition-colors"
+                  >
+                    <Maximize2 className="w-8 h-8 text-primary/70 mb-2" />
+                    <p className="text-sm font-semibold text-primary">Open full-screen recorder</p>
+                    <p className="text-xs text-muted-foreground mt-1">Immersive camera with flash & flip</p>
+                  </button>
+
                   {!stream ? (
                     <button
                       onClick={() => startCamera()}
-                      className="flex flex-col items-center justify-center w-full h-36 border-2 border-dashed rounded-2xl border-primary/30 hover:border-primary/60 bg-primary/5 transition-colors"
+                      className="flex flex-col items-center justify-center w-full h-24 border border-dashed rounded-xl border-border hover:border-primary/40 bg-muted/30 transition-colors"
                     >
-                      <Camera className="w-8 h-8 text-primary/60 mb-2" />
-                      <p className="text-sm font-medium text-primary">Tap to open camera</p>
-                      <p className="text-xs text-muted-foreground mt-1">Record directly from your device</p>
+                      <Camera className="w-5 h-5 text-muted-foreground mb-1" />
+                      <p className="text-xs text-muted-foreground">Or quick-record here</p>
                     </button>
                   ) : (
                     <div className="relative rounded-2xl overflow-hidden bg-black">
