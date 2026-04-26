@@ -82,10 +82,11 @@ export const VideoSlide = memo(({
     else { el.pause(); setPaused(true); }
   };
 
-  const toggleLike = async () => {
+  const toggleLike = async (forceLike = false) => {
     if (requireAuth()) return;
     if (!user) { toast.error("Sign in to like"); return; }
     const wasLiked = liked;
+    if (forceLike && wasLiked) return; // double-tap is "like only", never unlike
     setLiked(!wasLiked);
     setLocalLikeCount((c) => c + (wasLiked ? -1 : 1));
     try {
@@ -98,6 +99,115 @@ export const VideoSlide = memo(({
       setLiked(wasLiked);
       setLocalLikeCount((c) => c + (wasLiked ? 1 : -1));
     }
+  };
+
+  const triggerHeartAnim = () => {
+    setShowHeart(true);
+    window.setTimeout(() => setShowHeart(false), 700);
+  };
+
+  const handleVideoTap = () => {
+    if (longPressTriggeredRef.current) {
+      longPressTriggeredRef.current = false;
+      return;
+    }
+    const now = Date.now();
+    if (now - lastTapRef.current < 300) {
+      // Double tap → like
+      if (singleTapTimerRef.current) {
+        window.clearTimeout(singleTapTimerRef.current);
+        singleTapTimerRef.current = null;
+      }
+      lastTapRef.current = 0;
+      triggerHeartAnim();
+      toggleLike(true);
+      return;
+    }
+    lastTapRef.current = now;
+    // Defer single-tap (pause toggle) so a follow-up tap can be detected
+    if (singleTapTimerRef.current) window.clearTimeout(singleTapTimerRef.current);
+    singleTapTimerRef.current = window.setTimeout(() => {
+      togglePause();
+      singleTapTimerRef.current = null;
+    }, 280);
+  };
+
+  const handlePressStart = () => {
+    longPressTriggeredRef.current = false;
+    if (longPressTimerRef.current) window.clearTimeout(longPressTimerRef.current);
+    longPressTimerRef.current = window.setTimeout(() => {
+      longPressTriggeredRef.current = true;
+      // cancel pending single-tap pause
+      if (singleTapTimerRef.current) {
+        window.clearTimeout(singleTapTimerRef.current);
+        singleTapTimerRef.current = null;
+      }
+      setMenuOpen(true);
+    }, 550);
+  };
+
+  const handlePressEnd = () => {
+    if (longPressTimerRef.current) {
+      window.clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+  };
+
+  const handleDownload = async () => {
+    if (!isOwner && !video.allow_downloads) {
+      toast.error("The owner has disabled downloads for this video");
+      return;
+    }
+    setMenuOpen(false);
+    setDownloading(true);
+    try {
+      const res = await fetch(video.video_url);
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      const safeTitle = (video.title || "video").replace(/[^a-z0-9]+/gi, "_").slice(0, 40);
+      a.download = `${safeTitle || "video"}.mp4`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      toast.success("Download started");
+    } catch {
+      toast.error("Download failed");
+    } finally {
+      setDownloading(false);
+    }
+  };
+
+  const handleShare = async () => {
+    setMenuOpen(false);
+    const shareUrl = `${window.location.origin}/videos?v=${video.id}`;
+    const shareData = {
+      title: video.title || "Watch this video",
+      text: video.title || "Check out this video on HudumaHub.ke",
+      url: shareUrl,
+    };
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+      } else {
+        await navigator.clipboard.writeText(shareUrl);
+        toast.success("Link copied to clipboard");
+      }
+    } catch {
+      // user cancelled — silent
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!isOwner) return;
+    setConfirmDelete(false);
+    setMenuOpen(false);
+    const { error } = await supabase.from("videos").delete().eq("id", video.id);
+    if (error) { toast.error("Could not delete video"); return; }
+    setDeleted(true);
+    toast.success("Video deleted");
   };
 
   const handleComment = () => {
