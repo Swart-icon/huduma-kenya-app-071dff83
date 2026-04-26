@@ -1,4 +1,4 @@
-// PayHero STK push for premium subscriptions
+// PayHero STK push for premium subscriptions and status boosts
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const corsHeaders = {
@@ -10,6 +10,11 @@ const corsHeaders = {
 const SUBSCRIPTION_PRICES: Record<string, number> = {
   provider: 500,
   job_seeker: 200,
+};
+
+const BOOST_TIERS: Record<string, { price: number; durationHours: number }> = {
+  moderate: { price: 50, durationHours: 24 },
+  high: { price: 100, durationHours: 48 },
 };
 
 function normalizePhone(input: string): string | null {
@@ -50,34 +55,72 @@ Deno.serve(async (req) => {
     const { data: { user }, error: userErr } = await userClient.auth.getUser();
     if (userErr || !user) return json({ error: "Unauthorized" }, 401);
 
-    const { roleType, phone } = await req.json();
-    if (roleType !== "provider" && roleType !== "job_seeker") {
-      return json({ error: "Invalid roleType" }, 400);
-    }
+    const body = await req.json();
+    const { purpose, phone } = body;
     const msisdn = normalizePhone(String(phone || ""));
     if (!msisdn) return json({ error: "Invalid phone number" }, 400);
 
-    const amount = SUBSCRIPTION_PRICES[roleType];
     const admin = createClient(SUPABASE_URL, SERVICE_ROLE);
+    let amount = 0;
+    let externalRef = "";
 
-    const { data: sub, error: subErr } = await admin
-      .from("premium_subscriptions")
-      .insert({
-        user_id: user.id,
-        role_type: roleType,
-        amount_kes: amount,
-        status: "pending",
-        payment_method: "mpesa",
-      })
-      .select()
-      .single();
-    if (subErr || !sub) {
-      console.error("subscription insert error:", subErr);
-      return json({ error: "Could not create subscription" }, 500);
+    if (purpose === "boost") {
+      const { statusId, tier } = body;
+      const tierConf = BOOST_TIERS[tier];
+      if (!tierConf) return json({ error: "Invalid boost tier" }, 400);
+      if (!statusId) return json({ error: "statusId required" }, 400);
+
+      amount = tierConf.price;
+      const boostEnd = new Date();
+      boostEnd.setHours(boostEnd.getHours() + tierConf.durationHours);
+
+      const { data: boost, error: bErr } = await admin
+        .from("status_boosts")
+        .insert({
+          status_id: statusId,
+          user_id: user.id,
+          boost_tier: tier,
+          amount_kes: amount,
+          payment_method: "mpesa",
+          payment_status: "pending",
+          boost_start: new Date().toISOString(),
+          boost_end: boostEnd.toISOString(),
+          is_active: false,
+        })
+        .select()
+        .single();
+      if (bErr || !boost) {
+        console.error("boost insert error:", bErr);
+        return json({ error: "Could not create boost" }, 500);
+      }
+      externalRef = `boost_${boost.id}`;
+    } else {
+      // subscription (default)
+      const roleType = body.roleType;
+      if (roleType !== "provider" && roleType !== "job_seeker") {
+        return json({ error: "Invalid roleType" }, 400);
+      }
+      amount = SUBSCRIPTION_PRICES[roleType];
+
+      const { data: sub, error: subErr } = await admin
+        .from("premium_subscriptions")
+        .insert({
+          user_id: user.id,
+          role_type: roleType,
+          amount_kes: amount,
+          status: "pending",
+          payment_method: "mpesa",
+        })
+        .select()
+        .single();
+      if (subErr || !sub) {
+        console.error("subscription insert error:", subErr);
+        return json({ error: "Could not create subscription" }, 500);
+      }
+      externalRef = `sub_${sub.id}`;
     }
 
     const callbackUrl = `${SUPABASE_URL}/functions/v1/mpesa-callback`;
-    const externalRef = `sub_${sub.id}`;
 
     const phResp = await fetch("https://backend.payhero.co.ke/api/v2/payments", {
       method: "POST",
@@ -100,7 +143,11 @@ Deno.serve(async (req) => {
     console.log("PayHero response:", phResp.status, JSON.stringify(phData));
 
     if (!phResp.ok || phData?.success === false) {
-      await admin.from("premium_subscriptions").update({ status: "failed" }).eq("id", sub.id);
+      if (externalRef.startsWith("sub_")) {
+        await admin.from("premium_subscriptions").update({ status: "failed" }).eq("id", externalRef.slice(4));
+      } else if (externalRef.startsWith("boost_")) {
+        await admin.from("status_boosts").update({ payment_status: "failed" }).eq("id", externalRef.slice(6));
+      }
       return json(
         { error: phData?.error_message || phData?.message || "PayHero request failed" },
         502
@@ -112,7 +159,7 @@ Deno.serve(async (req) => {
 
     await admin.from("mpesa_transactions").insert({
       user_id: user.id,
-      subscription_id: sub.id,
+      subscription_id: externalRef.startsWith("sub_") ? externalRef.slice(4) : null,
       amount_kes: amount,
       phone_number: msisdn,
       checkout_request_id: checkoutRequestId,
@@ -120,7 +167,7 @@ Deno.serve(async (req) => {
       status: "pending",
     });
 
-    return json({ checkoutRequestId, success: true });
+    return json({ checkoutRequestId, externalRef, success: true });
   } catch (e) {
     console.error("mpesa-stk-push error:", e);
     return json({ error: e instanceof Error ? e.message : "Unknown error" }, 500);

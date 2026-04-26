@@ -25,7 +25,7 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // Locate transaction by checkoutRequestId or by externalRef → subscription_id
+    // Locate transaction by checkoutRequestId
     let tx: any = null;
     if (checkoutRequestId) {
       const { data } = await admin
@@ -47,22 +47,18 @@ Deno.serve(async (req) => {
       tx = data;
     }
 
-    if (!tx) {
-      console.warn("No transaction found for", checkoutRequestId, externalRef);
-      return new Response("OK", { status: 200 });
+    if (tx) {
+      await admin.from("mpesa_transactions").update({
+        result_code: resultCode ?? (isSuccess ? 0 : 1),
+        result_desc: resultDesc ?? null,
+        mpesa_receipt: mpesaReceipt,
+        status: isSuccess ? "success" : "failed",
+        raw_callback: body,
+      }).eq("id", tx.id);
     }
 
-    // Update transaction
-    await admin.from("mpesa_transactions").update({
-      result_code: resultCode ?? (isSuccess ? 0 : 1),
-      result_desc: resultDesc ?? null,
-      mpesa_receipt: mpesaReceipt,
-      status: isSuccess ? "success" : "failed",
-      raw_callback: body,
-    }).eq("id", tx.id);
-
-    // Activate or fail subscription
-    if (tx.subscription_id) {
+    // Activate / fail subscription
+    if (tx?.subscription_id) {
       if (isSuccess) {
         const startedAt = new Date();
         const expiresAt = new Date();
@@ -80,6 +76,27 @@ Deno.serve(async (req) => {
           status: "failed",
         }).eq("id", tx.subscription_id);
       }
+    }
+
+    // Activate / fail boost
+    if (externalRef?.startsWith("boost_")) {
+      const boostId = externalRef.slice(6);
+      if (isSuccess) {
+        await admin.from("status_boosts").update({
+          payment_status: "completed",
+          is_active: true,
+          payment_reference: checkoutRequestId ?? externalRef ?? null,
+        }).eq("id", boostId);
+      } else {
+        await admin.from("status_boosts").update({
+          payment_status: "failed",
+          is_active: false,
+        }).eq("id", boostId);
+      }
+    }
+
+    if (!tx && !externalRef?.startsWith("boost_")) {
+      console.warn("No transaction/boost found for", checkoutRequestId, externalRef);
     }
 
     return new Response("OK", { status: 200 });
