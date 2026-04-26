@@ -35,15 +35,39 @@ const roleConfig: Record<string, { title: string; subtitle: string; icon: React.
 };
 
 /* ────────── Section Header ────────── */
-const SectionHeader = ({ title, action, onAction }: { title: string; action?: string; onAction?: () => void }) => (
+const SectionHeader = ({ title, action, onAction, icon }: { title: string; action?: string; onAction?: () => void; icon?: React.ReactNode }) => (
   <div className="flex items-center justify-between mb-3">
-    <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">{title}</h3>
+    <div className="flex items-center gap-1.5">
+      {icon && <span className="text-primary/80">{icon}</span>}
+      <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">{title}</h3>
+    </div>
     {action && (
       <button onClick={onAction} className="text-xs text-primary font-semibold flex items-center gap-0.5">
         {action} <ChevronRight className="w-3 h-3" />
       </button>
     )}
   </div>
+);
+
+/* ────────── Hero Quick Action (gradient tile) ────────── */
+const HeroAction = ({ icon, label, sub, onClick, gradient }: {
+  icon: React.ReactNode; label: string; sub: string; onClick: () => void; gradient: string;
+}) => (
+  <button
+    onClick={onClick}
+    className={`relative overflow-hidden rounded-2xl p-4 text-left shadow-md hover:shadow-lg transition-all active:scale-[0.97] bg-gradient-to-br ${gradient}`}
+  >
+    <div className="absolute -right-4 -bottom-4 opacity-15">
+      <div className="w-20 h-20 rounded-full bg-white" />
+    </div>
+    <div className="relative">
+      <div className="w-9 h-9 rounded-xl bg-white/25 backdrop-blur-sm flex items-center justify-center mb-2 text-white">
+        {icon}
+      </div>
+      <p className="text-sm font-bold text-white">{label}</p>
+      <p className="text-[11px] text-white/80 mt-0.5 line-clamp-1">{sub}</p>
+    </div>
+  </button>
 );
 
 /* ────────── Action Card ────────── */
