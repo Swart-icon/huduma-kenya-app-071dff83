@@ -183,11 +183,14 @@ const Dashboard = () => {
         {/* ─── Welcome Card with Stats ─── */}
         <Card className="border-0 shadow-lg rounded-3xl overflow-hidden">
           <div className={`bg-gradient-to-br ${config.gradient} p-5 pb-4`}>
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-[11px] font-medium text-primary-foreground/70 bg-primary-foreground/10 px-2.5 py-0.5 rounded-full">{config.title}</span>
-              <Button variant="ghost" size="sm" onClick={handleLogout} className="h-7 px-2 text-primary-foreground/60 hover:text-primary-foreground hover:bg-primary-foreground/10 text-[11px] rounded-full">
-                <LogOut className="w-3 h-3 mr-1" /> Logout
-              </Button>
+            <div className="flex items-center justify-between mb-2 gap-2">
+              <span className="text-[11px] font-medium text-primary-foreground/70 bg-primary-foreground/10 px-2.5 py-0.5 rounded-full shrink-0">{config.title}</span>
+              <div className="flex items-center gap-1">
+                <RoleSwitcher />
+                <Button variant="ghost" size="sm" onClick={handleLogout} className="h-7 px-2 text-primary-foreground/60 hover:text-primary-foreground hover:bg-primary-foreground/10 text-[11px] rounded-full">
+                  <LogOut className="w-3 h-3 mr-1" /> Logout
+                </Button>
+              </div>
             </div>
             <h2 className="font-display text-xl font-bold text-primary-foreground mt-1">Karibu, {firstName}! 👋</h2>
             <p className="text-xs text-primary-foreground/60 mt-0.5 mb-4">{config.subtitle}</p>
