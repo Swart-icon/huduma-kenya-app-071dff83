@@ -45,6 +45,7 @@ export const VideoSlide = memo(({
   const longPressTriggeredRef = useRef(false);
 
   const isOwner = !!user && user.id === video.user_id;
+  const canDelete = isOwner || isAdmin;
 
   const requireAuth = () => {
     if (!user && onAuthRequired) { onAuthRequired(); return true; }
