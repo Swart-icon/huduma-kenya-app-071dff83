@@ -158,6 +158,7 @@ const AppInner = () => {
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
           <Route path="/terms-of-service" element={<TermsOfService />} />
           <Route path="/videos" element={<VideoFeed />} />
+          <Route path="/videos/record" element={<RecordVideo />} />
           <Route path="/user/:userId/videos" element={<UserVideos />} />
           <Route path="/help" element={<HelpCenter />} />
           <Route path="/upgrade" element={<Upgrade />} />
