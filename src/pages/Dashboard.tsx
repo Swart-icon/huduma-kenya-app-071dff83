@@ -297,11 +297,6 @@ const Dashboard = () => {
             </div>
 
             {/* Content */}
-            <div>
-              <SectionHeader title="Content" />
-              <ActionCard icon={<Video className="w-5 h-5" />} label="Watch Videos" description="See providers showcase their work" onClick={() => navigate("/videos")} accent="bg-accent/15 text-accent-foreground" />
-            </div>
-
             {/* Discover */}
             <div>
               <SectionHeader title="Discover" />
@@ -352,11 +347,6 @@ const Dashboard = () => {
               </div>
             </div>
 
-            {/* Content */}
-            <div>
-              <SectionHeader title="Content" />
-              <ActionCard icon={<Video className="w-5 h-5" />} label="Watch Videos" description="See providers showcase their work" onClick={() => navigate("/videos")} accent="bg-accent/15 text-accent-foreground" />
-            </div>
           </>
         )}
 
@@ -415,11 +405,6 @@ const Dashboard = () => {
               <ActionCard icon={<User className="w-5 h-5" />} label="Job Seeker Profile" description="Update skills, CV & experience" onClick={() => navigate("/job-seeker-profile")} />
             </div>
 
-            {/* Content */}
-            <div>
-              <SectionHeader title="Content" />
-              <ActionCard icon={<Video className="w-5 h-5" />} label="Watch Videos" description="See providers showcase their work" onClick={() => navigate("/videos")} accent="bg-accent/15 text-accent-foreground" />
-            </div>
           </>
         )}
 
