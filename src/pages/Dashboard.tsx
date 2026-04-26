@@ -20,6 +20,7 @@ import { InstallBanner } from "@/components/InstallBanner";
 import { StoryBar } from "@/components/stories/StoryBar";
 import NearbyServicesSection from "@/components/NearbyServicesSection";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { RoleSwitcher } from "@/components/RoleSwitcher";
 
 /* ────────── Role Config ────────── */
 const roleConfig: Record<string, { title: string; subtitle: string; icon: React.ReactNode; gradient: string }> = {
