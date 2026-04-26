@@ -12,9 +12,10 @@ import {
   LogOut, User, Shield, List, Grid, FileText, Calendar,
   ClipboardList, MessageCircle, Bell, Star, MapPin, ChevronRight,
   Settings, PlusCircle, TrendingUp, Eye, Navigation as NavigationIcon,
-  Video, Lightbulb, Bookmark, Send, Plus,
+  Video, Lightbulb, Bookmark, Send, Plus, Inbox as InboxIcon,
 } from "lucide-react";
 import { useUnreadCount } from "@/hooks/useUnreadCount";
+import { useInboxUnread } from "@/hooks/useInboxUnread";
 import { InstallBanner } from "@/components/InstallBanner";
 import { StoryBar } from "@/components/stories/StoryBar";
 import NearbyServicesSection from "@/components/NearbyServicesSection";
@@ -75,6 +76,7 @@ const Dashboard = () => {
   const { user, role, roles, loading, isAdmin, isSuspended, signOut } = useAuth();
   const navigate = useNavigate();
   const { unreadMessages, unreadNotifications } = useUnreadCount();
+  const inboxUnread = useInboxUnread();
   const [stats, setStats] = useState({ services: 0, bookings: 0, rating: 0, jobPosts: 0, applications: 0, savedJobs: 0 });
   const [profileCompletion, setProfileCompletion] = useState<number | null>(null);
 
@@ -160,6 +162,10 @@ const Dashboard = () => {
             <Button variant="ghost" size="icon" onClick={() => navigate("/conversations")} className="rounded-full h-9 w-9 relative">
               <MessageCircle className="w-[18px] h-[18px]" />
               {unreadMessages > 0 && <span className="absolute -top-0.5 -right-0.5 w-4 h-4 text-[9px] font-bold rounded-full bg-destructive text-destructive-foreground flex items-center justify-center">{unreadMessages}</span>}
+            </Button>
+            <Button variant="ghost" size="icon" onClick={() => navigate("/inbox")} className="rounded-full h-9 w-9 relative">
+              <InboxIcon className="w-[18px] h-[18px]" />
+              {inboxUnread > 0 && <span className="absolute -top-0.5 -right-0.5 w-4 h-4 text-[9px] font-bold rounded-full bg-primary text-primary-foreground flex items-center justify-center">{inboxUnread}</span>}
             </Button>
             <Button variant="ghost" size="icon" onClick={() => navigate("/notifications")} className="rounded-full h-9 w-9 relative">
               <Bell className="w-[18px] h-[18px]" />

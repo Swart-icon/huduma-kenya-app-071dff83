@@ -18,6 +18,7 @@ const EXEMPT_PATHS = [
   "/videos",                     // public video feed
   "/live",                       // public live stream viewer
   "/help",
+  "/inbox",
 ];
 
 const isExempt = (pathname: string) =>

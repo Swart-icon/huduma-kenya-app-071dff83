@@ -11,9 +11,10 @@ import { useToast } from "@/hooks/use-toast";
 import {
   ArrowLeft, Shield, Users, Briefcase, AlertTriangle, DollarSign,
   BarChart3, Ban, Clock, CheckCircle, XCircle, UserPlus, Trash2,
-  Eye, Search, Loader2, TrendingUp, Activity,
+  Eye, Search, Loader2, TrendingUp, Activity, Megaphone,
 } from "lucide-react";
 import AnalyticsDashboard from "@/components/admin/AnalyticsDashboard";
+import BroadcastTab from "@/components/admin/BroadcastTab";
 
 /* ─── Analytics (extracted to separate component) ─── */
 
@@ -531,6 +532,9 @@ const AdminPanel = () => {
               <TabsTrigger value="admins" className="text-xs flex-1">
                 <Shield className="w-3 h-3 mr-1" />Admins
               </TabsTrigger>
+              <TabsTrigger value="broadcast" className="text-xs flex-1">
+                <Megaphone className="w-3 h-3 mr-1" />Broadcast
+              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="analytics"><AnalyticsDashboard /></TabsContent>
@@ -540,6 +544,7 @@ const AdminPanel = () => {
             <TabsContent value="verify"><VerifyTab /></TabsContent>
             <TabsContent value="transactions"><TransactionsTab /></TabsContent>
             <TabsContent value="admins"><AdminsTab /></TabsContent>
+            <TabsContent value="broadcast"><BroadcastTab /></TabsContent>
           </Tabs>
         </div>
       </div>
