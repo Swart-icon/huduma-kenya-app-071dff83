@@ -223,15 +223,42 @@ export const UploadVideoDialog = ({ open, onOpenChange }: { open: boolean; onOpe
     setUploading(true);
     try {
       const ext = file.name.split(".").pop() || "webm";
-      const path = `${user.id}/${Date.now()}.${ext}`;
-      const { error: storageError } = await supabase.storage.from("user-videos").upload(path, file, { contentType: file.type });
+      const baseKey = `${user.id}/${Date.now()}`;
+      const path = `${baseKey}.${ext}`;
+
+      // Kick off thumbnail extraction in parallel with the video upload so
+      // posting is never delayed by frame decoding.
+      const thumbnailPromise = extractVideoThumbnail(file).catch(() => null);
+
+      const { error: storageError } = await supabase.storage
+        .from("user-videos")
+        .upload(path, file, { contentType: file.type });
       if (storageError) throw storageError;
       const { data: urlData } = supabase.storage.from("user-videos").getPublicUrl(path);
+
+      // Upload thumbnail (best-effort — never block the post)
+      let thumbnailUrl: string | null = null;
+      try {
+        const thumbFile = await thumbnailPromise;
+        if (thumbFile) {
+          const thumbPath = `${baseKey}_thumb.jpg`;
+          const { error: thumbErr } = await supabase.storage
+            .from("user-videos")
+            .upload(thumbPath, thumbFile, { contentType: "image/jpeg", cacheControl: "31536000" });
+          if (!thumbErr) {
+            thumbnailUrl = supabase.storage.from("user-videos").getPublicUrl(thumbPath).data.publicUrl;
+          }
+        }
+      } catch {
+        // Non-fatal — proceed without a thumbnail
+      }
+
       const { error: dbError } = await supabase.from("videos").insert({
         user_id: user.id,
         title: description.trim(),
         category_id: categoryId,
         video_url: urlData.publicUrl,
+        thumbnail_url: thumbnailUrl,
         county,
         city,
         allow_downloads: allowDownloads,
