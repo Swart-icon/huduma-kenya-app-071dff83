@@ -73,11 +73,12 @@ const JobSeekerDashboard = () => {
   }, [authLoading, user]);
 
   const fetchAll = async () => {
-    const [appsRes, savedRes, profileRes, jobsRes] = await Promise.all([
+    const [appsRes, savedRes, profileRes, jobsRes, mainProfileRes] = await Promise.all([
       supabase.from("job_applications").select("*").eq("applicant_id", user!.id).order("created_at", { ascending: false }).limit(10),
       supabase.from("saved_jobs").select("id").eq("user_id", user!.id),
       supabase.from("job_seeker_profiles").select("*").eq("user_id", user!.id).maybeSingle(),
       supabase.from("job_posts").select("*").eq("status", "open").order("created_at", { ascending: false }).limit(5),
+      supabase.from("profiles").select("full_name, phone, location").eq("user_id", user!.id).maybeSingle(),
     ]);
 
     const appsData = appsRes.data || [];
