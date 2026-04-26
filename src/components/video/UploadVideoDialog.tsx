@@ -18,6 +18,7 @@ import { Video, Upload, Loader2, X, AlertCircle, Camera, Square, CircleDot, Swit
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { KENYAN_COUNTIES, getCitiesByCounty } from "@/lib/kenyanLocations";
+import { extractVideoThumbnail } from "@/lib/videoThumbnail";
 
 const MAX_VIDEO_SIZE_MB = 1024;
 const ALLOWED_FORMATS = ["video/mp4", "video/webm", "video/quicktime", "video/x-m4v"];
