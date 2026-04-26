@@ -49,6 +49,7 @@ import TermsOfService from "./pages/TermsOfService";
 import JobSeekerDashboard from "./pages/JobSeekerDashboard";
 import JobSeekerProfile from "./pages/JobSeekerProfile";
 import MyApplications from "./pages/MyApplications";
+import ClientApplications from "./pages/ClientApplications";
 import SavedJobs from "./pages/SavedJobs";
 import ProviderPublicProfile from "./pages/ProviderPublicProfile";
 import VideoFeed from "./pages/VideoFeed";
@@ -134,6 +135,7 @@ const AppInner = () => {
           <Route path="/job-seeker" element={<JobSeekerDashboard />} />
           <Route path="/job-seeker-profile" element={<JobSeekerProfile />} />
           <Route path="/my-applications" element={<MyApplications />} />
+          <Route path="/client-applications" element={<ClientApplications />} />
           <Route path="/saved-jobs" element={<SavedJobs />} />
           <Route path="/job-board" element={<JobBoard />} />
           <Route path="/jobs" element={<JobBoard />} />
