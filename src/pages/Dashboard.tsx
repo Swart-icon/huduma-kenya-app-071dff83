@@ -321,7 +321,7 @@ const Dashboard = () => {
                 />
                 <HeroAction
                   icon={<Sparkles className="w-5 h-5" />}
-                  label="Quick Actions"
+                  label="My Workspace"
                   sub="All in one"
                   onClick={() => setQuickActionsOpen(true)}
                   gradient="from-secondary to-secondary/70"
@@ -533,7 +533,7 @@ const Dashboard = () => {
             <SheetHeader className="text-left space-y-1">
               <div className="flex items-center gap-2">
                 <Sparkles className="w-5 h-5" />
-                <SheetTitle className="text-primary-foreground text-lg">Quick Actions</SheetTitle>
+                <SheetTitle className="text-primary-foreground text-lg">My Workspace</SheetTitle>
               </div>
               <SheetDescription className="text-primary-foreground/80 text-xs">
                 Everything you need to run your business — one tap away
