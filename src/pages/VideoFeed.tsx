@@ -355,7 +355,7 @@ const VideoFeed = () => {
   return (
     <div className="h-screen w-screen bg-black relative overflow-hidden flex flex-col">
       {/* ─── Top Header ─── */}
-      <div className="absolute top-0 left-0 right-0 z-40">
+      <div className="absolute top-0 left-0 right-0 z-40 video-top-chrome">
         <div className="flex items-center gap-2 px-3 pt-3 pb-1">
           {searchOpen ? (
             <div className="flex-1 flex items-center gap-2">
@@ -518,7 +518,7 @@ const VideoFeed = () => {
       )}
 
       {/* ─── Bottom Navigation ─── */}
-      <div className="absolute bottom-0 left-0 right-0 z-40 bg-black backdrop-blur-md border-t border-white/10">
+      <div className="absolute bottom-0 left-0 right-0 z-40 video-bottom-chrome backdrop-blur-md">
       <div className="flex items-center justify-around py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
           <button
             onClick={() => {

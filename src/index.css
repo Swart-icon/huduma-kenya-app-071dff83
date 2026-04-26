@@ -133,4 +133,21 @@
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
+
+  .video-top-chrome {
+    background: linear-gradient(
+      to bottom,
+      hsl(0 0% 0% / 0.94) 0%,
+      hsl(0 0% 0% / 0.86) 72%,
+      hsl(0 0% 0% / 0.72) 100%
+    );
+    border-bottom: 1px solid hsl(0 0% 100% / 0.14);
+    box-shadow: 0 12px 28px hsl(0 0% 0% / 0.3);
+  }
+
+  .video-bottom-chrome {
+    background: hsl(0 0% 0% / 0.96);
+    border-top: 1px solid hsl(0 0% 100% / 0.16);
+    box-shadow: 0 -12px 28px hsl(0 0% 0% / 0.35);
+  }
 }
