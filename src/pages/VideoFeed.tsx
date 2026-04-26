@@ -518,7 +518,7 @@ const VideoFeed = () => {
       )}
 
       {/* ─── Bottom Navigation ─── */}
-      <div className="absolute bottom-0 left-0 right-0 z-40 bg-black/80 backdrop-blur-md border-t border-white/10">
+      <div className="absolute bottom-0 left-0 right-0 z-40 bg-black backdrop-blur-md border-t border-white/10">
       <div className="flex items-center justify-around py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
           <button
             onClick={() => {
