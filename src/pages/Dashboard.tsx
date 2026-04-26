@@ -13,6 +13,7 @@ import {
   ClipboardList, MessageCircle, Bell, Star, MapPin, ChevronRight,
   Settings, PlusCircle, TrendingUp, Eye, Navigation as NavigationIcon,
   Video, Lightbulb, Bookmark, Send, Plus, Inbox as InboxIcon,
+  Zap, Sparkles, Rocket, Target, Award,
 } from "lucide-react";
 import { useUnreadCount } from "@/hooks/useUnreadCount";
 import { useInboxUnread } from "@/hooks/useInboxUnread";
@@ -21,6 +22,9 @@ import { StoryBar } from "@/components/stories/StoryBar";
 import NearbyServicesSection from "@/components/NearbyServicesSection";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { RoleSwitcher } from "@/components/RoleSwitcher";
+import {
+  Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription,
+} from "@/components/ui/sheet";
 
 /* ────────── Role Config ────────── */
 const roleConfig: Record<string, { title: string; subtitle: string; icon: React.ReactNode; gradient: string }> = {
@@ -31,15 +35,39 @@ const roleConfig: Record<string, { title: string; subtitle: string; icon: React.
 };
 
 /* ────────── Section Header ────────── */
-const SectionHeader = ({ title, action, onAction }: { title: string; action?: string; onAction?: () => void }) => (
+const SectionHeader = ({ title, action, onAction, icon }: { title: string; action?: string; onAction?: () => void; icon?: React.ReactNode }) => (
   <div className="flex items-center justify-between mb-3">
-    <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">{title}</h3>
+    <div className="flex items-center gap-1.5">
+      {icon && <span className="text-primary/80">{icon}</span>}
+      <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">{title}</h3>
+    </div>
     {action && (
       <button onClick={onAction} className="text-xs text-primary font-semibold flex items-center gap-0.5">
         {action} <ChevronRight className="w-3 h-3" />
       </button>
     )}
   </div>
+);
+
+/* ────────── Hero Quick Action (gradient tile) ────────── */
+const HeroAction = ({ icon, label, sub, onClick, gradient }: {
+  icon: React.ReactNode; label: string; sub: string; onClick: () => void; gradient: string;
+}) => (
+  <button
+    onClick={onClick}
+    className={`relative overflow-hidden rounded-2xl p-4 text-left shadow-md hover:shadow-lg transition-all active:scale-[0.97] bg-gradient-to-br ${gradient}`}
+  >
+    <div className="absolute -right-4 -bottom-4 opacity-15">
+      <div className="w-20 h-20 rounded-full bg-white" />
+    </div>
+    <div className="relative">
+      <div className="w-9 h-9 rounded-xl bg-white/25 backdrop-blur-sm flex items-center justify-center mb-2 text-white">
+        {icon}
+      </div>
+      <p className="text-sm font-bold text-white">{label}</p>
+      <p className="text-[11px] text-white/80 mt-0.5 line-clamp-1">{sub}</p>
+    </div>
+  </button>
 );
 
 /* ────────── Action Card ────────── */
@@ -80,6 +108,7 @@ const Dashboard = () => {
   const inboxUnread = useInboxUnread();
   const [stats, setStats] = useState({ services: 0, bookings: 0, rating: 0, jobPosts: 0, applications: 0, savedJobs: 0 });
   const [profileCompletion, setProfileCompletion] = useState<number | null>(null);
+  const [quickActionsOpen, setQuickActionsOpen] = useState(false);
 
   const hasNonAdminRole = roles.filter((r) => r !== "admin").length > 0;
 
@@ -272,18 +301,31 @@ const Dashboard = () => {
         {/* ═══════════ PROVIDER DASHBOARD ═══════════ */}
         {role === "provider" && (
           <>
-            {/* Quick Actions */}
+            {/* Quick Actions — gradient hero tiles */}
             <div>
-              <SectionHeader title="Quick Actions" />
-              <div className="grid grid-cols-2 gap-3">
-                <Button className="h-auto py-4 rounded-2xl flex flex-col gap-1.5 shadow-sm" onClick={() => navigate("/services/new")}>
-                  <PlusCircle className="w-6 h-6" />
-                  <span className="text-xs font-semibold">Create Service</span>
-                </Button>
-                <Button variant="outline" className="h-auto py-4 rounded-2xl flex flex-col gap-1.5 shadow-sm border-0 bg-muted/50" onClick={() => navigate("/videos")}>
-                  <Video className="w-6 h-6 text-primary" />
-                  <span className="text-xs font-semibold">Add Story</span>
-                </Button>
+              <SectionHeader title="Quick Actions" icon={<Zap className="w-3.5 h-3.5" />} />
+              <div className="grid grid-cols-3 gap-2.5">
+                <HeroAction
+                  icon={<PlusCircle className="w-5 h-5" />}
+                  label="New Service"
+                  sub="List & sell"
+                  onClick={() => navigate("/services/new")}
+                  gradient="from-primary to-primary/70"
+                />
+                <HeroAction
+                  icon={<Video className="w-5 h-5" />}
+                  label="Add Story"
+                  sub="Get noticed"
+                  onClick={() => navigate("/videos")}
+                  gradient="from-accent to-accent/70"
+                />
+                <HeroAction
+                  icon={<Sparkles className="w-5 h-5" />}
+                  label="Quick Actions"
+                  sub="All in one"
+                  onClick={() => setQuickActionsOpen(true)}
+                  gradient="from-secondary to-secondary/70"
+                />
               </div>
             </div>
 
@@ -292,7 +334,7 @@ const Dashboard = () => {
 
             {/* Your Business */}
             <div>
-              <SectionHeader title="Your Business" />
+              <SectionHeader title="Your Business" icon={<Briefcase className="w-3.5 h-3.5" />} />
               <div className="space-y-2.5">
                 <ActionCard icon={<Eye className="w-5 h-5" />} label="Business Profile" description="View & edit your profile" onClick={() => navigate("/provider-profile/preview")} />
                 <ActionCard icon={<List className="w-5 h-5" />} label="My Services" description="Manage your service listings" onClick={() => navigate("/my-services")} accent="bg-accent/15 text-accent-foreground" />
@@ -302,14 +344,13 @@ const Dashboard = () => {
 
             {/* Job Board */}
             <div>
-              <SectionHeader title="Job Board" />
+              <SectionHeader title="Job Board" icon={<ClipboardList className="w-3.5 h-3.5" />} />
               <ActionCard icon={<ClipboardList className="w-5 h-5" />} label="Browse Jobs" description="Find open job posts from clients" onClick={() => navigate("/job-board")} accent="bg-primary/10 text-primary" />
             </div>
 
-            {/* Content */}
             {/* Discover */}
             <div>
-              <SectionHeader title="Discover" />
+              <SectionHeader title="Discover" icon={<Star className="w-3.5 h-3.5" />} />
               <ActionCard icon={<Star className="w-5 h-5" />} label="My Reviews" description="View client feedback" onClick={() => navigate(`/provider/${user?.id}/reviews`)} accent="bg-accent/15 text-accent-foreground" />
             </div>
           </>
@@ -318,24 +359,37 @@ const Dashboard = () => {
         {/* ═══════════ CLIENT DASHBOARD ═══════════ */}
         {role === "client" && (
           <>
-            {/* Quick Actions */}
+            {/* Quick Actions — gradient hero tiles */}
             <div>
-              <SectionHeader title="Quick Actions" />
-              <div className="grid grid-cols-2 gap-3">
-                <Button className="h-auto py-4 rounded-2xl flex flex-col gap-1.5 shadow-sm" onClick={() => navigate("/jobs/new")}>
-                  <PlusCircle className="w-6 h-6" />
-                  <span className="text-xs font-semibold">Post a Job</span>
-                </Button>
-                <Button variant="outline" className="h-auto py-4 rounded-2xl flex flex-col gap-1.5 shadow-sm border-0 bg-muted/50" onClick={() => navigate("/client-applications")}>
-                  <ClipboardList className="w-6 h-6 text-primary" />
-                  <span className="text-xs font-semibold">My Applications</span>
-                </Button>
+              <SectionHeader title="Quick Actions" icon={<Zap className="w-3.5 h-3.5" />} />
+              <div className="grid grid-cols-3 gap-2.5">
+                <HeroAction
+                  icon={<PlusCircle className="w-5 h-5" />}
+                  label="Post Job"
+                  sub="Hire fast"
+                  onClick={() => navigate("/jobs/new")}
+                  gradient="from-primary to-primary/70"
+                />
+                <HeroAction
+                  icon={<NavigationIcon className="w-5 h-5" />}
+                  label="Nearby"
+                  sub="Find pros"
+                  onClick={() => navigate("/nearby")}
+                  gradient="from-accent to-accent/70"
+                />
+                <HeroAction
+                  icon={<ClipboardList className="w-5 h-5" />}
+                  label="Applicants"
+                  sub="Review now"
+                  onClick={() => navigate("/client-applications")}
+                  gradient="from-secondary to-secondary/70"
+                />
               </div>
             </div>
 
             {/* Your Activity */}
             <div>
-              <SectionHeader title="Your Activity" />
+              <SectionHeader title="Your Activity" icon={<Target className="w-3.5 h-3.5" />} />
               <div className="space-y-2.5">
                 <ActionCard icon={<FileText className="w-5 h-5" />} label="My Job Posts" description="Post & manage jobs" onClick={() => navigate("/my-jobs")} accent="bg-secondary/10 text-secondary" />
                 <ActionCard icon={<ClipboardList className="w-5 h-5" />} label="My Applications" description="Track applicants for your jobs" onClick={() => navigate("/client-applications")} accent="bg-primary/10 text-primary" />
@@ -348,7 +402,7 @@ const Dashboard = () => {
 
             {/* Explore */}
             <div>
-              <SectionHeader title="Explore" />
+              <SectionHeader title="Explore" icon={<Search className="w-3.5 h-3.5" />} />
               <div className="space-y-2.5">
                 <ActionCard icon={<NavigationIcon className="w-5 h-5" />} label="Nearby Services" description="Discover services close to you" onClick={() => navigate("/nearby")} />
                 <ActionCard icon={<Search className="w-5 h-5" />} label="Search Services" description="Find services with filters" onClick={() => navigate("/search")} accent="bg-accent/15 text-accent-foreground" />
@@ -356,7 +410,6 @@ const Dashboard = () => {
                 <ActionCard icon={<MapIcon className="w-5 h-5" />} label="Service Map" description="Find providers on a map" onClick={() => navigate("/map")} />
               </div>
             </div>
-
           </>
         )}
 
@@ -365,33 +418,46 @@ const Dashboard = () => {
           <>
             {/* Profile Completion */}
             {profileCompletion !== null && profileCompletion < 100 && (
-              <Card className="border-0 shadow-sm rounded-2xl cursor-pointer" onClick={() => navigate("/job-seeker-profile")}>
+              <Card className="border-0 shadow-sm rounded-2xl cursor-pointer overflow-hidden" onClick={() => navigate("/job-seeker-profile")}>
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
-                      <User className="w-4 h-4 text-primary" />
-                      <span className="text-sm font-semibold text-foreground">Profile Completion</span>
+                      <Award className="w-4 h-4 text-primary" />
+                      <span className="text-sm font-semibold text-foreground">Profile Strength</span>
                     </div>
                     <span className="text-sm font-bold text-primary">{profileCompletion}%</span>
                   </div>
                   <Progress value={profileCompletion} className="h-2 rounded-full" />
-                  <p className="text-xs text-muted-foreground mt-1.5">Complete your profile to stand out</p>
+                  <p className="text-xs text-muted-foreground mt-1.5">A complete profile gets 5× more interviews</p>
                 </CardContent>
               </Card>
             )}
 
-            {/* Quick Actions */}
+            {/* Quick Actions — gradient hero tiles */}
             <div>
-              <SectionHeader title="Quick Actions" />
-              <div className="grid grid-cols-2 gap-3">
-                <Button className="h-auto py-4 rounded-2xl flex flex-col gap-1.5 shadow-sm" onClick={() => navigate("/job-board")}>
-                  <Briefcase className="w-6 h-6" />
-                  <span className="text-xs font-semibold">Browse Jobs</span>
-                </Button>
-                <Button variant="outline" className="h-auto py-4 rounded-2xl flex flex-col gap-1.5 shadow-sm border-0 bg-muted/50" onClick={() => navigate("/saved-jobs")}>
-                  <Bookmark className="w-6 h-6 text-primary" />
-                  <span className="text-xs font-semibold">Saved Jobs</span>
-                </Button>
+              <SectionHeader title="Quick Actions" icon={<Zap className="w-3.5 h-3.5" />} />
+              <div className="grid grid-cols-3 gap-2.5">
+                <HeroAction
+                  icon={<Briefcase className="w-5 h-5" />}
+                  label="Browse Jobs"
+                  sub="New today"
+                  onClick={() => navigate("/job-board")}
+                  gradient="from-primary to-primary/70"
+                />
+                <HeroAction
+                  icon={<Send className="w-5 h-5" />}
+                  label="Applied"
+                  sub="Track status"
+                  onClick={() => navigate("/my-applications")}
+                  gradient="from-accent to-accent/70"
+                />
+                <HeroAction
+                  icon={<Bookmark className="w-5 h-5" />}
+                  label="Saved"
+                  sub="Apply later"
+                  onClick={() => navigate("/saved-jobs")}
+                  gradient="from-secondary to-secondary/70"
+                />
               </div>
             </div>
 
@@ -400,7 +466,7 @@ const Dashboard = () => {
 
             {/* Opportunities */}
             <div>
-              <SectionHeader title="Opportunities" />
+              <SectionHeader title="Opportunities" icon={<Rocket className="w-3.5 h-3.5" />} />
               <div className="space-y-2.5">
                 <ActionCard icon={<Briefcase className="w-5 h-5" />} label="Job Seeker Hub" description="Dashboard, applications & profile" onClick={() => navigate("/job-seeker")} />
                 <ActionCard icon={<ClipboardList className="w-5 h-5" />} label="Job Board" description="Browse available jobs" onClick={() => navigate("/job-board")} accent="bg-accent/15 text-accent-foreground" />
@@ -411,10 +477,9 @@ const Dashboard = () => {
 
             {/* Build Your Profile */}
             <div>
-              <SectionHeader title="Build Your Profile" />
+              <SectionHeader title="Build Your Profile" icon={<User className="w-3.5 h-3.5" />} />
               <ActionCard icon={<User className="w-5 h-5" />} label="Job Seeker Profile" description="Update skills, CV & experience" onClick={() => navigate("/job-seeker-profile")} />
             </div>
-
           </>
         )}
 
@@ -468,6 +533,45 @@ const Dashboard = () => {
           <Search className="w-6 h-6" />
         </button>
       )}
+
+      {/* ─── Quick Actions Sheet (Provider) ─── */}
+      <Sheet open={quickActionsOpen} onOpenChange={setQuickActionsOpen}>
+        <SheetContent side="bottom" className="rounded-t-3xl border-0 p-0 max-h-[85vh] overflow-y-auto">
+          <div className={`bg-gradient-to-br ${config.gradient} p-5 pb-6 text-primary-foreground`}>
+            <SheetHeader className="text-left space-y-1">
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-5 h-5" />
+                <SheetTitle className="text-primary-foreground text-lg">Quick Actions</SheetTitle>
+              </div>
+              <SheetDescription className="text-primary-foreground/80 text-xs">
+                Everything you need to run your business — one tap away
+              </SheetDescription>
+            </SheetHeader>
+          </div>
+          <div className="p-4 space-y-2.5 -mt-3 bg-background rounded-t-3xl">
+            <ActionCard
+              icon={<Eye className="w-5 h-5" />}
+              label="Business Profile"
+              description="View, edit & polish your public profile"
+              onClick={() => { setQuickActionsOpen(false); navigate("/provider-profile/preview"); }}
+            />
+            <ActionCard
+              icon={<List className="w-5 h-5" />}
+              label="My Services"
+              description="Manage your service listings & pricing"
+              onClick={() => { setQuickActionsOpen(false); navigate("/my-services"); }}
+              accent="bg-accent/15 text-accent-foreground"
+            />
+            <ActionCard
+              icon={<Calendar className="w-5 h-5" />}
+              label="My Bookings"
+              description="View, accept & manage all your bookings"
+              onClick={() => { setQuickActionsOpen(false); navigate("/my-bookings"); }}
+              accent="bg-secondary/10 text-secondary"
+            />
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 };
