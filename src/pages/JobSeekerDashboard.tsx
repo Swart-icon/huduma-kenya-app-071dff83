@@ -96,19 +96,16 @@ const JobSeekerDashboard = () => {
     setSavedCount((savedRes.data || []).length);
     setRecommendedJobs(jobsRes.data || []);
 
-    if (profileRes.data) {
-      const p = profileRes.data;
-      let filled = 0;
-      const total = 7;
-      if ((p.skills as string[])?.length > 0) filled++;
-      if (p.experience_years && p.experience_years > 0) filled++;
-      if (p.experience_description) filled++;
-      if (p.education) filled++;
-      if (p.certifications) filled++;
-      if (p.bio) filled++;
-      if (p.cv_url) filled++;
-      setProfileCompletion(Math.round((filled / total) * 100));
-    }
+    // Completion = mandatory personal info only (full name, phone, email, location)
+    const mp = mainProfileRes.data;
+    const checks = [
+      !!mp?.full_name?.trim(),
+      !!mp?.phone?.trim(),
+      !!user?.email,
+      !!mp?.location?.trim(),
+    ];
+    const filled = checks.filter(Boolean).length;
+    setProfileCompletion(Math.round((filled / checks.length) * 100));
     setLoading(false);
   };
 
