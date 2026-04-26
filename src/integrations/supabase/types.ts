@@ -1499,6 +1499,7 @@ export type Database = {
       }
       videos: {
         Row: {
+          allow_downloads: boolean
           category_id: string | null
           city: string | null
           comment_count: number
@@ -1516,6 +1517,7 @@ export type Database = {
           view_count: number
         }
         Insert: {
+          allow_downloads?: boolean
           category_id?: string | null
           city?: string | null
           comment_count?: number
@@ -1533,6 +1535,7 @@ export type Database = {
           view_count?: number
         }
         Update: {
+          allow_downloads?: boolean
           category_id?: string | null
           city?: string | null
           comment_count?: number
