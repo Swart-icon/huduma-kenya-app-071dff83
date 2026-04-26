@@ -533,6 +533,45 @@ const Dashboard = () => {
           <Search className="w-6 h-6" />
         </button>
       )}
+
+      {/* ─── Quick Actions Sheet (Provider) ─── */}
+      <Sheet open={quickActionsOpen} onOpenChange={setQuickActionsOpen}>
+        <SheetContent side="bottom" className="rounded-t-3xl border-0 p-0 max-h-[85vh] overflow-y-auto">
+          <div className={`bg-gradient-to-br ${config.gradient} p-5 pb-6 text-primary-foreground`}>
+            <SheetHeader className="text-left space-y-1">
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-5 h-5" />
+                <SheetTitle className="text-primary-foreground text-lg">Quick Actions</SheetTitle>
+              </div>
+              <SheetDescription className="text-primary-foreground/80 text-xs">
+                Everything you need to run your business — one tap away
+              </SheetDescription>
+            </SheetHeader>
+          </div>
+          <div className="p-4 space-y-2.5 -mt-3 bg-background rounded-t-3xl">
+            <ActionCard
+              icon={<Eye className="w-5 h-5" />}
+              label="Business Profile"
+              description="View, edit & polish your public profile"
+              onClick={() => { setQuickActionsOpen(false); navigate("/provider-profile/preview"); }}
+            />
+            <ActionCard
+              icon={<List className="w-5 h-5" />}
+              label="My Services"
+              description="Manage your service listings & pricing"
+              onClick={() => { setQuickActionsOpen(false); navigate("/my-services"); }}
+              accent="bg-accent/15 text-accent-foreground"
+            />
+            <ActionCard
+              icon={<Calendar className="w-5 h-5" />}
+              label="My Bookings"
+              description="View, accept & manage all your bookings"
+              onClick={() => { setQuickActionsOpen(false); navigate("/my-bookings"); }}
+              accent="bg-secondary/10 text-secondary"
+            />
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 };
