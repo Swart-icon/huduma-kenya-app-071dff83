@@ -73,6 +73,33 @@ export const UploadVideoDialog = ({ open, onOpenChange }: { open: boolean; onOpe
     }
   }, [open]);
 
+  // Ingest a pending recording handed off from the full-screen recorder
+  useEffect(() => {
+    if (!open) return;
+    try {
+      const raw = sessionStorage.getItem("pending_recorded_video");
+      const memRef = sessionStorage.getItem("pending_recorded_video_ref");
+      if (raw) {
+        const meta = JSON.parse(raw) as { name: string; type: string; data: string };
+        const bin = atob(meta.data);
+        const bytes = new Uint8Array(bin.length);
+        for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+        const recordedFile = new File([bytes], meta.name, { type: meta.type });
+        setFile(recordedFile);
+        setPreview(URL.createObjectURL(recordedFile));
+        sessionStorage.removeItem("pending_recorded_video");
+      } else if (memRef === "memory" && (window as any).__pendingRecordedVideo) {
+        const recordedFile = (window as any).__pendingRecordedVideo as File;
+        setFile(recordedFile);
+        setPreview(URL.createObjectURL(recordedFile));
+        delete (window as any).__pendingRecordedVideo;
+        sessionStorage.removeItem("pending_recorded_video_ref");
+      }
+    } catch {
+      // ignore malformed handoff
+    }
+  }, [open]);
+
   // Sync stream to video element after render
   useEffect(() => {
     if (stream && liveVideoRef.current) {
