@@ -13,7 +13,8 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Video, Upload, Loader2, X, AlertCircle, Camera, Square, CircleDot, SwitchCamera } from "lucide-react";
+import { Video, Upload, Loader2, X, AlertCircle, Camera, Square, CircleDot, SwitchCamera, Download } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { KENYAN_COUNTIES, getCitiesByCounty } from "@/lib/kenyanLocations";
 
@@ -37,6 +38,7 @@ export const UploadVideoDialog = ({ open, onOpenChange }: { open: boolean; onOpe
   const [categoryId, setCategoryId] = useState("");
   const [county, setCounty] = useState("");
   const [city, setCity] = useState("");
+  const [allowDownloads, setAllowDownloads] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [preview, setPreview] = useState<string | null>(null);
   const [errors, setErrors] = useState<ValidationErrors>({});
@@ -203,6 +205,7 @@ export const UploadVideoDialog = ({ open, onOpenChange }: { open: boolean; onOpe
         video_url: urlData.publicUrl,
         county,
         city,
+        allow_downloads: allowDownloads,
         status: "active",
       } as any);
       if (dbError) throw dbError;
@@ -416,6 +419,19 @@ export const UploadVideoDialog = ({ open, onOpenChange }: { open: boolean; onOpe
               </SelectContent>
             </Select>
             <FieldError message={errors.city} />
+          </div>
+
+          {/* Allow downloads toggle */}
+          <div className="flex items-start justify-between gap-3 rounded-xl border border-border p-3">
+            <div className="flex-1">
+              <Label className="text-sm font-medium flex items-center gap-1.5">
+                <Download className="w-4 h-4" /> Allow downloads
+              </Label>
+              <p className="text-[11px] text-muted-foreground mt-0.5">
+                Let viewers save your video. Off by default to protect your content.
+              </p>
+            </div>
+            <Switch checked={allowDownloads} onCheckedChange={setAllowDownloads} />
           </div>
 
           <Button onClick={handleUpload} disabled={uploading} className="w-full rounded-xl">

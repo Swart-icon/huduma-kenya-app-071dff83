@@ -159,7 +159,21 @@ const VideoFeed = () => {
             .in("id", catIds);
           catMap = new Map((cats || []).map((c) => [c.id, c]));
         }
-        items = rows.map((r) => ({ ...r, service_categories: catMap.get(r.category_id) || null }));
+        // ranked_videos RPC doesn't return allow_downloads — fetch it
+        const ids = rows.map((r) => r.id);
+        let dlMap = new Map<string, boolean>();
+        if (ids.length > 0) {
+          const { data: extras } = await supabase
+            .from("videos")
+            .select("id, allow_downloads")
+            .in("id", ids);
+          dlMap = new Map((extras || []).map((e: any) => [e.id, !!e.allow_downloads]));
+        }
+        items = rows.map((r) => ({
+          ...r,
+          allow_downloads: dlMap.get(r.id) ?? false,
+          service_categories: catMap.get(r.category_id) || null,
+        }));
       } else {
         let query = supabase
           .from("videos")
