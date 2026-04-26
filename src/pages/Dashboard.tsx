@@ -359,24 +359,37 @@ const Dashboard = () => {
         {/* ═══════════ CLIENT DASHBOARD ═══════════ */}
         {role === "client" && (
           <>
-            {/* Quick Actions */}
+            {/* Quick Actions — gradient hero tiles */}
             <div>
-              <SectionHeader title="Quick Actions" />
-              <div className="grid grid-cols-2 gap-3">
-                <Button className="h-auto py-4 rounded-2xl flex flex-col gap-1.5 shadow-sm" onClick={() => navigate("/jobs/new")}>
-                  <PlusCircle className="w-6 h-6" />
-                  <span className="text-xs font-semibold">Post a Job</span>
-                </Button>
-                <Button variant="outline" className="h-auto py-4 rounded-2xl flex flex-col gap-1.5 shadow-sm border-0 bg-muted/50" onClick={() => navigate("/client-applications")}>
-                  <ClipboardList className="w-6 h-6 text-primary" />
-                  <span className="text-xs font-semibold">My Applications</span>
-                </Button>
+              <SectionHeader title="Quick Actions" icon={<Zap className="w-3.5 h-3.5" />} />
+              <div className="grid grid-cols-3 gap-2.5">
+                <HeroAction
+                  icon={<PlusCircle className="w-5 h-5" />}
+                  label="Post Job"
+                  sub="Hire fast"
+                  onClick={() => navigate("/jobs/new")}
+                  gradient="from-primary to-primary/70"
+                />
+                <HeroAction
+                  icon={<NavigationIcon className="w-5 h-5" />}
+                  label="Nearby"
+                  sub="Find pros"
+                  onClick={() => navigate("/nearby")}
+                  gradient="from-accent to-accent/70"
+                />
+                <HeroAction
+                  icon={<ClipboardList className="w-5 h-5" />}
+                  label="Applicants"
+                  sub="Review now"
+                  onClick={() => navigate("/client-applications")}
+                  gradient="from-secondary to-secondary/70"
+                />
               </div>
             </div>
 
             {/* Your Activity */}
             <div>
-              <SectionHeader title="Your Activity" />
+              <SectionHeader title="Your Activity" icon={<Target className="w-3.5 h-3.5" />} />
               <div className="space-y-2.5">
                 <ActionCard icon={<FileText className="w-5 h-5" />} label="My Job Posts" description="Post & manage jobs" onClick={() => navigate("/my-jobs")} accent="bg-secondary/10 text-secondary" />
                 <ActionCard icon={<ClipboardList className="w-5 h-5" />} label="My Applications" description="Track applicants for your jobs" onClick={() => navigate("/client-applications")} accent="bg-primary/10 text-primary" />
@@ -389,7 +402,7 @@ const Dashboard = () => {
 
             {/* Explore */}
             <div>
-              <SectionHeader title="Explore" />
+              <SectionHeader title="Explore" icon={<Search className="w-3.5 h-3.5" />} />
               <div className="space-y-2.5">
                 <ActionCard icon={<NavigationIcon className="w-5 h-5" />} label="Nearby Services" description="Discover services close to you" onClick={() => navigate("/nearby")} />
                 <ActionCard icon={<Search className="w-5 h-5" />} label="Search Services" description="Find services with filters" onClick={() => navigate("/search")} accent="bg-accent/15 text-accent-foreground" />
@@ -397,7 +410,6 @@ const Dashboard = () => {
                 <ActionCard icon={<MapIcon className="w-5 h-5" />} label="Service Map" description="Find providers on a map" onClick={() => navigate("/map")} />
               </div>
             </div>
-
           </>
         )}
 
@@ -406,33 +418,46 @@ const Dashboard = () => {
           <>
             {/* Profile Completion */}
             {profileCompletion !== null && profileCompletion < 100 && (
-              <Card className="border-0 shadow-sm rounded-2xl cursor-pointer" onClick={() => navigate("/job-seeker-profile")}>
+              <Card className="border-0 shadow-sm rounded-2xl cursor-pointer overflow-hidden" onClick={() => navigate("/job-seeker-profile")}>
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
-                      <User className="w-4 h-4 text-primary" />
-                      <span className="text-sm font-semibold text-foreground">Profile Completion</span>
+                      <Award className="w-4 h-4 text-primary" />
+                      <span className="text-sm font-semibold text-foreground">Profile Strength</span>
                     </div>
                     <span className="text-sm font-bold text-primary">{profileCompletion}%</span>
                   </div>
                   <Progress value={profileCompletion} className="h-2 rounded-full" />
-                  <p className="text-xs text-muted-foreground mt-1.5">Complete your profile to stand out</p>
+                  <p className="text-xs text-muted-foreground mt-1.5">A complete profile gets 5× more interviews</p>
                 </CardContent>
               </Card>
             )}
 
-            {/* Quick Actions */}
+            {/* Quick Actions — gradient hero tiles */}
             <div>
-              <SectionHeader title="Quick Actions" />
-              <div className="grid grid-cols-2 gap-3">
-                <Button className="h-auto py-4 rounded-2xl flex flex-col gap-1.5 shadow-sm" onClick={() => navigate("/job-board")}>
-                  <Briefcase className="w-6 h-6" />
-                  <span className="text-xs font-semibold">Browse Jobs</span>
-                </Button>
-                <Button variant="outline" className="h-auto py-4 rounded-2xl flex flex-col gap-1.5 shadow-sm border-0 bg-muted/50" onClick={() => navigate("/saved-jobs")}>
-                  <Bookmark className="w-6 h-6 text-primary" />
-                  <span className="text-xs font-semibold">Saved Jobs</span>
-                </Button>
+              <SectionHeader title="Quick Actions" icon={<Zap className="w-3.5 h-3.5" />} />
+              <div className="grid grid-cols-3 gap-2.5">
+                <HeroAction
+                  icon={<Briefcase className="w-5 h-5" />}
+                  label="Browse Jobs"
+                  sub="New today"
+                  onClick={() => navigate("/job-board")}
+                  gradient="from-primary to-primary/70"
+                />
+                <HeroAction
+                  icon={<Send className="w-5 h-5" />}
+                  label="Applied"
+                  sub="Track status"
+                  onClick={() => navigate("/my-applications")}
+                  gradient="from-accent to-accent/70"
+                />
+                <HeroAction
+                  icon={<Bookmark className="w-5 h-5" />}
+                  label="Saved"
+                  sub="Apply later"
+                  onClick={() => navigate("/saved-jobs")}
+                  gradient="from-secondary to-secondary/70"
+                />
               </div>
             </div>
 
@@ -441,7 +466,7 @@ const Dashboard = () => {
 
             {/* Opportunities */}
             <div>
-              <SectionHeader title="Opportunities" />
+              <SectionHeader title="Opportunities" icon={<Rocket className="w-3.5 h-3.5" />} />
               <div className="space-y-2.5">
                 <ActionCard icon={<Briefcase className="w-5 h-5" />} label="Job Seeker Hub" description="Dashboard, applications & profile" onClick={() => navigate("/job-seeker")} />
                 <ActionCard icon={<ClipboardList className="w-5 h-5" />} label="Job Board" description="Browse available jobs" onClick={() => navigate("/job-board")} accent="bg-accent/15 text-accent-foreground" />
@@ -452,10 +477,9 @@ const Dashboard = () => {
 
             {/* Build Your Profile */}
             <div>
-              <SectionHeader title="Build Your Profile" />
+              <SectionHeader title="Build Your Profile" icon={<User className="w-3.5 h-3.5" />} />
               <ActionCard icon={<User className="w-5 h-5" />} label="Job Seeker Profile" description="Update skills, CV & experience" onClick={() => navigate("/job-seeker-profile")} />
             </div>
-
           </>
         )}
 
