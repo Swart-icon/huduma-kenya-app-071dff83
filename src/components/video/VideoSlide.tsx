@@ -258,17 +258,26 @@ export const VideoSlide = memo(({
     ? `${video.providerCity}${video.providerCounty ? `, ${video.providerCounty}` : ""}`
     : null;
 
+  if (deleted) return null;
+
   return (
     <div className="relative w-full h-full snap-start snap-always bg-black flex items-center justify-center">
       <video
         ref={videoRef}
         src={video.video_url}
-        className="w-full h-full object-contain"
+        className="w-full h-full object-contain select-none"
         loop
         playsInline
         muted={isMuted}
         preload={Math.abs(globalIndex) <= 1 ? "auto" : "none"}
-        onClick={togglePause}
+        controlsList="nodownload"
+        disablePictureInPicture
+        onContextMenu={(e) => e.preventDefault()}
+        onClick={handleVideoTap}
+        onPointerDown={handlePressStart}
+        onPointerUp={handlePressEnd}
+        onPointerLeave={handlePressEnd}
+        onPointerCancel={handlePressEnd}
       />
 
       {paused && (
@@ -278,6 +287,22 @@ export const VideoSlide = memo(({
           </div>
         </div>
       )}
+
+      {/* Double-tap heart animation */}
+      {showHeart && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <Heart className="w-28 h-28 text-red-500 fill-red-500 drop-shadow-2xl animate-[ping_0.7s_ease-out]" />
+        </div>
+      )}
+
+      {/* Top-right more menu */}
+      <button
+        onClick={() => setMenuOpen(true)}
+        className="absolute top-3 right-3 w-9 h-9 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center z-10"
+        aria-label="More options"
+      >
+        <MoreVertical className="w-5 h-5 text-white" />
+      </button>
 
       {/* Right action bar */}
       <div className="absolute right-3 bottom-[140px] flex flex-col items-center gap-2.5">
@@ -291,7 +316,7 @@ export const VideoSlide = memo(({
           </div>
         </button>
 
-        <button onClick={toggleLike} className="flex flex-col items-center">
+        <button onClick={() => toggleLike(false)} className="flex flex-col items-center">
           <div className={`w-9 h-9 rounded-full flex items-center justify-center ${liked ? "bg-red-500/20" : "bg-white/10"}`}>
             <Heart className={`w-5 h-5 ${liked ? "text-red-500 fill-red-500" : "text-white"}`} />
           </div>
