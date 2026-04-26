@@ -4,44 +4,107 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useAuth } from "@/contexts/AuthContext";
 import { lovable } from "@/integrations/lovable";
-import { ArrowLeft, Briefcase, Search, UserCheck, Eye, EyeOff, Mail, Check } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import {
+  ArrowLeft,
+  Briefcase,
+  Search,
+  UserCheck,
+  Eye,
+  EyeOff,
+  Mail,
+  Check,
+  MapPin,
+  Loader2,
+  Globe,
+  Languages,
+  ShieldCheck,
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { AppRole } from "@/contexts/AuthContext";
+import {
+  detectCurrentLocation,
+  formatPublicLocation,
+  type DetailedLocation,
+} from "@/lib/locationDetection";
+import { KENYAN_COUNTIES, getCitiesByCounty } from "@/lib/kenyanLocations";
 
-type Step = "credentials" | "verify_email" | "role";
+type Step = "credentials" | "verify_email" | "role" | "locale";
 
-const roleOptions: { value: AppRole; label: string; description: string; icon: React.ReactNode }[] = [
+const SELECTABLE_ROLES = ["provider", "job_seeker", "client"] as const;
+type SelectableRole = (typeof SELECTABLE_ROLES)[number];
+
+const roleOptions: { value: SelectableRole; label: string; description: string; icon: React.ReactNode }[] = [
   { value: "provider", label: "Service Provider", description: "Offer your skills & services", icon: <Briefcase className="w-7 h-7" /> },
   { value: "job_seeker", label: "Job Seeker", description: "Find jobs & upload your CV", icon: <Search className="w-7 h-7" /> },
   { value: "client", label: "Client", description: "Post jobs & book services", icon: <UserCheck className="w-7 h-7" /> },
+];
+
+// East African Community focus
+const COUNTRIES = [
+  { code: "KE", name: "Kenya" },
+  { code: "UG", name: "Uganda" },
+  { code: "TZ", name: "Tanzania" },
+  { code: "RW", name: "Rwanda" },
+];
+
+const LANGUAGES = [
+  { code: "en", name: "English" },
+  { code: "sw", name: "Swahili / Kiswahili" },
 ];
 
 const Register = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const preselectedRole = searchParams.get("role") as AppRole | null;
-  const { user, role, roles, loading, signUp, setUserRoles } = useAuth();
+  const { user, roles, loading, signUp, setUserRoles } = useAuth();
   const { toast } = useToast();
   const [step, setStep] = useState<Step>("credentials");
 
-  useEffect(() => {
-    if (!loading && user && roles.filter((r) => r !== "admin").length === 0) {
-      setStep("role");
-    }
-    if (!loading && user && roles.filter((r) => r !== "admin").length > 0) {
-      navigate("/videos");
-    }
-  }, [loading, user, roles, navigate]);
-
+  // Form state
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [selectedRole, setSelectedRole] = useState<AppRole | "">(preselectedRole && ["provider", "job_seeker", "client"].includes(preselectedRole) ? preselectedRole : "");
   const [submitting, setSubmitting] = useState(false);
+
+  // Multi-select roles
+  const initialRoles = new Set<SelectableRole>();
+  if (preselectedRole && (SELECTABLE_ROLES as readonly string[]).includes(preselectedRole)) {
+    initialRoles.add(preselectedRole as SelectableRole);
+  }
+  const [selectedRoles, setSelectedRoles] = useState<Set<SelectableRole>>(initialRoles);
+
+  // Locale + location
+  const [country, setCountry] = useState<string>("Kenya");
+  const [language, setLanguage] = useState<string>("en");
+  const [detectedLocation, setDetectedLocation] = useState<DetailedLocation | null>(null);
+  const [detecting, setDetecting] = useState(false);
+
+  // Manual fallback
+  const [manualCounty, setManualCounty] = useState<string>("");
+  const [manualCity, setManualCity] = useState<string>("");
+  const [manualArea, setManualArea] = useState<string>("");
+
+  useEffect(() => {
+    if (loading || !user) return;
+    const nonAdmin = roles.filter((r) => r !== "admin");
+    if (nonAdmin.length === 0) {
+      setStep("role");
+    } else if (step === "credentials" || step === "verify_email") {
+      navigate("/videos");
+    }
+  }, [loading, user, roles, navigate, step]);
 
   const passwordStrength = (() => {
     if (password.length < 6) return { level: 0, label: "Too short", color: "bg-muted" };
@@ -50,6 +113,14 @@ const Register = () => {
     return { level: 2, label: "Medium", color: "bg-accent" };
   })();
 
+  const toggleRole = (r: SelectableRole) => {
+    setSelectedRoles((prev) => {
+      const next = new Set(prev);
+      if (next.has(r)) next.delete(r);
+      else next.add(r);
+      return next;
+    });
+  };
 
   const handleCredentialsSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -67,18 +138,124 @@ const Register = () => {
     }
   };
 
-  const handleRoleSelect = async () => {
-    if (!selectedRole) return;
-    setSubmitting(true);
-    const { error } = await setUserRoles([selectedRole]);
-    setSubmitting(false);
-    if (error) {
-      toast({ title: "Failed to set role", description: error.message, variant: "destructive" });
-    } else {
-      const label = roleOptions.find((o) => o.value === selectedRole)?.label;
-      toast({ title: "Welcome to Servio! 🎉", description: `You're registered as: ${label}` });
-      navigate("/videos");
+  const handleRoleContinue = () => {
+    if (selectedRoles.size === 0) {
+      toast({
+        title: "Pick at least one role",
+        description: "Choose Client, Service Provider, Job Seeker — or any combination.",
+        variant: "destructive",
+      });
+      return;
     }
+    setStep("locale");
+  };
+
+  const handleDetectLocation = async () => {
+    setDetecting(true);
+    try {
+      const loc = await detectCurrentLocation();
+      setDetectedLocation(loc);
+      // Mirror into manual fields so the user can review/edit
+      setManualCounty(loc.county || "");
+      setManualCity(loc.city || "");
+      setManualArea(loc.area || "");
+      if (loc.country) setCountry(loc.country);
+      toast({
+        title: "Location detected",
+        description: `Approx: ${loc.approximate}`,
+      });
+    } catch (err) {
+      toast({
+        title: "Couldn't detect location",
+        description: err instanceof Error ? err.message : "Try the manual selectors below.",
+        variant: "destructive",
+      });
+    } finally {
+      setDetecting(false);
+    }
+  };
+
+  const finalLocation = (() => {
+    // Prefer any manual override (lets user correct GPS), but keep detected coords if present
+    const city = manualCity.trim() || detectedLocation?.city || "";
+    const county = manualCounty.trim() || detectedLocation?.county || "";
+    const area = manualArea.trim() || detectedLocation?.area || "";
+    return {
+      city,
+      county,
+      area,
+      latitude: detectedLocation?.latitude ?? null,
+      longitude: detectedLocation?.longitude ?? null,
+    };
+  })();
+
+  const canFinish = !!country && !!language && (!!finalLocation.city || !!finalLocation.county);
+
+  const handleFinish = async () => {
+    if (!user) {
+      toast({ title: "Not signed in", variant: "destructive" });
+      return;
+    }
+    if (selectedRoles.size === 0) {
+      toast({ title: "Pick at least one role", variant: "destructive" });
+      setStep("role");
+      return;
+    }
+    if (!canFinish) {
+      toast({
+        title: "Location is required",
+        description: "Detect your location or pick County / City manually.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setSubmitting(true);
+
+    // 1. Persist roles
+    const { error: roleError } = await setUserRoles(Array.from(selectedRoles));
+    if (roleError) {
+      setSubmitting(false);
+      toast({ title: "Failed to set roles", description: roleError.message, variant: "destructive" });
+      return;
+    }
+
+    // 2. Persist locale + location on profile (precise coords stored privately)
+    const publicLabel = formatPublicLocation({
+      city: finalLocation.city,
+      county: finalLocation.county,
+    });
+
+    const { error: profileError } = await supabase
+      .from("profiles")
+      .update({
+        country,
+        language,
+        county: finalLocation.county || null,
+        city: finalLocation.city || null,
+        area: finalLocation.area || null,
+        latitude: finalLocation.latitude,
+        longitude: finalLocation.longitude,
+        location: publicLabel, // public-friendly label only
+      })
+      .eq("user_id", user.id);
+
+    setSubmitting(false);
+
+    if (profileError) {
+      toast({
+        title: "Couldn't save profile",
+        description: profileError.message,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    toast({
+      title: "Welcome to HudumaHub! 🎉",
+      description: `Roles: ${Array.from(selectedRoles).length} active`,
+    });
+    navigate("/videos");
   };
 
   const handleGoogleSignIn = async () => {
@@ -92,6 +269,7 @@ const Register = () => {
     setSubmitting(false);
   };
 
+  // ─── Verify email ───
   if (step === "verify_email") {
     return (
       <div className="min-h-screen bg-background px-6 py-8">
@@ -120,6 +298,7 @@ const Register = () => {
     );
   }
 
+  // ─── Step: Roles (multi-select) ───
   if (step === "role") {
     return (
       <div className="min-h-screen bg-background px-6 py-8">
@@ -128,55 +307,233 @@ const Register = () => {
             <ArrowLeft className="w-5 h-5" />
             <span>Back</span>
           </button>
-          <h1 className="font-display text-2xl font-bold text-foreground mb-2">Choose your role</h1>
-          <p className="text-muted-foreground mb-8">Select the role that best describes you</p>
-          
-          <div className="space-y-4 mb-8">
+          <h1 className="font-display text-2xl font-bold text-foreground mb-2">Choose your roles</h1>
+          <p className="text-muted-foreground mb-2">Pick one, two, or all three. You can switch between dashboards anytime.</p>
+          <p className="text-xs text-muted-foreground mb-6">At least one role is required.</p>
+
+          <div className="space-y-3 mb-6">
             {roleOptions.map((r) => {
-              const isSelected = selectedRole === r.value;
+              const isSelected = selectedRoles.has(r.value);
               return (
                 <Card
                   key={r.value}
                   className={`cursor-pointer transition-all duration-200 ${
-                    isSelected
-                      ? "ring-2 ring-primary border-primary shadow-lg"
-                      : "hover:border-primary/50"
+                    isSelected ? "ring-2 ring-primary border-primary shadow-lg" : "hover:border-primary/50"
                   }`}
-                  onClick={() => setSelectedRole(r.value)}
+                  onClick={() => toggleRole(r.value)}
                 >
-                  <CardContent className="flex items-center gap-4 p-5">
-                    <div className={`w-14 h-14 rounded-xl flex items-center justify-center shrink-0 ${
-                      isSelected ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
-                    }`}>
+                  <CardContent className="flex items-center gap-4 p-4">
+                    <Checkbox
+                      checked={isSelected}
+                      onCheckedChange={() => toggleRole(r.value)}
+                      onClick={(e) => e.stopPropagation()}
+                      aria-label={r.label}
+                    />
+                    <div
+                      className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${
+                        isSelected ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+                      }`}
+                    >
                       {r.icon}
                     </div>
-                    <div className="flex-1">
+                    <div className="flex-1 min-w-0">
                       <h3 className="font-semibold text-foreground">{r.label}</h3>
-                      <p className="text-sm text-muted-foreground">{r.description}</p>
+                      <p className="text-sm text-muted-foreground truncate">{r.description}</p>
                     </div>
-                    {isSelected && (
-                      <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center shrink-0">
-                        <Check className="w-4 h-4 text-primary-foreground" />
-                      </div>
-                    )}
                   </CardContent>
                 </Card>
               );
             })}
           </div>
+
+          {selectedRoles.size === 0 && (
+            <p className="text-xs text-destructive mb-4 text-center">Select at least one role to continue.</p>
+          )}
+
           <Button
-            onClick={handleRoleSelect}
-            disabled={!selectedRole || submitting}
+            onClick={handleRoleContinue}
+            disabled={selectedRoles.size === 0}
             className="w-full h-14 text-lg font-bold rounded-xl"
             size="lg"
           >
-            {submitting ? "Setting up..." : "Continue"}
+            Continue ({selectedRoles.size})
           </Button>
         </div>
       </div>
     );
   }
 
+  // ─── Step: Locale + Location ───
+  if (step === "locale") {
+    const cities = manualCounty ? getCitiesByCounty(manualCounty) : [];
+    const publicPreview = formatPublicLocation({
+      city: finalLocation.city,
+      county: finalLocation.county,
+    });
+
+    return (
+      <div className="min-h-screen bg-background px-6 py-8">
+        <div className="max-w-sm mx-auto">
+          <button onClick={() => setStep("role")} className="flex items-center gap-2 text-muted-foreground mb-6">
+            <ArrowLeft className="w-5 h-5" />
+            <span>Back</span>
+          </button>
+          <h1 className="font-display text-2xl font-bold text-foreground mb-2">Tell us where you are</h1>
+          <p className="text-muted-foreground mb-6">
+            We use this to match you with nearby people. Only an approximate location is shown publicly.
+          </p>
+
+          {/* Country + Language */}
+          <div className="grid grid-cols-2 gap-3 mb-5">
+            <div>
+              <Label className="text-sm font-semibold flex items-center gap-1.5 mb-1.5">
+                <Globe className="w-4 h-4" /> Country
+              </Label>
+              <Select value={country} onValueChange={setCountry}>
+                <SelectTrigger className="h-12 rounded-xl">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {COUNTRIES.map((c) => (
+                    <SelectItem key={c.code} value={c.name}>
+                      {c.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label className="text-sm font-semibold flex items-center gap-1.5 mb-1.5">
+                <Languages className="w-4 h-4" /> Language
+              </Label>
+              <Select value={language} onValueChange={setLanguage}>
+                <SelectTrigger className="h-12 rounded-xl">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {LANGUAGES.map((l) => (
+                    <SelectItem key={l.code} value={l.code}>
+                      {l.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {/* Detect button */}
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleDetectLocation}
+            disabled={detecting}
+            className="w-full h-12 rounded-xl mb-4 border-2 font-semibold"
+          >
+            {detecting ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Detecting…
+              </>
+            ) : (
+              <>
+                <MapPin className="w-4 h-4 mr-2" /> Detect Location
+              </>
+            )}
+          </Button>
+
+          <div className="text-center text-xs text-muted-foreground mb-4">— or pick manually —</div>
+
+          {/* Manual cascading selectors */}
+          <div className="space-y-3 mb-5">
+            <div>
+              <Label className="text-sm font-semibold mb-1.5 block">County</Label>
+              <Select
+                value={manualCounty}
+                onValueChange={(v) => {
+                  setManualCounty(v);
+                  setManualCity("");
+                }}
+              >
+                <SelectTrigger className="h-12 rounded-xl">
+                  <SelectValue placeholder="Select your county" />
+                </SelectTrigger>
+                <SelectContent>
+                  {KENYAN_COUNTIES.map((c) => (
+                    <SelectItem key={c} value={c}>
+                      {c}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label className="text-sm font-semibold mb-1.5 block">City / Town</Label>
+              <Select value={manualCity} onValueChange={setManualCity} disabled={!manualCounty}>
+                <SelectTrigger className="h-12 rounded-xl">
+                  <SelectValue placeholder={manualCounty ? "Select a city/town" : "Pick a county first"} />
+                </SelectTrigger>
+                <SelectContent>
+                  {cities.map((c) => (
+                    <SelectItem key={c} value={c}>
+                      {c}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label className="text-sm font-semibold mb-1.5 block">
+                Area / Neighbourhood <span className="font-normal text-muted-foreground">(optional)</span>
+              </Label>
+              <Input
+                value={manualArea}
+                onChange={(e) => setManualArea(e.target.value)}
+                placeholder="e.g. Mikinduri"
+                maxLength={80}
+                className="h-12 rounded-xl"
+              />
+            </div>
+          </div>
+
+          {/* Privacy preview */}
+          {(finalLocation.city || finalLocation.county) && (
+            <div className="rounded-xl bg-muted/50 border border-border p-3 mb-5 flex items-start gap-2">
+              <ShieldCheck className="w-4 h-4 text-primary mt-0.5 shrink-0" />
+              <div className="text-xs text-muted-foreground">
+                <p className="font-medium text-foreground">Public preview</p>
+                <p>{publicPreview}</p>
+                {finalLocation.area && (
+                  <p className="mt-1 italic">
+                    Area "{finalLocation.area}" stays private — only used for matching.
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+
+          <Button
+            onClick={handleFinish}
+            disabled={!canFinish || submitting}
+            className="w-full h-14 text-lg font-bold rounded-xl"
+            size="lg"
+          >
+            {submitting ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Saving…
+              </>
+            ) : (
+              <>
+                <Check className="w-5 h-5 mr-2" /> Finish setup
+              </>
+            )}
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // ─── Step: Credentials ───
   return (
     <div className="min-h-screen bg-background px-6 py-8">
       <div className="max-w-sm mx-auto">
@@ -211,13 +568,13 @@ const Register = () => {
         <form onSubmit={handleCredentialsSubmit} className="space-y-5">
           <div>
             <Label htmlFor="fullName" className="text-sm font-semibold">Full Name</Label>
-            <Input id="fullName" value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="John Kamau" className="h-12 rounded-xl mt-1.5" />
+            <Input id="fullName" value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="John Kamau" maxLength={100} className="h-12 rounded-xl mt-1.5" />
           </div>
           <div>
             <Label htmlFor="email" className="text-sm font-semibold">Email</Label>
             <div className="relative mt-1.5">
               <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-              <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="john@example.com" className="h-12 rounded-xl pl-10" />
+              <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="john@example.com" maxLength={255} className="h-12 rounded-xl pl-10" />
             </div>
           </div>
           <div>
@@ -229,6 +586,7 @@ const Register = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Min 6 characters"
+                maxLength={72}
                 className="h-12 rounded-xl pr-10"
               />
               <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">

@@ -863,31 +863,52 @@ export type Database = {
       }
       profiles: {
         Row: {
+          area: string | null
           avatar_url: string | null
+          city: string | null
+          country: string | null
+          county: string | null
           created_at: string
           full_name: string | null
           id: string
+          language: string | null
+          latitude: number | null
           location: string | null
+          longitude: number | null
           phone: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
+          area?: string | null
           avatar_url?: string | null
+          city?: string | null
+          country?: string | null
+          county?: string | null
           created_at?: string
           full_name?: string | null
           id?: string
+          language?: string | null
+          latitude?: number | null
           location?: string | null
+          longitude?: number | null
           phone?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
+          area?: string | null
           avatar_url?: string | null
+          city?: string | null
+          country?: string | null
+          county?: string | null
           created_at?: string
           full_name?: string | null
           id?: string
+          language?: string | null
+          latitude?: number | null
           location?: string | null
+          longitude?: number | null
           phone?: string | null
           updated_at?: string
           user_id?: string
