@@ -14,7 +14,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Video, Upload, Loader2, X, AlertCircle, Camera, Square, CircleDot, SwitchCamera, Download } from "lucide-react";
+import { Video, Upload, Loader2, X, AlertCircle, Camera, Square, CircleDot, SwitchCamera, Download, Maximize2 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { KENYAN_COUNTIES, getCitiesByCounty } from "@/lib/kenyanLocations";
