@@ -79,8 +79,10 @@ const Upgrade = () => {
       if (data?.status === "success") {
         clearInterval(interval);
         setPolling(false);
-        qc.invalidateQueries({ queryKey: ["subscription"] });
-        toast({ title: "Payment successful! 🎉", description: "Your premium is now active." });
+        // Invalidate ALL subscription queries so every gated screen rechecks immediately.
+        await qc.invalidateQueries({ queryKey: ["subscription"] });
+        await qc.refetchQueries({ queryKey: ["subscription"] });
+        toast({ title: "Payment successful! 🎉", description: "Premium unlocked — features are now available." });
       } else if (data?.status === "failed") {
         clearInterval(interval);
         setPolling(false);
