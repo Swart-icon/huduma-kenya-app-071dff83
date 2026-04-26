@@ -4,8 +4,9 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Camera, X, Loader2 } from "lucide-react";
+import { Camera, X, Loader2, Zap } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { BoostStatusDialog } from "./BoostStatusDialog";
 
 interface Props {
   open: boolean;
