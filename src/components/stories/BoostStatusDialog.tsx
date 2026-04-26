@@ -53,7 +53,7 @@ export const BoostStatusDialog = ({ open, onClose, statusId, onBoosted }: Props)
   const tier = boostTiers.find((t) => t.id === selectedTier)!;
 
   const handlePay = async () => {
-    if (!phoneNumber.trim() || phoneNumber.length < 10) {
+    if (!phoneNumber.trim() || phoneNumber.replace(/\D/g, "").length < 9) {
       toast({ title: "Enter a valid M-Pesa phone number", variant: "destructive" });
       return;
     }
@@ -61,38 +61,31 @@ export const BoostStatusDialog = ({ open, onClose, statusId, onBoosted }: Props)
     setStep("processing");
     setProcessing(true);
 
-    await new Promise((r) => setTimeout(r, 2500));
-
-    const boostEnd = new Date();
-    boostEnd.setHours(boostEnd.getHours() + tier.durationHours);
-
-    const paymentRef = `MPESA${Date.now().toString(36).toUpperCase()}`;
-
-    const { error } = await supabase.from("status_boosts").insert({
-      status_id: statusId,
-      user_id: user!.id,
-      boost_tier: selectedTier,
-      amount_kes: tier.price,
-      payment_method: "mpesa",
-      payment_status: "completed",
-      payment_reference: paymentRef,
-      boost_start: new Date().toISOString(),
-      boost_end: boostEnd.toISOString(),
-      is_active: true,
+    const { data, error } = await supabase.functions.invoke("mpesa-stk-push", {
+      body: {
+        purpose: "boost",
+        statusId,
+        tier: selectedTier,
+        phone: phoneNumber.trim(),
+      },
     });
 
     setProcessing(false);
 
-    if (error) {
-      if (/unique/i.test(error.message)) {
-        toast({ title: "This status already has an active boost", variant: "destructive" });
-      } else {
-        toast({ title: "Boost failed", description: error.message, variant: "destructive" });
-      }
-      setStep("select");
+    if (error || (data as any)?.error) {
+      toast({
+        title: "Payment failed",
+        description: (data as any)?.error || error?.message || "Could not initiate STK push",
+        variant: "destructive",
+      });
+      setStep("payment");
       return;
     }
 
+    toast({
+      title: "STK push sent",
+      description: "Approve the M-Pesa prompt on your phone to activate the boost.",
+    });
     setStep("success");
     onBoosted();
   };
