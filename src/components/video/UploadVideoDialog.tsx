@@ -308,14 +308,22 @@ export const UploadVideoDialog = ({ open, onOpenChange }: { open: boolean; onOpe
 
               <TabsContent value="record">
                 <div className="space-y-3">
+                  <button
+                    onClick={() => { stopCamera(); onOpenChange(false); navigate("/videos/record"); }}
+                    className="flex flex-col items-center justify-center w-full h-36 border-2 border-dashed rounded-2xl border-primary/40 hover:border-primary/70 bg-gradient-to-br from-primary/10 to-primary/5 transition-colors"
+                  >
+                    <Maximize2 className="w-8 h-8 text-primary/70 mb-2" />
+                    <p className="text-sm font-semibold text-primary">Open full-screen recorder</p>
+                    <p className="text-xs text-muted-foreground mt-1">Immersive camera with flash & flip</p>
+                  </button>
+
                   {!stream ? (
                     <button
                       onClick={() => startCamera()}
-                      className="flex flex-col items-center justify-center w-full h-36 border-2 border-dashed rounded-2xl border-primary/30 hover:border-primary/60 bg-primary/5 transition-colors"
+                      className="flex flex-col items-center justify-center w-full h-24 border border-dashed rounded-xl border-border hover:border-primary/40 bg-muted/30 transition-colors"
                     >
-                      <Camera className="w-8 h-8 text-primary/60 mb-2" />
-                      <p className="text-sm font-medium text-primary">Tap to open camera</p>
-                      <p className="text-xs text-muted-foreground mt-1">Record directly from your device</p>
+                      <Camera className="w-5 h-5 text-muted-foreground mb-1" />
+                      <p className="text-xs text-muted-foreground">Or quick-record here</p>
                     </button>
                   ) : (
                     <div className="relative rounded-2xl overflow-hidden bg-black">
