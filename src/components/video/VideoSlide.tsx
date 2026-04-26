@@ -202,7 +202,7 @@ export const VideoSlide = memo(({
   };
 
   const handleDelete = async () => {
-    if (!isOwner) return;
+    if (!canDelete) return;
     setConfirmDelete(false);
     setMenuOpen(false);
     const { error } = await supabase.from("videos").delete().eq("id", video.id);
