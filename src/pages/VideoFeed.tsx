@@ -115,6 +115,16 @@ const VideoFeed = () => {
   const [authPromptOpen, setAuthPromptOpen] = useState(false);
   const [authPromptRole, setAuthPromptRole] = useState<string | undefined>(undefined);
   const containerRef = useRef<HTMLDivElement>(null);
+  const queryClient = useQueryClient();
+
+  const handleRefresh = async () => {
+    await queryClient.invalidateQueries({ queryKey: ["videos-feed"] });
+    toast.success("Feed updated");
+  };
+
+  const { pull, refreshing, progress } = usePullToRefresh(containerRef, {
+    onRefresh: handleRefresh,
+  });
 
   const isGuest = !user;
   const canUpload = !isGuest && (roles.includes("provider") || roles.includes("job_seeker"));
