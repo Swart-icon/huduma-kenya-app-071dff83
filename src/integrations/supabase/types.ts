@@ -82,6 +82,80 @@ export type Database = {
           },
         ]
       }
+      broadcast_messages: {
+        Row: {
+          audience_type: string
+          body: string
+          created_at: string
+          id: string
+          recipient_count: number
+          sender_id: string
+          target_city: string | null
+          target_county: string | null
+          target_role: string | null
+          title: string
+        }
+        Insert: {
+          audience_type?: string
+          body: string
+          created_at?: string
+          id?: string
+          recipient_count?: number
+          sender_id: string
+          target_city?: string | null
+          target_county?: string | null
+          target_role?: string | null
+          title: string
+        }
+        Update: {
+          audience_type?: string
+          body?: string
+          created_at?: string
+          id?: string
+          recipient_count?: number
+          sender_id?: string
+          target_city?: string | null
+          target_county?: string | null
+          target_role?: string | null
+          title?: string
+        }
+        Relationships: []
+      }
+      broadcast_recipients: {
+        Row: {
+          broadcast_id: string
+          created_at: string
+          id: string
+          read: boolean
+          read_at: string | null
+          user_id: string
+        }
+        Insert: {
+          broadcast_id: string
+          created_at?: string
+          id?: string
+          read?: boolean
+          read_at?: string | null
+          user_id: string
+        }
+        Update: {
+          broadcast_id?: string
+          created_at?: string
+          id?: string
+          read?: boolean
+          read_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "broadcast_recipients_broadcast_id_fkey"
+            columns: ["broadcast_id"]
+            isOneToOne: false
+            referencedRelation: "broadcast_messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       conversations: {
         Row: {
           booking_id: string | null
