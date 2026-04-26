@@ -223,9 +223,9 @@ export const BoostStatusDialog = ({ open, onClose, statusId, onBoosted }: Props)
               <Check className="w-8 h-8 text-[#4CAF50]" />
             </div>
             <div>
-              <p className="font-bold text-foreground text-lg">Boost Active! 🚀</p>
+              <p className="font-bold text-foreground text-lg">Payment Requested 🚀</p>
               <p className="text-sm text-muted-foreground mt-1">
-                Your status is now boosted for {tier.duration}
+                Approve the M-Pesa prompt on your phone. Your status will be boosted for {tier.duration} once confirmed.
               </p>
             </div>
             <Button onClick={resetAndClose} className="rounded-xl">
