@@ -11,6 +11,7 @@ export type VideoItem = {
   comment_count: number;
   status: string;
   created_at: string;
+  allow_downloads?: boolean;
   profile?: { full_name: string | null; avatar_url: string | null } | null;
   category?: { name: string; icon: string | null } | null;
   providerPhone?: string | null;
