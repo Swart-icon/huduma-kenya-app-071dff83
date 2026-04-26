@@ -91,7 +91,7 @@ const GuestLimitOverlay = () => {
 };
 
 const VideoFeed = () => {
-  const { user, roles, role: activeRole } = useAuth();
+  const { user, roles, role: activeRole, switchRole, addRole } = useAuth();
   const navigate = useNavigate();
   const { data: profile } = useProfile();
   const { location: userLocation, status: locationStatus, requestLocation } = useLocation();
@@ -416,7 +416,7 @@ const VideoFeed = () => {
           {TABS.map((tab) => (
             <button
               key={tab.key}
-              onClick={() => {
+              onClick={async () => {
                 if (tab.key === "service") {
                   if (isGuest) { handleAuthRequired("provider"); }
                   else if (activeRole === "provider") { navigate("/dashboard"); }
@@ -426,8 +426,13 @@ const VideoFeed = () => {
                   else { navigate("/job-seeker"); }
                 } else if (tab.key === "client") {
                   if (isGuest) { handleAuthRequired("client"); }
-                  else if (activeRole === "client") { navigate("/dashboard"); }
-                  else { navigate("/dashboard"); }
+                  else {
+                    if (!roles.includes("client")) {
+                      await addRole("client");
+                    }
+                    switchRole("client");
+                    navigate("/dashboard");
+                  }
                 } else if (tab.key === "nearby") {
                   if (!userLocation) { requestLocation(); }
                   setActiveTab("nearby");
