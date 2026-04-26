@@ -108,6 +108,7 @@ const Dashboard = () => {
   const inboxUnread = useInboxUnread();
   const [stats, setStats] = useState({ services: 0, bookings: 0, rating: 0, jobPosts: 0, applications: 0, savedJobs: 0 });
   const [profileCompletion, setProfileCompletion] = useState<number | null>(null);
+  const [quickActionsOpen, setQuickActionsOpen] = useState(false);
 
   const hasNonAdminRole = roles.filter((r) => r !== "admin").length > 0;
 
