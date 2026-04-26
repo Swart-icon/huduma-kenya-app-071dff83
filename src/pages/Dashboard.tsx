@@ -13,6 +13,7 @@ import {
   ClipboardList, MessageCircle, Bell, Star, MapPin, ChevronRight,
   Settings, PlusCircle, TrendingUp, Eye, Navigation as NavigationIcon,
   Video, Lightbulb, Bookmark, Send, Plus, Inbox as InboxIcon,
+  Zap, Sparkles, Rocket, Target, Award,
 } from "lucide-react";
 import { useUnreadCount } from "@/hooks/useUnreadCount";
 import { useInboxUnread } from "@/hooks/useInboxUnread";
@@ -21,6 +22,9 @@ import { StoryBar } from "@/components/stories/StoryBar";
 import NearbyServicesSection from "@/components/NearbyServicesSection";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { RoleSwitcher } from "@/components/RoleSwitcher";
+import {
+  Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription,
+} from "@/components/ui/sheet";
 
 /* ────────── Role Config ────────── */
 const roleConfig: Record<string, { title: string; subtitle: string; icon: React.ReactNode; gradient: string }> = {
