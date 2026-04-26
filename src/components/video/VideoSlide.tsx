@@ -265,6 +265,7 @@ export const VideoSlide = memo(({
       <video
         ref={videoRef}
         src={video.video_url}
+        poster={video.thumbnail_url ?? undefined}
         className="w-full h-full object-contain select-none"
         loop
         playsInline
