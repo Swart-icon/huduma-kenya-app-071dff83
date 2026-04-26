@@ -91,7 +91,7 @@ const GuestLimitOverlay = () => {
 };
 
 const VideoFeed = () => {
-  const { user, roles, role: activeRole } = useAuth();
+  const { user, roles, role: activeRole, switchRole, addRole } = useAuth();
   const navigate = useNavigate();
   const { data: profile } = useProfile();
   const { location: userLocation, status: locationStatus, requestLocation } = useLocation();
