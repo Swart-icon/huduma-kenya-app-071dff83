@@ -26,7 +26,7 @@ export const VideoSlide = memo(({
   onAuthRequired?: (targetRole?: string) => void;
   activeRole?: AppRole | null;
 }) => {
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const navigate = useNavigate();
   const videoRef = useRef<HTMLVideoElement>(null);
   const [paused, setPaused] = useState(false);
@@ -45,6 +45,7 @@ export const VideoSlide = memo(({
   const longPressTriggeredRef = useRef(false);
 
   const isOwner = !!user && user.id === video.user_id;
+  const canDelete = isOwner || isAdmin;
 
   const requireAuth = () => {
     if (!user && onAuthRequired) { onAuthRequired(); return true; }
@@ -201,7 +202,7 @@ export const VideoSlide = memo(({
   };
 
   const handleDelete = async () => {
-    if (!isOwner) return;
+    if (!canDelete) return;
     setConfirmDelete(false);
     setMenuOpen(false);
     const { error } = await supabase.from("videos").delete().eq("id", video.id);
@@ -432,7 +433,7 @@ export const VideoSlide = memo(({
               </div>
             </button>
 
-            {isOwner && (
+            {canDelete && (
               <button
                 onClick={() => { setMenuOpen(false); setConfirmDelete(true); }}
                 className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-destructive/10 text-left"
@@ -440,7 +441,9 @@ export const VideoSlide = memo(({
                 <Trash2 className="w-5 h-5 text-destructive" />
                 <div className="flex-1">
                   <p className="text-sm font-medium text-destructive">Delete video</p>
-                  <p className="text-[11px] text-muted-foreground">Permanently remove this video</p>
+                  <p className="text-[11px] text-muted-foreground">
+                    {isOwner ? "Permanently remove this video" : "Admin: remove this video"}
+                  </p>
                 </div>
               </button>
             )}
