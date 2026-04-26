@@ -301,18 +301,31 @@ const Dashboard = () => {
         {/* ═══════════ PROVIDER DASHBOARD ═══════════ */}
         {role === "provider" && (
           <>
-            {/* Quick Actions */}
+            {/* Quick Actions — gradient hero tiles */}
             <div>
-              <SectionHeader title="Quick Actions" />
-              <div className="grid grid-cols-2 gap-3">
-                <Button className="h-auto py-4 rounded-2xl flex flex-col gap-1.5 shadow-sm" onClick={() => navigate("/services/new")}>
-                  <PlusCircle className="w-6 h-6" />
-                  <span className="text-xs font-semibold">Create Service</span>
-                </Button>
-                <Button variant="outline" className="h-auto py-4 rounded-2xl flex flex-col gap-1.5 shadow-sm border-0 bg-muted/50" onClick={() => navigate("/videos")}>
-                  <Video className="w-6 h-6 text-primary" />
-                  <span className="text-xs font-semibold">Add Story</span>
-                </Button>
+              <SectionHeader title="Quick Actions" icon={<Zap className="w-3.5 h-3.5" />} />
+              <div className="grid grid-cols-3 gap-2.5">
+                <HeroAction
+                  icon={<PlusCircle className="w-5 h-5" />}
+                  label="New Service"
+                  sub="List & sell"
+                  onClick={() => navigate("/services/new")}
+                  gradient="from-primary to-primary/70"
+                />
+                <HeroAction
+                  icon={<Video className="w-5 h-5" />}
+                  label="Add Story"
+                  sub="Get noticed"
+                  onClick={() => navigate("/videos")}
+                  gradient="from-accent to-accent/70"
+                />
+                <HeroAction
+                  icon={<Sparkles className="w-5 h-5" />}
+                  label="Quick Actions"
+                  sub="All in one"
+                  onClick={() => setQuickActionsOpen(true)}
+                  gradient="from-secondary to-secondary/70"
+                />
               </div>
             </div>
 
@@ -321,7 +334,7 @@ const Dashboard = () => {
 
             {/* Your Business */}
             <div>
-              <SectionHeader title="Your Business" />
+              <SectionHeader title="Your Business" icon={<Briefcase className="w-3.5 h-3.5" />} />
               <div className="space-y-2.5">
                 <ActionCard icon={<Eye className="w-5 h-5" />} label="Business Profile" description="View & edit your profile" onClick={() => navigate("/provider-profile/preview")} />
                 <ActionCard icon={<List className="w-5 h-5" />} label="My Services" description="Manage your service listings" onClick={() => navigate("/my-services")} accent="bg-accent/15 text-accent-foreground" />
@@ -331,14 +344,13 @@ const Dashboard = () => {
 
             {/* Job Board */}
             <div>
-              <SectionHeader title="Job Board" />
+              <SectionHeader title="Job Board" icon={<ClipboardList className="w-3.5 h-3.5" />} />
               <ActionCard icon={<ClipboardList className="w-5 h-5" />} label="Browse Jobs" description="Find open job posts from clients" onClick={() => navigate("/job-board")} accent="bg-primary/10 text-primary" />
             </div>
 
-            {/* Content */}
             {/* Discover */}
             <div>
-              <SectionHeader title="Discover" />
+              <SectionHeader title="Discover" icon={<Star className="w-3.5 h-3.5" />} />
               <ActionCard icon={<Star className="w-5 h-5" />} label="My Reviews" description="View client feedback" onClick={() => navigate(`/provider/${user?.id}/reviews`)} accent="bg-accent/15 text-accent-foreground" />
             </div>
           </>
