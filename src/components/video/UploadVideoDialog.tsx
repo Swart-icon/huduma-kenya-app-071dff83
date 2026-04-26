@@ -31,6 +31,7 @@ type ValidationErrors = {
 };
 
 export const UploadVideoDialog = ({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) => {
+  const navigate = useNavigate();
   const { user, roles } = useAuth();
   const queryClient = useQueryClient();
   const { data: categories } = useCategories();
