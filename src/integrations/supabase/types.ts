@@ -255,6 +255,7 @@ export type Database = {
           certifications: string | null
           created_at: string
           cv_url: string | null
+          documents: Json
           education: string | null
           experience_description: string | null
           experience_years: number | null
@@ -271,6 +272,7 @@ export type Database = {
           certifications?: string | null
           created_at?: string
           cv_url?: string | null
+          documents?: Json
           education?: string | null
           experience_description?: string | null
           experience_years?: number | null
@@ -287,6 +289,7 @@ export type Database = {
           certifications?: string | null
           created_at?: string
           cv_url?: string | null
+          documents?: Json
           education?: string | null
           experience_description?: string | null
           experience_years?: number | null

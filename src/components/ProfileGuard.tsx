@@ -70,13 +70,13 @@ const ProfileGuard = ({ children }: { children: React.ReactNode }) => {
           return;
         }
       } else if (role === "job_seeker") {
-        const { data } = await supabase
-          .from("job_seeker_profiles")
-          .select("bio, skills, experience_years")
+        const { data: mp } = await supabase
+          .from("profiles")
+          .select("full_name, phone, location")
           .eq("user_id", user.id)
           .maybeSingle();
 
-        if (!data || !data.bio || !(data.skills as string[])?.length) {
+        if (!mp || !mp.full_name || !mp.phone || !mp.location) {
           setComplete(false);
           navigate("/job-seeker-profile", { replace: true });
           return;
