@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery } from "@tanstack/react-query";
 import { useProfile } from "@/hooks/useProfile";
 import { useLocation } from "@/contexts/LocationContext";
 import { KENYAN_LOCATIONS } from "@/lib/kenyanLocations";
@@ -13,9 +13,8 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from "@/components/ui/dialog";
 import {
-  Home, Plus, MessageCircle, User, Loader2, Video, Search, X, LogIn, MapPin, Radio, ArrowDown,
+  Home, Plus, MessageCircle, User, Loader2, Video, Search, X, LogIn, MapPin, Radio,
 } from "lucide-react";
-import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { UploadVideoDialog } from "@/components/video/UploadVideoDialog";
 import { CommentsSheet } from "@/components/video/CommentsSheet";
 import { VideoSlide } from "@/components/video/VideoSlide";
@@ -117,16 +116,6 @@ const VideoFeed = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const feedTouchStartY = useRef<number | null>(null);
   const feedTouchStartX = useRef<number | null>(null);
-  const queryClient = useQueryClient();
-
-  const handleRefresh = async () => {
-    await queryClient.invalidateQueries({ queryKey: ["videos-feed"] });
-    toast.success("Feed updated");
-  };
-
-  const { pull, refreshing, progress } = usePullToRefresh(containerRef, {
-    onRefresh: handleRefresh,
-  });
 
   const isGuest = !user;
   const canUpload = !isGuest && (roles.includes("provider") || roles.includes("job_seeker"));
