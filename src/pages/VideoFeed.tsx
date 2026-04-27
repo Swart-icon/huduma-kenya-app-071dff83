@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery } from "@tanstack/react-query";
 import { useProfile } from "@/hooks/useProfile";
 import { useLocation } from "@/contexts/LocationContext";
 import { KENYAN_LOCATIONS } from "@/lib/kenyanLocations";
@@ -13,9 +13,8 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from "@/components/ui/dialog";
 import {
-  Home, Plus, MessageCircle, User, Loader2, Video, Search, X, LogIn, MapPin, Radio, ArrowDown,
+  Home, Plus, MessageCircle, User, Loader2, Video, Search, X, LogIn, MapPin, Radio,
 } from "lucide-react";
-import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { UploadVideoDialog } from "@/components/video/UploadVideoDialog";
 import { CommentsSheet } from "@/components/video/CommentsSheet";
 import { VideoSlide } from "@/components/video/VideoSlide";
@@ -117,16 +116,6 @@ const VideoFeed = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const feedTouchStartY = useRef<number | null>(null);
   const feedTouchStartX = useRef<number | null>(null);
-  const queryClient = useQueryClient();
-
-  const handleRefresh = async () => {
-    await queryClient.invalidateQueries({ queryKey: ["videos-feed"] });
-    toast.success("Feed updated");
-  };
-
-  const { pull, refreshing, progress } = usePullToRefresh(containerRef, {
-    onRefresh: handleRefresh,
-  });
 
   const isGuest = !user;
   const canUpload = !isGuest && (roles.includes("provider") || roles.includes("job_seeker"));
@@ -570,28 +559,6 @@ const VideoFeed = () => {
         </div>
       ) : (
         <div className="flex-1 min-h-0 relative overflow-hidden">
-          {/* Pull-to-refresh indicator */}
-          <div
-            className="absolute left-0 right-0 flex justify-center pointer-events-none z-50"
-            style={{
-              top: 8,
-              transform: `translateY(${Math.max(0, pull - 30)}px)`,
-              opacity: pull > 4 || refreshing ? 1 : 0,
-              transition: refreshing || pull > 0 ? "none" : "opacity 200ms",
-            }}
-          >
-            <div
-              className="w-10 h-10 rounded-full bg-white/15 backdrop-blur-md flex items-center justify-center shadow-lg"
-              style={{ transform: `rotate(${progress * 180}deg)` }}
-            >
-              {refreshing ? (
-                <Loader2 className="w-4 h-4 animate-spin text-white" />
-              ) : (
-                <ArrowDown className="w-4 h-4 text-white" />
-              )}
-            </div>
-          </div>
-
           <div
             ref={containerRef}
             onTouchStart={handleFeedTouchStart}
@@ -602,8 +569,6 @@ const VideoFeed = () => {
               WebkitOverflowScrolling: "touch",
               touchAction: "pan-y",
               overscrollBehaviorY: "contain",
-              transform: pull > 0 ? `translateY(${pull}px)` : undefined,
-              transition: pull > 0 || refreshing ? "none" : "transform 220ms ease-out",
             }}
           >
             {displayVideos.map((v, i) => (
