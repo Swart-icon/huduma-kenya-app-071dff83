@@ -115,6 +115,8 @@ const VideoFeed = () => {
   const [authPromptOpen, setAuthPromptOpen] = useState(false);
   const [authPromptRole, setAuthPromptRole] = useState<string | undefined>(undefined);
   const containerRef = useRef<HTMLDivElement>(null);
+  const feedTouchStartY = useRef<number | null>(null);
+  const feedTouchStartX = useRef<number | null>(null);
   const queryClient = useQueryClient();
 
   const handleRefresh = async () => {
@@ -385,6 +387,47 @@ const VideoFeed = () => {
     setAuthPromptOpen(true);
   };
 
+  const snapToVideo = (index: number) => {
+    const container = containerRef.current;
+    if (!container) return;
+    const totalSlides = displayVideos.length + (isGuest && displayVideos.length > 0 ? 1 : 0);
+    const nextIndex = Math.max(0, Math.min(index, totalSlides - 1));
+    setActiveIndex(nextIndex);
+    container.scrollTo({ top: nextIndex * container.clientHeight, behavior: "smooth" });
+  };
+
+  const handleFeedTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+    const target = e.target as HTMLElement;
+    if (target.closest("button,a,input,textarea,select,[role='button']")) {
+      feedTouchStartY.current = null;
+      feedTouchStartX.current = null;
+      return;
+    }
+    feedTouchStartY.current = e.touches[0].clientY;
+    feedTouchStartX.current = e.touches[0].clientX;
+  };
+
+  const handleFeedTouchEnd = (e: React.TouchEvent<HTMLDivElement>) => {
+    const startY = feedTouchStartY.current;
+    const startX = feedTouchStartX.current;
+    feedTouchStartY.current = null;
+    feedTouchStartX.current = null;
+
+    const container = containerRef.current;
+    if (startY == null || startX == null || !container) return;
+
+    const dy = e.changedTouches[0].clientY - startY;
+    const dx = e.changedTouches[0].clientX - startX;
+    if (Math.abs(dy) < 48 || Math.abs(dx) > Math.abs(dy)) return;
+
+    const currentIndex = Math.round(container.scrollTop / Math.max(1, container.clientHeight));
+    if (dy < 0) {
+      snapToVideo(currentIndex + 1);
+    } else if (!(currentIndex === 0 && container.scrollTop <= 2)) {
+      snapToVideo(currentIndex - 1);
+    }
+  };
+
   return (
     <div className="h-screen w-screen bg-black relative overflow-hidden flex flex-col">
       {/* ─── Top Header ─── */}
@@ -526,7 +569,7 @@ const VideoFeed = () => {
           </p>
         </div>
       ) : (
-        <div className="flex-1 relative overflow-hidden">
+        <div className="flex-1 min-h-0 relative overflow-hidden">
           {/* Pull-to-refresh indicator */}
           <div
             className="absolute left-0 right-0 flex justify-center pointer-events-none z-50"
@@ -551,10 +594,14 @@ const VideoFeed = () => {
 
           <div
             ref={containerRef}
-            className="w-full h-full overflow-y-scroll snap-y snap-mandatory scrollbar-hide"
+            onTouchStart={handleFeedTouchStart}
+            onTouchEnd={handleFeedTouchEnd}
+            className="w-full h-full min-h-0 overflow-y-scroll snap-y snap-mandatory scrollbar-hide"
             style={{
               scrollSnapType: "y mandatory",
               WebkitOverflowScrolling: "touch",
+              touchAction: "pan-y",
+              overscrollBehaviorY: "contain",
               transform: pull > 0 ? `translateY(${pull}px)` : undefined,
               transition: pull > 0 || refreshing ? "none" : "transform 220ms ease-out",
             }}
