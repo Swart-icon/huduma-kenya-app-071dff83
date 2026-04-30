@@ -384,7 +384,6 @@ const Dashboard = () => {
               <SectionHeader title="Your Activity" icon={<Target className="w-3.5 h-3.5" />} />
               <div className="space-y-2.5">
                 <ActionCard icon={<FileText className="w-5 h-5" />} label="My Job Posts" description="Post & manage jobs" onClick={() => navigate("/my-jobs")} accent="bg-secondary/10 text-secondary" />
-                <ActionCard icon={<ClipboardList className="w-5 h-5" />} label="My Applications" description="Track applicants for your jobs" onClick={() => navigate("/client-applications")} accent="bg-primary/10 text-primary" />
                 <ActionCard icon={<Calendar className="w-5 h-5" />} label="My Bookings" description="Track service bookings" onClick={() => navigate("/my-bookings")} />
               </div>
             </div>
