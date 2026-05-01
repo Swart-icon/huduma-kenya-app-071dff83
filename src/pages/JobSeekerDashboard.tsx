@@ -117,7 +117,7 @@ const JobSeekerDashboard = () => {
     } else { setApplications([]); }
 
     setSavedCount((savedRes.data || []).length);
-    setRecommendedJobs(jobsRes.data || []);
+    setAllJobs(jobsRes.data || []);
 
     // Completion = mandatory personal info only (full name, phone, email, location)
     const mp = mainProfileRes.data;
