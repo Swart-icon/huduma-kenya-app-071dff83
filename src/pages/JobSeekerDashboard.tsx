@@ -192,9 +192,9 @@ const JobSeekerDashboard = () => {
 
         {/* Quick Actions */}
         <div className="grid grid-cols-2 gap-3">
-          <Button className="h-auto py-4 rounded-2xl flex flex-col gap-1.5 shadow-sm" onClick={() => navigate("/job-board")}>
-            <Briefcase className="w-6 h-6" />
-            <span className="text-xs font-semibold">Browse Jobs</span>
+          <Button variant="outline" className="h-auto py-4 rounded-2xl flex flex-col gap-1.5 shadow-sm border-0 bg-muted/50" onClick={() => navigate("/my-applications")}>
+            <Send className="w-6 h-6 text-primary" />
+            <span className="text-xs font-semibold">My Applications</span>
           </Button>
           <Button variant="outline" className="h-auto py-4 rounded-2xl flex flex-col gap-1.5 shadow-sm border-0 bg-muted/50" onClick={() => navigate("/saved-jobs")}>
             <Bookmark className="w-6 h-6 text-primary" />
@@ -202,46 +202,10 @@ const JobSeekerDashboard = () => {
           </Button>
         </div>
 
-        {/* Recent Applications */}
+        {/* All Open Jobs */}
         <div>
-          <SectionHeader title="My Applications" action={applications.length > 3 ? "View All" : undefined} onAction={() => navigate("/my-applications")} />
-          {applications.length === 0 ? (
-            <Card className="border-dashed rounded-2xl">
-              <CardContent className="py-10 text-center">
-                <Send className="w-8 h-8 text-muted-foreground/40 mx-auto mb-3" />
-                <p className="text-muted-foreground text-sm mb-3">No applications yet</p>
-                <Button size="sm" className="rounded-xl" onClick={() => navigate("/job-board")}>Browse Jobs</Button>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="space-y-2.5">
-              {applications.slice(0, 3).map((app) => (
-                <Card key={app.id} className="border-0 shadow-sm rounded-2xl cursor-pointer hover:shadow-md transition-all active:scale-[0.98]" onClick={() => navigate(`/jobs/${app.job_post_id}`)}>
-                  <CardContent className="p-4">
-                    <div className="flex items-start justify-between mb-2">
-                      <h3 className="text-sm font-semibold text-foreground line-clamp-1 flex-1 mr-2">{app.job_title}</h3>
-                      <Badge variant="outline" className={`text-[10px] px-2 py-0.5 h-5 gap-1 shrink-0 rounded-full ${statusColors[app.status] || statusColors.pending}`}>
-                        {statusIcons[app.status]}
-                        {app.status}
-                      </Badge>
-                    </div>
-                    <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                      {(app.job_city || app.job_county) && (
-                        <span className="flex items-center gap-1"><MapPin className="w-3 h-3" />{[app.job_city, app.job_county].filter(Boolean).join(", ")}</span>
-                      )}
-                      <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{new Date(app.created_at).toLocaleDateString()}</span>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Recommended Jobs */}
-        <div>
-          <SectionHeader title="Recommended Jobs" />
-          {recommendedJobs.length === 0 ? (
+          <SectionHeader title="Available Jobs" />
+          {allJobs.length === 0 ? (
             <Card className="border-dashed rounded-2xl">
               <CardContent className="py-10 text-center">
                 <Briefcase className="w-8 h-8 text-muted-foreground/40 mx-auto mb-3" />
@@ -250,15 +214,43 @@ const JobSeekerDashboard = () => {
             </Card>
           ) : (
             <div className="space-y-2.5">
-              {recommendedJobs.map((job) => (
-                <Card key={job.id} className="border-0 shadow-sm rounded-2xl cursor-pointer hover:shadow-md transition-all active:scale-[0.98]" onClick={() => navigate(`/jobs/${job.id}`)}>
+              {allJobs.map((job) => (
+                <Card key={job.id} className="border-0 shadow-sm rounded-2xl hover:shadow-md transition-all">
                   <CardContent className="p-4">
-                    <h3 className="text-sm font-semibold text-foreground mb-1.5">{job.title}</h3>
-                    <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                    <h3
+                      className="text-sm font-semibold text-foreground mb-1.5 cursor-pointer"
+                      onClick={() => navigate(`/jobs/${job.id}`)}
+                    >
+                      {job.title}
+                    </h3>
+                    <div className="flex items-center gap-3 text-xs text-muted-foreground mb-3 flex-wrap">
                       {(job.city || job.county) && (
                         <span className="flex items-center gap-1"><MapPin className="w-3 h-3" />{[job.city, job.county].filter(Boolean).join(", ")}</span>
                       )}
-                      {job.budget && <span className="font-semibold text-foreground">KSh {job.budget.toLocaleString()}</span>}
+                      {job.budget && (
+                        <span className="flex items-center gap-1 font-semibold text-foreground">
+                          <DollarSign className="w-3 h-3" />KSh {job.budget.toLocaleString()}
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        className="rounded-xl flex-1 gap-1.5"
+                        onClick={() => handleApply(job.id)}
+                        disabled={checkingPremium}
+                      >
+                        {requirePremium ? <Crown className="w-3.5 h-3.5" /> : <Send className="w-3.5 h-3.5" />}
+                        {checkingPremium ? "Checking..." : requirePremium ? "Unlock to Apply" : "Apply"}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="rounded-xl"
+                        onClick={() => navigate(`/jobs/${job.id}`)}
+                      >
+                        View
+                      </Button>
                     </div>
                   </CardContent>
                 </Card>
