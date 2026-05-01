@@ -63,11 +63,32 @@ const SectionHeader = ({ title, action, onAction }: { title: string; action?: st
 const JobSeekerDashboard = () => {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const { isPremium, loading: premiumLoading } = useIsPremium("job_seeker");
   const [applications, setApplications] = useState<Application[]>([]);
-  const [recommendedJobs, setRecommendedJobs] = useState<RecommendedJob[]>([]);
+  const [allJobs, setAllJobs] = useState<RecommendedJob[]>([]);
   const [savedCount, setSavedCount] = useState(0);
   const [profileCompletion, setProfileCompletion] = useState(0);
   const [loading, setLoading] = useState(true);
+
+  const checkingPremium = authLoading || premiumLoading;
+  const requirePremium = !checkingPremium && !isPremium;
+
+  const handleApply = (jobId: string) => {
+    if (checkingPremium) {
+      toast({ title: "Checking subscription", description: "Please wait a moment." });
+      return;
+    }
+    if (requirePremium) {
+      toast({
+        title: "Premium required",
+        description: "Pay KSh 200 for 30 days to apply for jobs.",
+      });
+      navigate("/upgrade?role=job_seeker");
+      return;
+    }
+    navigate(`/jobs/${jobId}`);
+  };
 
   useEffect(() => {
     if (!authLoading && !user) { navigate("/login"); return; }
