@@ -4,8 +4,8 @@
   "description": "Kenya's marketplace for verified service professionals",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#22c55e",
+  "background_color": "#f5f0eb",
+  "theme_color": "#f5f0eb",
   "orientation": "portrait",
   "icons": [
     {
