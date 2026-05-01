@@ -6,9 +6,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import { useToast } from "@/hooks/use-toast";
+import { useIsPremium } from "@/hooks/useSubscription";
 import {
   ArrowLeft, Briefcase, Bookmark, User, ChevronRight,
-  MapPin, Clock, Send, CheckCircle, XCircle, Eye, Star, Search,
+  MapPin, Clock, Send, CheckCircle, XCircle, Eye, Star, Search, Crown, DollarSign,
 } from "lucide-react";
 
 const statusColors: Record<string, string> = {
