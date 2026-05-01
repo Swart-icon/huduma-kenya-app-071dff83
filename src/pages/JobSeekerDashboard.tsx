@@ -241,7 +241,7 @@ const JobSeekerDashboard = () => {
                         disabled={checkingPremium}
                       >
                         {requirePremium ? <Crown className="w-3.5 h-3.5" /> : <Send className="w-3.5 h-3.5" />}
-                        {checkingPremium ? "Checking..." : requirePremium ? "Unlock to Apply" : "Apply"}
+                        {checkingPremium ? "Checking..." : "Apply"}
                       </Button>
                       <Button
                         size="sm"
