@@ -257,16 +257,7 @@ const Register = () => {
     navigate("/videos");
   };
 
-  const handleGoogleSignIn = async () => {
-    setSubmitting(true);
-    const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: window.location.origin,
-    });
-    if (result.error) {
-      toast({ title: "Google sign-in failed", description: String(result.error), variant: "destructive" });
-    }
-    setSubmitting(false);
-  };
+
 
   // ─── Verify email ───
   if (step === "verify_email") {
