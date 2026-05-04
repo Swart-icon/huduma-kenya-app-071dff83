@@ -81,7 +81,7 @@ const JobDetail = () => {
   // Pre-fill applicant info from profile when premium job seeker opens form
   useEffect(() => {
     const prefill = async () => {
-      if (!user || !isJobSeeker) return;
+      if (!user || !(role === "job_seeker" || roles.includes("job_seeker"))) return;
       const { data: profile } = await supabase
         .from("profiles")
         .select("full_name")
