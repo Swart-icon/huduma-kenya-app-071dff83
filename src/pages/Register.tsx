@@ -99,7 +99,9 @@ const Register = () => {
     if (loading || !user) return;
     const nonAdmin = roles.filter((r) => r !== "admin");
     if (nonAdmin.length === 0) {
-      setStep("role");
+      if (step === "credentials" || step === "verify_email") {
+        setStep("role");
+      }
     } else if (step === "credentials" || step === "verify_email") {
       navigate("/videos");
     }
