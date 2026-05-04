@@ -20,7 +20,7 @@ export const useCategories = () => {
       if (error) throw error;
       return data || [];
     },
-    staleTime: 1000 * 60 * 30, // 30 min — categories rarely change
-    gcTime: 1000 * 60 * 60,
+    staleTime: 1000 * 60, // 1 min — pick up category changes faster
+    gcTime: 1000 * 60 * 10,
   });
 };
