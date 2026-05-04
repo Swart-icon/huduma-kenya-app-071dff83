@@ -15,6 +15,8 @@ const RecordVideo = () => {
   const chunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const recordedMimeRef = useRef<string>("video/webm");
+  const recordedExtRef = useRef<string>("webm");
 
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [facingMode, setFacingMode] = useState<"user" | "environment">("environment");
