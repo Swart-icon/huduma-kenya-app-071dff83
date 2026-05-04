@@ -3,10 +3,15 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Progress } from "@/components/ui/progress";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Camera, X, Loader2, Zap } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { BoostStatusDialog } from "./BoostStatusDialog";
+import {
+  validateImageFile, prepareImageForUpload, uploadWithProgress,
+  friendlyUploadError, logFileMeta,
+} from "@/lib/mobileUpload";
 
 interface Props {
   open: boolean;
