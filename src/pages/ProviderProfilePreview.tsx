@@ -63,13 +63,18 @@ const ProviderProfilePreview = () => {
   }, [authLoading, user, role]);
 
   const fetchAll = async () => {
-    const [profRes, revRes, portRes, availRes] = await Promise.all([
+    const [profRes, profPrivRes, revRes, portRes, availRes] = await Promise.all([
       supabase.from("provider_profiles").select("*").eq("user_id", user!.id).maybeSingle(),
+      supabase.from("provider_profiles_private").select("contact_phone, contact_email").eq("user_id", user!.id).maybeSingle(),
       supabase.from("reviews").select("rating").eq("provider_id", user!.id),
       supabase.from("portfolio_items").select("*").eq("user_id", user!.id).order("created_at", { ascending: false }),
       supabase.from("provider_availability").select("*").eq("user_id", user!.id).order("day_of_week"),
     ]);
-    setProfile(profRes.data as ProviderProfile | null);
+    setProfile(profRes.data ? ({
+      ...profRes.data,
+      contact_phone: profPrivRes.data?.contact_phone ?? null,
+      contact_email: profPrivRes.data?.contact_email ?? null,
+    } as ProviderProfile) : null);
     const reviews = revRes.data || [];
     if (reviews.length > 0) {
       setAvgRating(reviews.reduce((s, r) => s + r.rating, 0) / reviews.length);

@@ -104,9 +104,9 @@ const JobDetail = () => {
       const { data: resps } = await supabase.from("job_responses").select("*").eq("job_post_id", id!).order("created_at", { ascending: false });
       const providerIds = (resps || []).map((r: JobResponse) => r.provider_id);
       if (providerIds.length > 0) {
-        const { data: profiles } = await supabase.from("provider_profiles").select("user_id, business_name, contact_phone, profile_image_url").in("user_id", providerIds);
+        const { data: profiles } = await supabase.from("provider_profiles").select("user_id, business_name, profile_image_url").in("user_id", providerIds);
         const profileMap: Record<string, { name: string; phone: string | null; image: string | null }> = {};
-        (profiles || []).forEach((p: any) => { profileMap[p.user_id] = { name: p.business_name, phone: p.contact_phone, image: p.profile_image_url }; });
+        (profiles || []).forEach((p: any) => { profileMap[p.user_id] = { name: p.business_name, phone: null, image: p.profile_image_url }; });
         setResponses((resps || []).map((r: JobResponse) => ({
           ...r,
           provider_name: profileMap[r.provider_id]?.name || "Provider",

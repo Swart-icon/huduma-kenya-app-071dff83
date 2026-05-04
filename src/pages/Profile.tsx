@@ -32,8 +32,16 @@ const Profile = () => {
 
   useEffect(() => {
     if (user) {
-      supabase.from("profiles").select("*").eq("user_id", user.id).maybeSingle().then(({ data }) => {
-        if (data) setProfile({ full_name: data.full_name || "", phone: data.phone || "", location: data.location || "", avatar_url: data.avatar_url || "" });
+      Promise.all([
+        supabase.from("profiles").select("full_name, avatar_url").eq("user_id", user.id).maybeSingle(),
+        supabase.from("profiles_private").select("phone, location").eq("user_id", user.id).maybeSingle(),
+      ]).then(([pub, priv]) => {
+        setProfile({
+          full_name: pub.data?.full_name || "",
+          phone: priv.data?.phone || "",
+          location: priv.data?.location || "",
+          avatar_url: pub.data?.avatar_url || "",
+        });
       });
     }
   }, [user]);
@@ -41,10 +49,14 @@ const Profile = () => {
   const handleSave = async () => {
     if (!user) return;
     setSaving(true);
-    const { error } = await supabase
-      .from("profiles")
-      .update({ full_name: profile.full_name, phone: profile.phone, location: profile.location })
-      .eq("user_id", user.id);
+    const [pubRes, privRes] = await Promise.all([
+      supabase.from("profiles").update({ full_name: profile.full_name }).eq("user_id", user.id),
+      supabase.from("profiles_private").upsert(
+        { user_id: user.id, phone: profile.phone, location: profile.location, updated_at: new Date().toISOString() },
+        { onConflict: "user_id" }
+      ),
+    ]);
+    const error = pubRes.error || privRes.error;
     setSaving(false);
     if (error) {
       toast({ title: "Failed to save", description: error.message, variant: "destructive" });

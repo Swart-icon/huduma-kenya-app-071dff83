@@ -186,10 +186,7 @@ const ServiceMap = () => {
       setLoading(true);
 
       const { data: providerProfiles, error: providerError } = await supabase
-        .from("provider_profiles")
-        .select("user_id,business_name,city,county,latitude,longitude,is_verified,profile_image_url")
-        .not("latitude", "is", null)
-        .not("longitude", "is", null);
+        .rpc("public_provider_map_points");
 
       if (providerError || !providerProfiles?.length) {
         setProviders([]);

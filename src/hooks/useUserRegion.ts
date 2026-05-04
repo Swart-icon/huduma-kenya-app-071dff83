@@ -1,6 +1,7 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useLocation } from "@/contexts/LocationContext";
-import { useProfile } from "@/hooks/useProfile";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import { KENYAN_LOCATIONS } from "@/lib/kenyanLocations";
 
 const haversine = (lat1: number, lng1: number, lat2: number, lng2: number) => {
@@ -30,7 +31,18 @@ export type UserRegion = {
  */
 export const useUserRegion = (): UserRegion => {
   const { location } = useLocation();
-  const { data: profile } = useProfile();
+  const { user } = useAuth();
+  const [profileLocation, setProfileLocation] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!user) { setProfileLocation(null); return; }
+    supabase
+      .from("profiles_private")
+      .select("location")
+      .eq("user_id", user.id)
+      .maybeSingle()
+      .then(({ data }) => setProfileLocation(data?.location ?? null));
+  }, [user]);
 
   return useMemo(() => {
     // 1. GPS reverse-lookup
@@ -48,7 +60,7 @@ export const useUserRegion = (): UserRegion => {
     }
 
     // 2. Profile text fallback
-    const txt = profile?.location?.trim().toLowerCase();
+    const txt = profileLocation?.trim().toLowerCase();
     if (txt) {
       const cityMatch = KENYAN_LOCATIONS.find((l) => l.name.toLowerCase() === txt);
       if (cityMatch) return { city: cityMatch.name, county: cityMatch.county, source: "profile" };
@@ -57,5 +69,5 @@ export const useUserRegion = (): UserRegion => {
     }
 
     return { city: null, county: null, source: "none" };
-  }, [location, profile?.location]);
+  }, [location, profileLocation]);
 };

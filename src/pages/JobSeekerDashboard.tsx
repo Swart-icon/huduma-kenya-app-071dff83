@@ -101,7 +101,12 @@ const JobSeekerDashboard = () => {
       supabase.from("saved_jobs").select("id").eq("user_id", user!.id),
       supabase.from("job_seeker_profiles").select("*").eq("user_id", user!.id).maybeSingle(),
       supabase.from("job_posts").select("*").eq("status", "open").order("created_at", { ascending: false }).limit(50),
-      supabase.from("profiles").select("full_name, phone, location").eq("user_id", user!.id).maybeSingle(),
+      Promise.all([
+        supabase.from("profiles").select("full_name").eq("user_id", user!.id).maybeSingle(),
+        supabase.from("profiles_private").select("phone, location").eq("user_id", user!.id).maybeSingle(),
+      ]).then(([pub, priv]) => ({
+        data: { full_name: pub.data?.full_name, phone: priv.data?.phone, location: priv.data?.location },
+      })),
     ]);
 
     const appsData = appsRes.data || [];

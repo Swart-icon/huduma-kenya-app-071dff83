@@ -905,7 +905,6 @@ export type Database = {
       }
       profiles: {
         Row: {
-          area: string | null
           avatar_url: string | null
           city: string | null
           country: string | null
@@ -914,6 +913,38 @@ export type Database = {
           full_name: string | null
           id: string
           language: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          city?: string | null
+          country?: string | null
+          county?: string | null
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          language?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          city?: string | null
+          country?: string | null
+          county?: string | null
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          language?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles_private: {
+        Row: {
+          area: string | null
           latitude: number | null
           location: string | null
           longitude: number | null
@@ -923,14 +954,6 @@ export type Database = {
         }
         Insert: {
           area?: string | null
-          avatar_url?: string | null
-          city?: string | null
-          country?: string | null
-          county?: string | null
-          created_at?: string
-          full_name?: string | null
-          id?: string
-          language?: string | null
           latitude?: number | null
           location?: string | null
           longitude?: number | null
@@ -940,14 +963,6 @@ export type Database = {
         }
         Update: {
           area?: string | null
-          avatar_url?: string | null
-          city?: string | null
-          country?: string | null
-          county?: string | null
-          created_at?: string
-          full_name?: string | null
-          id?: string
-          language?: string | null
           latitude?: number | null
           location?: string | null
           longitude?: number | null
@@ -989,15 +1004,11 @@ export type Database = {
           availability_status: string
           business_name: string
           city: string | null
-          contact_email: string | null
-          contact_phone: string | null
           county: string | null
           created_at: string
           description: string | null
           id: string
           is_verified: boolean | null
-          latitude: number | null
-          longitude: number | null
           profile_image_url: string | null
           service_radius_km: number | null
           service_type: string | null
@@ -1010,15 +1021,11 @@ export type Database = {
           availability_status?: string
           business_name: string
           city?: string | null
-          contact_email?: string | null
-          contact_phone?: string | null
           county?: string | null
           created_at?: string
           description?: string | null
           id?: string
           is_verified?: boolean | null
-          latitude?: number | null
-          longitude?: number | null
           profile_image_url?: string | null
           service_radius_km?: number | null
           service_type?: string | null
@@ -1031,15 +1038,11 @@ export type Database = {
           availability_status?: string
           business_name?: string
           city?: string | null
-          contact_email?: string | null
-          contact_phone?: string | null
           county?: string | null
           created_at?: string
           description?: string | null
           id?: string
           is_verified?: boolean | null
-          latitude?: number | null
-          longitude?: number | null
           profile_image_url?: string | null
           service_radius_km?: number | null
           service_type?: string | null
@@ -1047,6 +1050,33 @@ export type Database = {
           updated_at?: string
           user_id?: string
           years_experience?: number | null
+        }
+        Relationships: []
+      }
+      provider_profiles_private: {
+        Row: {
+          contact_email: string | null
+          contact_phone: string | null
+          latitude: number | null
+          longitude: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          contact_email?: string | null
+          contact_phone?: string | null
+          latitude?: number | null
+          longitude?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          contact_email?: string | null
+          contact_phone?: string | null
+          latitude?: number | null
+          longitude?: number | null
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -1635,6 +1665,14 @@ export type Database = {
         Returns: undefined
       }
       expire_stale_mpesa_transactions: { Args: never; Returns: number }
+      get_user_contact: {
+        Args: { _user_id: string }
+        Returns: {
+          contact_email: string
+          contact_phone: string
+          phone: string
+        }[]
+      }
       has_active_subscription: {
         Args: { _role_type: string; _user_id: string }
         Returns: boolean
@@ -1682,6 +1720,19 @@ export type Database = {
           review_count: number
           service_id: string
           title: string
+        }[]
+      }
+      public_provider_map_points: {
+        Args: never
+        Returns: {
+          business_name: string
+          city: string
+          county: string
+          is_verified: boolean
+          latitude: number
+          longitude: number
+          profile_image_url: string
+          user_id: string
         }[]
       }
       ranked_jobs: {
