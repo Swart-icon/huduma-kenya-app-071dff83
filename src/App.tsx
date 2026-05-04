@@ -60,11 +60,13 @@ import Upgrade from "./pages/Upgrade";
 import GoLive from "./pages/GoLive";
 import LiveViewer from "./pages/LiveViewer";
 import Inbox from "./pages/Inbox";
+import NotificationSettings from "./pages/NotificationSettings";
 import { OfflineBanner } from "@/components/OfflineBanner";
 import ProfileGuard from "@/components/ProfileGuard";
 import { RateUsDialog } from "@/components/RateUsDialog";
 import { useRatePrompt } from "@/hooks/useRatePrompt";
 import { useAndroidBackButton } from "@/hooks/useAndroidBackButton";
+import { useBroadcastNotifications } from "@/hooks/useBroadcastNotifications";
 
 // Keep React Query's online status in sync with browser events
 onlineManager.setEventListener((setOnline) => {
@@ -102,6 +104,7 @@ const queryClient = new QueryClient({
 const AppInner = () => {
   const ratePrompt = useRatePrompt();
   useAndroidBackButton();
+  useBroadcastNotifications();
 
   // Expose trackAction globally so any page can call it
   useEffect(() => {
@@ -165,6 +168,7 @@ const AppInner = () => {
           <Route path="/go-live" element={<GoLive />} />
           <Route path="/live/:streamId" element={<LiveViewer />} />
           <Route path="/inbox" element={<Inbox />} />
+          <Route path="/notification-settings" element={<NotificationSettings />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </ProfileGuard>
