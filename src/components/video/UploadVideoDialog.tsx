@@ -333,7 +333,7 @@ export const UploadVideoDialog = ({ open, onOpenChange }: { open: boolean; onOpe
                   <Upload className="w-8 h-8 text-primary/60 mb-2" />
                   <p className="text-sm font-medium text-primary">Tap to select video</p>
                   <p className="text-xs text-muted-foreground mt-1">MP4, WebM, MOV • Max 1GB</p>
-                  <input type="file" accept="video/mp4,video/webm,video/quicktime,video/x-m4v" className="hidden" onChange={handleFileSelect} />
+                  <input type="file" accept="video/*" className="hidden" onChange={handleFileSelect} />
                 </label>
                 <FieldError message={errors.file} />
               </TabsContent>
