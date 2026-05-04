@@ -427,6 +427,7 @@ const ProviderProfileEdit = () => {
               <SelectContent>
                 <SelectItem value="providing_services">🔧 Providing Services</SelectItem>
                 <SelectItem value="selling_goods">🛒 Selling Goods</SelectItem>
+                <SelectItem value="both">🛍️ Both Goods & Services</SelectItem>
               </SelectContent>
             </Select>
           </div>
