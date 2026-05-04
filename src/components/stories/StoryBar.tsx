@@ -4,6 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Plus } from "lucide-react";
 import { StoryViewer } from "./StoryViewer";
 import { CreateStoryDialog } from "./CreateStoryDialog";
+import { hasUploadSessionState, logMobileMediaEvent } from "@/hooks/useMobileMediaLifecycle";
 
 type ProviderStory = {
   user_id: string;
@@ -108,6 +109,22 @@ export const StoryBar = () => {
   useEffect(() => {
     fetchStories();
   }, [user]);
+
+  useEffect(() => {
+    const reopenIfPending = (reason: string) => {
+      if (hasUploadSessionState("story-upload")) {
+        logMobileMediaEvent("story-dialog-auto-reopen", { sessionKey: "story-upload", reason });
+        setCreateOpen(true);
+      }
+    };
+    reopenIfPending("mount");
+    const onSelected = (event: Event) => {
+      const detail = (event as CustomEvent).detail;
+      if (detail?.sessionKey === "story-upload") reopenIfPending("media-selected");
+    };
+    window.addEventListener("servio-media-selected", onSelected);
+    return () => window.removeEventListener("servio-media-selected", onSelected);
+  }, []);
 
   const openViewer = (idx: number) => {
     setViewerIndex(idx);
