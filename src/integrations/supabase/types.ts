@@ -1722,6 +1722,19 @@ export type Database = {
           title: string
         }[]
       }
+      public_provider_map_points: {
+        Args: never
+        Returns: {
+          business_name: string
+          city: string
+          county: string
+          is_verified: boolean
+          latitude: number
+          longitude: number
+          profile_image_url: string
+          user_id: string
+        }[]
+      }
       ranked_jobs: {
         Args: {
           _category_id?: string
