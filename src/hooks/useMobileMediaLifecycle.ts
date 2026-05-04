@@ -194,12 +194,13 @@ export const useMobileMediaLifecycle = <TDraft extends Record<string, unknown>>(
   const api = useMemo(() => ({
     beginPicker: (source: MobileMediaSource) => {
       setSelecting(true);
+      logMobileMediaEvent("picker-open", { sessionKey, source, routeBeforePicker: location.pathname });
       setActiveMediaFlow({ sessionKey, route: location.pathname, source, startedAt: Date.now() });
     },
     endPicker: (reason: string) => {
       setSelecting(false);
       clearActiveMediaFlow(sessionKey);
-      logMobileMediaEvent("picker-end", { sessionKey, reason });
+      logMobileMediaEvent("picker-end", { sessionKey, reason, routeAfterPicker: window.location.pathname });
     },
     rememberFile: (file: File, source: MobileMediaSource, kind?: MobileMediaKind) => {
       const stored = storeUploadSessionFile(sessionKey, file, source, kind);
@@ -219,9 +220,9 @@ export const useMobileMediaLifecycle = <TDraft extends Record<string, unknown>>(
       clearActiveMediaFlow(sessionKey);
     },
     shouldBlockClose: () => {
-      const block = selecting || Boolean(safeParse<ActiveFlow>(sessionStorage.getItem(ACTIVE_FLOW_KEY))?.sessionKey === sessionKey);
+      const block = selecting || mediaSessionHasRecentSelection(sessionKey) || Boolean(safeParse<ActiveFlow>(sessionStorage.getItem(ACTIVE_FLOW_KEY))?.sessionKey === sessionKey);
       if (block) {
-        logMobileMediaEvent("close-blocked-during-picker", { sessionKey });
+        logMobileMediaEvent("close-blocked-during-media-flow", { sessionKey, selecting, recentSelection: mediaSessionHasRecentSelection(sessionKey) });
         toast.info("Returning to upload…");
       }
       return block;
