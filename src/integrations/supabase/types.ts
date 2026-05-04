@@ -199,31 +199,58 @@ export type Database = {
       }
       job_applications: {
         Row: {
+          applicant_email: string | null
           applicant_id: string
+          applicant_name: string | null
+          applicant_phone: string | null
+          availability: string | null
           cover_message: string | null
           created_at: string
+          cv_filename: string | null
+          cv_url: string | null
+          expected_salary: number | null
           id: string
           job_post_id: string
+          skills: string | null
           status: string
           updated_at: string
+          years_experience: number | null
         }
         Insert: {
+          applicant_email?: string | null
           applicant_id: string
+          applicant_name?: string | null
+          applicant_phone?: string | null
+          availability?: string | null
           cover_message?: string | null
           created_at?: string
+          cv_filename?: string | null
+          cv_url?: string | null
+          expected_salary?: number | null
           id?: string
           job_post_id: string
+          skills?: string | null
           status?: string
           updated_at?: string
+          years_experience?: number | null
         }
         Update: {
+          applicant_email?: string | null
           applicant_id?: string
+          applicant_name?: string | null
+          applicant_phone?: string | null
+          availability?: string | null
           cover_message?: string | null
           created_at?: string
+          cv_filename?: string | null
+          cv_url?: string | null
+          expected_salary?: number | null
           id?: string
           job_post_id?: string
+          skills?: string | null
           status?: string
           updated_at?: string
+          years_experience?: number | null
         }
         Relationships: [
           {

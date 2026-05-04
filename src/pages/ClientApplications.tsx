@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import {
   ArrowLeft, ChevronDown, ChevronUp, ClipboardList, MapPin,
   Clock, User as UserIcon, Briefcase, MessageCircle, CheckCircle, XCircle, Star, Eye,
+  Mail, Phone, FileText, Award, Calendar, DollarSign, Sparkles,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -28,7 +29,16 @@ type Application = {
   status: string;
   created_at: string;
   cover_message: string | null;
-  applicant_name?: string;
+  applicant_name: string | null;
+  applicant_email: string | null;
+  applicant_phone: string | null;
+  years_experience: number | null;
+  skills: string | null;
+  availability: string | null;
+  expected_salary: number | null;
+  cv_url: string | null;
+  cv_filename: string | null;
+  applicant_display_name?: string;
 };
 
 const statusColors: Record<string, string> = {
@@ -88,13 +98,13 @@ const ClientApplications = () => {
     const jobIds = jobList.map((j) => j.id);
     const { data: appsData } = await supabase
       .from("job_applications")
-      .select("id, job_post_id, applicant_id, status, created_at, cover_message")
+      .select("id, job_post_id, applicant_id, status, created_at, cover_message, applicant_name, applicant_email, applicant_phone, years_experience, skills, availability, expected_salary, cv_url, cv_filename")
       .in("job_post_id", jobIds)
       .order("created_at", { ascending: false });
 
     const apps = appsData || [];
 
-    // 3. Resolve applicant names from profiles
+    // 3. Fallback: resolve applicant names from profiles for legacy rows
     const applicantIds = [...new Set(apps.map((a) => a.applicant_id))];
     const nameMap: Record<string, string> = {};
     if (applicantIds.length) {
@@ -107,7 +117,10 @@ const ClientApplications = () => {
 
     const grouped: Record<string, Application[]> = {};
     apps.forEach((a: any) => {
-      const item: Application = { ...a, applicant_name: nameMap[a.applicant_id] || "Anonymous" };
+      const item: Application = {
+        ...a,
+        applicant_display_name: a.applicant_name || nameMap[a.applicant_id] || "Anonymous",
+      };
       (grouped[a.job_post_id] ||= []).push(item);
     });
     setAppsByJob(grouped);
@@ -253,11 +266,11 @@ const ClientApplications = () => {
                         <div key={app.id} className="bg-background rounded-xl p-3 shadow-sm">
                           <div className="flex items-start justify-between gap-2 mb-2">
                             <div className="flex items-center gap-2 min-w-0 flex-1">
-                              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                              <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
                                 <UserIcon className="w-4 h-4 text-primary" />
                               </div>
                               <div className="min-w-0 flex-1">
-                                <p className="text-sm font-semibold text-foreground truncate">{app.applicant_name}</p>
+                                <p className="text-sm font-semibold text-foreground truncate">{app.applicant_display_name}</p>
                                 <p className="text-[10px] text-muted-foreground">
                                   Applied {new Date(app.created_at).toLocaleDateString()}
                                 </p>
@@ -272,13 +285,71 @@ const ClientApplications = () => {
                             </Badge>
                           </div>
 
+                          {/* Contact + details grid */}
+                          <div className="pl-11 space-y-1.5 mb-2">
+                            {app.applicant_email && (
+                              <a
+                                href={`mailto:${app.applicant_email}`}
+                                className="flex items-center gap-2 text-xs text-foreground hover:text-primary"
+                              >
+                                <Mail className="w-3 h-3 text-muted-foreground" />
+                                <span className="truncate">{app.applicant_email}</span>
+                              </a>
+                            )}
+                            {app.applicant_phone && (
+                              <a
+                                href={`tel:${app.applicant_phone}`}
+                                className="flex items-center gap-2 text-xs text-foreground hover:text-primary"
+                              >
+                                <Phone className="w-3 h-3 text-muted-foreground" />
+                                <span>{app.applicant_phone}</span>
+                              </a>
+                            )}
+                            {app.years_experience !== null && app.years_experience !== undefined && (
+                              <div className="flex items-center gap-2 text-xs text-foreground">
+                                <Award className="w-3 h-3 text-muted-foreground" />
+                                <span>{app.years_experience} {app.years_experience === 1 ? "year" : "years"} experience</span>
+                              </div>
+                            )}
+                            {app.expected_salary && (
+                              <div className="flex items-center gap-2 text-xs text-foreground">
+                                <DollarSign className="w-3 h-3 text-muted-foreground" />
+                                <span>Expects KSh {Number(app.expected_salary).toLocaleString()}</span>
+                              </div>
+                            )}
+                            {app.availability && (
+                              <div className="flex items-center gap-2 text-xs text-foreground">
+                                <Calendar className="w-3 h-3 text-muted-foreground" />
+                                <span className="truncate">{app.availability}</span>
+                              </div>
+                            )}
+                            {app.skills && (
+                              <div className="flex items-start gap-2 text-xs text-foreground">
+                                <Sparkles className="w-3 h-3 text-muted-foreground mt-0.5 shrink-0" />
+                                <span className="line-clamp-2">{app.skills}</span>
+                              </div>
+                            )}
+                            {app.cv_url && (
+                              <a
+                                href={app.cv_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-2 mt-1 px-2.5 py-1.5 rounded-lg bg-primary/10 text-primary text-xs font-medium hover:bg-primary/20"
+                              >
+                                <FileText className="w-3.5 h-3.5" />
+                                {app.cv_filename || "Download CV"}
+                              </a>
+                            )}
+                          </div>
+
                           {app.cover_message && (
-                            <p className="text-xs text-muted-foreground line-clamp-2 mb-2 pl-10">
-                              {app.cover_message}
-                            </p>
+                            <div className="pl-11 mb-2">
+                              <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold mb-0.5">Cover message</p>
+                              <p className="text-xs text-foreground whitespace-pre-wrap">{app.cover_message}</p>
+                            </div>
                           )}
 
-                          <div className="flex flex-wrap gap-1.5 pl-10">
+                          <div className="flex flex-wrap gap-1.5 pl-11">
                             <Button
                               size="sm"
                               variant="outline"

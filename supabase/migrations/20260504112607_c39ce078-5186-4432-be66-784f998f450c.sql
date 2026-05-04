@@ -1,0 +1,11 @@
+
+ALTER TABLE public.job_applications
+  ADD COLUMN IF NOT EXISTS applicant_name TEXT,
+  ADD COLUMN IF NOT EXISTS applicant_email TEXT,
+  ADD COLUMN IF NOT EXISTS applicant_phone TEXT,
+  ADD COLUMN IF NOT EXISTS years_experience INTEGER,
+  ADD COLUMN IF NOT EXISTS skills TEXT,
+  ADD COLUMN IF NOT EXISTS availability TEXT,
+  ADD COLUMN IF NOT EXISTS expected_salary NUMERIC,
+  ADD COLUMN IF NOT EXISTS cv_url TEXT,
+  ADD COLUMN IF NOT EXISTS cv_filename TEXT;
