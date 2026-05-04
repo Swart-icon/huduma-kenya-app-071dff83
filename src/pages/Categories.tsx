@@ -11,13 +11,23 @@ import {
   MARKETPLACE_MODE_COPY,
   type MarketplaceMode,
   getMarketplaceCategories,
+  getMarketplaceMode,
 } from "@/lib/marketplace";
 
 const Categories = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { data: categories = [], isLoading } = useCategories();
   const [search, setSearch] = useState("");
-  const [mode, setMode] = useState<MarketplaceMode>(DEFAULT_MARKETPLACE_MODE);
+  const initialMode = searchParams.get("mode") ? getMarketplaceMode(searchParams.get("mode")) : DEFAULT_MARKETPLACE_MODE;
+  const [mode, setMode] = useState<MarketplaceMode>(initialMode);
+
+  const handleModeChange = (next: MarketplaceMode) => {
+    setMode(next);
+    const params = new URLSearchParams(searchParams);
+    params.set("mode", next);
+    setSearchParams(params, { replace: true });
+  };
 
   const filtered = useMemo(
     () => getMarketplaceCategories(categories, mode, search),
