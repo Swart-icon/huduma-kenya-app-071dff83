@@ -264,6 +264,16 @@ const Profile = () => {
           My Videos
         </Button>
 
+        <Button variant="outline" onClick={() => navigate("/payment-history")} className="w-full h-12 rounded-xl mt-3 border-2 font-semibold">
+          <Receipt className="w-5 h-5 mr-2" />
+          Payment History
+        </Button>
+
+        <Button variant="outline" onClick={() => navigate("/notification-settings")} className="w-full h-12 rounded-xl mt-3 border-2 font-semibold">
+          <Bell className="w-5 h-5 mr-2" />
+          Notification Settings
+        </Button>
+
         <Button variant="outline" onClick={handleLogout} className="w-full h-12 rounded-xl mt-4 border-2 text-secondary font-semibold">
           <LogOut className="w-5 h-5 mr-2" />
           Sign Out
