@@ -170,6 +170,7 @@ const AppInner = () => {
           <Route path="/live/:streamId" element={<LiveViewer />} />
           <Route path="/inbox" element={<Inbox />} />
           <Route path="/notification-settings" element={<NotificationSettings />} />
+          <Route path="/payment-history" element={<PaymentHistory />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </ProfileGuard>
