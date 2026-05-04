@@ -46,6 +46,7 @@ type Viewer = {
 const STORY_DURATION_MS = 30000;
 const TICK_INTERVAL_MS = 100;
 const PROGRESS_INCREMENT = (TICK_INTERVAL_MS / STORY_DURATION_MS) * 100;
+const isStoryVideoUrl = (url: string) => /\.(mp4|m4v|mov|webm|3gp|3gpp)(\?|#|$)/i.test(url);
 
 export const StoryViewer = ({ stories, initialIndex, onClose, currentUserId, onRefresh }: Props) => {
   const { toast } = useToast();
@@ -312,7 +313,11 @@ export const StoryViewer = ({ stories, initialIndex, onClose, currentUserId, onR
         <button className="absolute right-0 top-0 w-1/3 h-full z-10" onClick={goNext} />
 
         {status.image_url ? (
-          <img src={status.image_url} alt="" className="w-full h-full object-contain" />
+          isStoryVideoUrl(status.image_url) ? (
+            <video src={status.image_url} className="w-full h-full object-contain" controls playsInline autoPlay muted loop />
+          ) : (
+            <img src={status.image_url} alt="" className="w-full h-full object-contain" />
+          )
         ) : (
           <div className="px-8 text-center">
             <p className="text-white text-xl font-bold leading-relaxed">{status.text_content}</p>

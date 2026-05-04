@@ -24,6 +24,7 @@ import {
   isVideoFile, validateVideoFile, normalizedMime,
   uploadWithProgress, friendlyUploadError, logFileMeta, MAX_VIDEO_MB,
 } from "@/lib/mobileUpload";
+import { useMobileMediaLifecycle } from "@/hooks/useMobileMediaLifecycle";
 
 type ValidationErrors = {
   file?: string;
@@ -32,6 +33,8 @@ type ValidationErrors = {
   county?: string;
   city?: string;
 };
+
+const VIDEO_UPLOAD_SESSION = "video-upload";
 
 export const UploadVideoDialog = ({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) => {
   const navigate = useNavigate();
@@ -50,6 +53,13 @@ export const UploadVideoDialog = ({ open, onOpenChange }: { open: boolean; onOpe
   const [preview, setPreview] = useState<string | null>(null);
   const [errors, setErrors] = useState<ValidationErrors>({});
   const [submitted, setSubmitted] = useState(false);
+  const mediaLifecycle = useMobileMediaLifecycle<{
+    description: string;
+    categoryId: string;
+    county: string;
+    city: string;
+    allowDownloads: boolean;
+  }>(VIDEO_UPLOAD_SESSION, open);
 
   // Recording state
   const [recording, setRecording] = useState(false);
@@ -68,13 +78,40 @@ export const UploadVideoDialog = ({ open, onOpenChange }: { open: boolean; onOpe
     setFile(null); setDescription(""); setCategoryId("");
     setCounty(""); setCity(""); setPreview(null);
     setErrors({}); setSubmitted(false);
+    mediaLifecycle.clearAll();
     stopCamera();
-  }, []);
+  }, [mediaLifecycle]);
 
   // Cleanup on dialog close
   useEffect(() => {
     if (!open) {
       stopCamera();
+    }
+  }, [open]);
+
+  // Persist form state while Android/iOS temporarily background the webview for camera/gallery.
+  useEffect(() => {
+    if (!open) return;
+    mediaLifecycle.saveDraft({ description, categoryId, county, city, allowDownloads });
+  }, [open, description, categoryId, county, city, allowDownloads, mediaLifecycle]);
+
+  // Restore draft + selected file if the app was paused/recreated during picker handoff.
+  useEffect(() => {
+    if (!open) return;
+    const draft = mediaLifecycle.loadDraft();
+    if (draft) {
+      if (typeof draft.description === "string") setDescription(draft.description);
+      if (typeof draft.categoryId === "string") setCategoryId(draft.categoryId);
+      if (typeof draft.county === "string") setCounty(draft.county);
+      if (typeof draft.city === "string") setCity(draft.city);
+      if (typeof draft.allowDownloads === "boolean") setAllowDownloads(draft.allowDownloads);
+    }
+    const restored = mediaLifecycle.restoreFile();
+    if (restored?.file) {
+      setFile(restored.file);
+      setPreview(restored.objectUrl);
+    } else if (mediaLifecycle.hasInterruptedFile()) {
+      toast.error("Unable to load selected media. Please try again.");
     }
   }, [open]);
 
@@ -90,20 +127,23 @@ export const UploadVideoDialog = ({ open, onOpenChange }: { open: boolean; onOpe
         const bytes = new Uint8Array(bin.length);
         for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
         const recordedFile = new File([bytes], meta.name, { type: meta.type });
-        setFile(recordedFile);
-        setPreview(URL.createObjectURL(recordedFile));
+        const stored = mediaLifecycle.rememberFile(recordedFile, "recorder", "video");
+        setFile(stored.file);
+        setPreview(stored.objectUrl);
         sessionStorage.removeItem("pending_recorded_video");
       } else if (memRef === "memory" && (window as any).__pendingRecordedVideo) {
         const recordedFile = (window as any).__pendingRecordedVideo as File;
-        setFile(recordedFile);
-        setPreview(URL.createObjectURL(recordedFile));
+        const stored = mediaLifecycle.rememberFile(recordedFile, "recorder", "video");
+        setFile(stored.file);
+        setPreview(stored.objectUrl);
         delete (window as any).__pendingRecordedVideo;
         sessionStorage.removeItem("pending_recorded_video_ref");
       }
-    } catch {
-      // ignore malformed handoff
+    } catch (err) {
+      console.error("[UploadVideo] recorded handoff failed", err);
+      toast.error("Unable to load selected media. Please try again.");
     }
-  }, [open]);
+  }, [open, mediaLifecycle]);
 
   // Sync stream to video element after render
   useEffect(() => {
@@ -206,14 +246,19 @@ export const UploadVideoDialog = ({ open, onOpenChange }: { open: boolean; onOpe
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
-    if (!f) return;
+    if (!f) {
+      mediaLifecycle.endPicker("no-file-selected");
+      return;
+    }
     logFileMeta("UploadVideo", f);
-    if (!isVideoFile(f)) { toast.error("Unsupported file type. Use MP4, MOV, or WebM."); return; }
+    if (!isVideoFile(f)) { mediaLifecycle.endPicker("unsupported-type"); toast.error("Unsupported file type. Use MP4, MOV, or WebM."); return; }
     const v = validateVideoFile(f);
-    if (!v.ok) { toast.error(v.error!); return; }
-    setFile(f);
-    setPreview(URL.createObjectURL(f));
+    if (!v.ok) { mediaLifecycle.endPicker("validation-failed"); toast.error(v.error!); return; }
+    const stored = mediaLifecycle.rememberFile(f, "gallery", "video");
+    setFile(stored.file);
+    setPreview(stored.objectUrl);
     if (submitted) setErrors((prev) => ({ ...prev, file: undefined }));
+    e.currentTarget.value = "";
   };
 
   const validate = (): ValidationErrors => {
@@ -336,7 +381,10 @@ export const UploadVideoDialog = ({ open, onOpenChange }: { open: boolean; onOpe
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={(next) => {
+      if (!next && mediaLifecycle.shouldBlockClose()) return;
+      onOpenChange(next);
+    }}>
       <DialogContent className="max-w-md mx-auto max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -364,7 +412,13 @@ export const UploadVideoDialog = ({ open, onOpenChange }: { open: boolean; onOpe
                   <Upload className="w-8 h-8 text-primary/60 mb-2" />
                   <p className="text-sm font-medium text-primary">Tap to select video</p>
                   <p className="text-xs text-muted-foreground mt-1">MP4, WebM, MOV • Max 1GB</p>
-                  <input type="file" accept="video/*,.mp4,.mov,.m4v,.webm,.3gp,.mkv" className="hidden" onChange={handleFileSelect} />
+                  <input
+                    type="file"
+                    accept="video/*,.mp4,.mov,.m4v,.webm,.3gp,.mkv"
+                    className="hidden"
+                    onClick={() => mediaLifecycle.beginPicker("gallery")}
+                    onChange={handleFileSelect}
+                  />
                 </label>
                 <FieldError message={errors.file} />
               </TabsContent>
@@ -372,7 +426,7 @@ export const UploadVideoDialog = ({ open, onOpenChange }: { open: boolean; onOpe
               <TabsContent value="record">
                 <div className="space-y-3">
                   <button
-                    onClick={() => { stopCamera(); onOpenChange(false); navigate("/videos/record"); }}
+                    onClick={() => { mediaLifecycle.saveDraft({ description, categoryId, county, city, allowDownloads }); stopCamera(); onOpenChange(false); navigate("/videos/record"); }}
                     className="flex flex-col items-center justify-center w-full h-36 border-2 border-dashed rounded-2xl border-primary/40 hover:border-primary/70 bg-gradient-to-br from-primary/10 to-primary/5 transition-colors"
                   >
                     <Maximize2 className="w-8 h-8 text-primary/70 mb-2" />
