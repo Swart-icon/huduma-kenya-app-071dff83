@@ -349,7 +349,7 @@ const ClientApplications = () => {
                             </div>
                           )}
 
-                          <div className="flex flex-wrap gap-1.5 pl-10">
+                          <div className="flex flex-wrap gap-1.5 pl-11">
                             <Button
                               size="sm"
                               variant="outline"
