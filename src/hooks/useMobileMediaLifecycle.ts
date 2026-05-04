@@ -88,6 +88,13 @@ export const storeUploadSessionFile = (
 export const getUploadSessionFile = (sessionKey: string) =>
   window.__servioUploadSessions?.[sessionKey] ?? null;
 
+export const hasUploadSessionState = (sessionKey: string) =>
+  Boolean(
+    getUploadSessionFile(sessionKey) ||
+    sessionStorage.getItem(storageKey(sessionKey, "fileMeta")) ||
+    sessionStorage.getItem(storageKey(sessionKey, "draft"))
+  );
+
 export const clearUploadSessionFile = (sessionKey: string) => {
   const existing = window.__servioUploadSessions?.[sessionKey];
   if (existing?.objectUrl) URL.revokeObjectURL(existing.objectUrl);
