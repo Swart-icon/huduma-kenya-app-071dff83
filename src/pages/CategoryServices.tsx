@@ -1,8 +1,14 @@
-import { useState, useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { ArrowLeft, MapPin } from "lucide-react";
+import {
+  getMarketplaceCategoryCopy,
+  getMarketplaceMode,
+  getProviderTypesForMode,
+  MARKETPLACE_MODE_COPY,
+} from "@/lib/marketplace";
 
 type Service = {
   id: string;
@@ -18,6 +24,7 @@ type Service = {
 type Category = {
   id: string;
   name: string;
+  slug: string;
   icon: string | null;
 };
 
@@ -32,48 +39,67 @@ const priceLabel = (price: number | null, type: string) => {
 const CategoryServices = () => {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const mode = getMarketplaceMode(searchParams.get("mode"));
   const [services, setServices] = useState<Service[]>([]);
   const [category, setCategory] = useState<Category | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
-      // Support both slug and UUID lookups
+      setLoading(true);
       const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(slug!);
       const { data: cat } = await supabase
         .from("service_categories")
-        .select("*")
+        .select("id, name, slug, icon")
         .eq(isUuid ? "id" : "slug", slug!)
         .maybeSingle();
 
       if (!cat) {
+        setCategory(null);
+        setServices([]);
         setLoading(false);
         return;
       }
       setCategory(cat);
 
-      const { data: svc } = await supabase
-        .from("services")
-        .select("*")
-        .eq("category_id", cat.id)
-        .eq("is_active", true)
-        .order("created_at", { ascending: false });
+      const [providersRes, servicesRes] = await Promise.all([
+        supabase
+          .from("provider_profiles")
+          .select("user_id, service_type")
+          .in("service_type", getProviderTypesForMode(mode)),
+        supabase
+          .from("services")
+          .select("id, title, description, price, price_type, city, county, provider_id")
+          .eq("category_id", cat.id)
+          .eq("is_active", true)
+          .order("created_at", { ascending: false }),
+      ]);
 
-      setServices(svc || []);
+      const allowedProviderIds = new Set((providersRes.data || []).map((provider) => provider.user_id));
+      const filteredServices = (servicesRes.data || []).filter((service) => allowedProviderIds.has(service.provider_id));
+
+      setServices(filteredServices);
       setLoading(false);
     };
+
     fetchData();
-  }, [slug]);
+  }, [slug, mode]);
+
+  const categoryCopy = useMemo(() => {
+    if (!category) return null;
+    return getMarketplaceCategoryCopy(category.slug, mode, category.name);
+  }, [category, mode]);
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
       </div>
     );
   }
 
-  if (!category) {
+  if (!category || !categoryCopy) {
     return (
       <div className="min-h-screen bg-background px-6 py-8 text-center">
         <p className="text-muted-foreground">Category not found</p>
@@ -83,41 +109,52 @@ const CategoryServices = () => {
 
   return (
     <div className="min-h-screen bg-background px-6 py-6">
-      <div className="max-w-sm mx-auto">
-        <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-muted-foreground mb-6">
-          <ArrowLeft className="w-5 h-5" />
+      <div className="mx-auto max-w-sm">
+        <button onClick={() => navigate(-1)} className="mb-6 flex items-center gap-2 text-muted-foreground">
+          <ArrowLeft className="h-5 w-5" />
           <span>Categories</span>
         </button>
 
-        <div className="flex items-center gap-3 mb-6">
+        <div className="mb-4 inline-flex rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
+          {MARKETPLACE_MODE_COPY[mode].title}
+        </div>
+
+        <div className="mb-6 flex items-center gap-3">
           <span className="text-3xl">{category.icon}</span>
-          <h1 className="font-display text-2xl font-bold text-foreground">{category.name}</h1>
+          <div>
+            <h1 className="font-display text-2xl font-bold text-foreground">{categoryCopy.title}</h1>
+            <p className="mt-1 text-sm text-muted-foreground">{categoryCopy.subtitle}</p>
+          </div>
         </div>
 
         {services.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-muted-foreground">No services listed yet in this category.</p>
+          <div className="py-12 text-center">
+            <p className="text-muted-foreground">
+              {mode === "goods"
+                ? "No sellers are listed in this category yet."
+                : "No service providers are listed in this category yet."}
+            </p>
           </div>
         ) : (
           <div className="space-y-3">
             {services.map((svc) => (
               <Card
                 key={svc.id}
-                className="cursor-pointer hover:shadow-md transition-shadow active:scale-[0.98]"
-                onClick={() => navigate(`/services/${svc.id}`)}
+                className="cursor-pointer transition-shadow hover:shadow-md active:scale-[0.98]"
+                onClick={() => navigate(`/services/${svc.id}?mode=${mode}`)}
               >
                 <CardContent className="p-4">
-                  <h3 className="font-semibold text-foreground mb-1">{svc.title}</h3>
+                  <h3 className="mb-1 font-semibold text-foreground">{svc.title}</h3>
                   {svc.description && (
-                    <p className="text-sm text-muted-foreground line-clamp-2 mb-2">{svc.description}</p>
+                    <p className="mb-2 line-clamp-2 text-sm text-muted-foreground">{svc.description}</p>
                   )}
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between gap-3">
                     <span className="text-sm font-bold text-primary">
                       {priceLabel(svc.price, svc.price_type)}
                     </span>
                     {(svc.city || svc.county) && (
-                      <span className="text-xs text-muted-foreground flex items-center gap-1">
-                        <MapPin className="w-3 h-3" />
+                      <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <MapPin className="h-3 w-3" />
                         {[svc.city, svc.county].filter(Boolean).join(", ")}
                       </span>
                     )}
