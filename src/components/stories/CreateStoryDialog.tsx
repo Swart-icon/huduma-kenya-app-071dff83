@@ -27,6 +27,15 @@ export const CreateStoryDialog = ({ open, onClose }: Props) => {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    const isImage = (file.type && file.type.startsWith("image/")) || /\.(jpg|jpeg|png|webp|gif|heic|heif)$/i.test(file.name);
+    if (!isImage) {
+      toast({ title: "Please choose an image file", variant: "destructive" });
+      return;
+    }
+    if (file.size > 20 * 1024 * 1024) {
+      toast({ title: "Image too large", description: "Max 20MB", variant: "destructive" });
+      return;
+    }
     setImageFile(file);
     setPreview(URL.createObjectURL(file));
   };
@@ -48,13 +57,16 @@ export const CreateStoryDialog = ({ open, onClose }: Props) => {
     let image_url: string | null = null;
 
     if (imageFile) {
-      const ext = imageFile.name.split(".").pop();
+      const rawExt = (imageFile.name.split(".").pop() || "").toLowerCase();
+      const ext = rawExt && rawExt.length <= 5 ? rawExt : "jpg";
       const path = `${user.id}/status_${Date.now()}.${ext}`;
+      const contentType = imageFile.type && imageFile.type.startsWith("image/") ? imageFile.type : "image/jpeg";
       const { error: uploadErr } = await supabase.storage
         .from("provider-images")
-        .upload(path, imageFile, { upsert: true });
+        .upload(path, imageFile, { upsert: true, contentType });
 
       if (uploadErr) {
+        console.error("[CreateStory] upload error", uploadErr);
         toast({ title: "Image upload failed", description: uploadErr.message, variant: "destructive" });
         setSubmitting(false);
         return;
