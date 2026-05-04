@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowLeft, LogOut, User, MapPin, Phone, Briefcase, Search, UserCheck, Plus, X, Video, Camera } from "lucide-react";
+import { ArrowLeft, LogOut, User, MapPin, Phone, Briefcase, Search, UserCheck, Plus, X, Video, Camera, Receipt, Bell } from "lucide-react";
 import { useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -262,6 +262,16 @@ const Profile = () => {
         <Button variant="outline" onClick={() => navigate(`/user/${user?.id}/videos`)} className="w-full h-12 rounded-xl mt-6 border-2 font-semibold">
           <Video className="w-5 h-5 mr-2" />
           My Videos
+        </Button>
+
+        <Button variant="outline" onClick={() => navigate("/payment-history")} className="w-full h-12 rounded-xl mt-3 border-2 font-semibold">
+          <Receipt className="w-5 h-5 mr-2" />
+          Payment History
+        </Button>
+
+        <Button variant="outline" onClick={() => navigate("/notification-settings")} className="w-full h-12 rounded-xl mt-3 border-2 font-semibold">
+          <Bell className="w-5 h-5 mr-2" />
+          Notification Settings
         </Button>
 
         <Button variant="outline" onClick={handleLogout} className="w-full h-12 rounded-xl mt-4 border-2 text-secondary font-semibold">

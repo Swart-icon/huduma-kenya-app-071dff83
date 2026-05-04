@@ -75,6 +75,16 @@ Deno.serve(async (req) => {
         .maybeSingle();
       tx = data;
     }
+    if (!tx && externalRef) {
+      const { data } = await admin
+        .from("mpesa_transactions")
+        .select("*")
+        .eq("external_reference", externalRef)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      tx = data;
+    }
     if (!tx && externalRef?.startsWith("sub_")) {
       const subId = externalRef.slice(4);
       const { data } = await admin
@@ -120,6 +130,11 @@ Deno.serve(async (req) => {
 
     // ---- 3. Update the transaction record ----
     if (tx) {
+      // Replay protection at tx level
+      if (tx.status === "success") {
+        console.log("Transaction already processed, ignoring duplicate:", tx.id);
+        return new Response("OK", { status: 200 });
+      }
       await admin
         .from("mpesa_transactions")
         .update({
@@ -170,9 +185,8 @@ Deno.serve(async (req) => {
     }
 
     // ---- 5. Activate / fail boost (only if verified) ----
-    if (externalRef?.startsWith("boost_")) {
-      const boostId = externalRef.slice(6);
-
+    const boostId = tx?.boost_id ?? (externalRef?.startsWith("boost_") ? externalRef.slice(6) : null);
+    if (boostId) {
       const { data: existingBoost } = await admin
         .from("status_boosts")
         .select("payment_status")
@@ -198,7 +212,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    if (!tx && !externalRef?.startsWith("boost_")) {
+    if (!tx && !boostId) {
       console.warn("No transaction/boost found for", checkoutRequestId, externalRef);
     }
 

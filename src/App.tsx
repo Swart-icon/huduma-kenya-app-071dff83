@@ -61,6 +61,7 @@ import GoLive from "./pages/GoLive";
 import LiveViewer from "./pages/LiveViewer";
 import Inbox from "./pages/Inbox";
 import NotificationSettings from "./pages/NotificationSettings";
+import PaymentHistory from "./pages/PaymentHistory";
 import { OfflineBanner } from "@/components/OfflineBanner";
 import ProfileGuard from "@/components/ProfileGuard";
 import { RateUsDialog } from "@/components/RateUsDialog";
@@ -169,6 +170,7 @@ const AppInner = () => {
           <Route path="/live/:streamId" element={<LiveViewer />} />
           <Route path="/inbox" element={<Inbox />} />
           <Route path="/notification-settings" element={<NotificationSettings />} />
+          <Route path="/payment-history" element={<PaymentHistory />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </ProfileGuard>

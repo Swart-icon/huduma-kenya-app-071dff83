@@ -662,12 +662,15 @@ export type Database = {
       mpesa_transactions: {
         Row: {
           amount_kes: number
+          boost_id: string | null
           checkout_request_id: string | null
           created_at: string
+          external_reference: string | null
           id: string
           merchant_request_id: string | null
           mpesa_receipt: string | null
           phone_number: string
+          purpose: string | null
           raw_callback: Json | null
           result_code: number | null
           result_desc: string | null
@@ -678,12 +681,15 @@ export type Database = {
         }
         Insert: {
           amount_kes: number
+          boost_id?: string | null
           checkout_request_id?: string | null
           created_at?: string
+          external_reference?: string | null
           id?: string
           merchant_request_id?: string | null
           mpesa_receipt?: string | null
           phone_number: string
+          purpose?: string | null
           raw_callback?: Json | null
           result_code?: number | null
           result_desc?: string | null
@@ -694,12 +700,15 @@ export type Database = {
         }
         Update: {
           amount_kes?: number
+          boost_id?: string | null
           checkout_request_id?: string | null
           created_at?: string
+          external_reference?: string | null
           id?: string
           merchant_request_id?: string | null
           mpesa_receipt?: string | null
           phone_number?: string
+          purpose?: string | null
           raw_callback?: Json | null
           result_code?: number | null
           result_desc?: string | null
@@ -1625,6 +1634,7 @@ export type Database = {
         Args: { _role: Database["public"]["Enums"]["app_role"] }
         Returns: undefined
       }
+      expire_stale_mpesa_transactions: { Args: never; Returns: number }
       has_active_subscription: {
         Args: { _role_type: string; _user_id: string }
         Returns: boolean
