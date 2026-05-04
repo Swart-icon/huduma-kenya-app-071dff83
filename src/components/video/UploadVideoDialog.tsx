@@ -16,16 +16,14 @@ import {
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Video, Upload, Loader2, X, AlertCircle, Camera, Square, CircleDot, SwitchCamera, Download, Maximize2 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
+import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import { KENYAN_COUNTIES, getCitiesByCounty } from "@/lib/kenyanLocations";
 import { extractVideoThumbnail } from "@/lib/videoThumbnail";
-
-const MAX_VIDEO_SIZE_MB = 1024;
-// Accept anything the browser/OS labels as video, plus common phone-camera extensions
-// that sometimes arrive with an empty or non-standard MIME type.
-const VIDEO_EXT_RE = /\.(mp4|m4v|mov|webm|mkv|avi|3gp|3gpp|qt)$/i;
-const isAcceptableVideo = (f: File) =>
-  (f.type && f.type.startsWith("video/")) || VIDEO_EXT_RE.test(f.name);
+import {
+  isVideoFile, validateVideoFile, normalizedMime,
+  uploadWithProgress, friendlyUploadError, logFileMeta, MAX_VIDEO_MB,
+} from "@/lib/mobileUpload";
 
 type ValidationErrors = {
   file?: string;
@@ -47,6 +45,8 @@ export const UploadVideoDialog = ({ open, onOpenChange }: { open: boolean; onOpe
   const [city, setCity] = useState("");
   const [allowDownloads, setAllowDownloads] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [progressLabel, setProgressLabel] = useState<string>("");
   const [preview, setPreview] = useState<string | null>(null);
   const [errors, setErrors] = useState<ValidationErrors>({});
   const [submitted, setSubmitted] = useState(false);
@@ -156,16 +156,26 @@ export const UploadVideoDialog = ({ open, onOpenChange }: { open: boolean; onOpe
   const startRecording = () => {
     if (!stream) return;
     chunksRef.current = [];
-    const mimeType = MediaRecorder.isTypeSupported("video/webm;codecs=vp9,opus")
-      ? "video/webm;codecs=vp9,opus"
-      : "video/webm";
-    const recorder = new MediaRecorder(stream, { mimeType });
+    // iOS Safari can't record webm. Try webm first (Android/desktop), fall back to mp4 (iOS).
+    const candidates = [
+      "video/webm;codecs=vp9,opus",
+      "video/webm;codecs=vp8,opus",
+      "video/webm",
+      "video/mp4;codecs=h264,aac",
+      "video/mp4",
+    ];
+    const mimeType = candidates.find((m) => MediaRecorder.isTypeSupported(m)) || "";
+    const recorder = mimeType
+      ? new MediaRecorder(stream, { mimeType })
+      : new MediaRecorder(stream);
+    const outputType = mimeType || recorder.mimeType || "video/webm";
+    const ext = outputType.includes("mp4") ? "mp4" : "webm";
     recorder.ondataavailable = (e) => {
       if (e.data.size > 0) chunksRef.current.push(e.data);
     };
     recorder.onstop = () => {
-      const blob = new Blob(chunksRef.current, { type: "video/webm" });
-      const recordedFile = new File([blob], `recording-${Date.now()}.webm`, { type: "video/webm" });
+      const blob = new Blob(chunksRef.current, { type: outputType });
+      const recordedFile = new File([blob], `recording-${Date.now()}.${ext}`, { type: outputType });
       setFile(recordedFile);
       setPreview(URL.createObjectURL(blob));
       stopCamera();
@@ -197,8 +207,10 @@ export const UploadVideoDialog = ({ open, onOpenChange }: { open: boolean; onOpe
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
     if (!f) return;
-    if (!isAcceptableVideo(f)) { toast.error("Please choose a video file (MP4, MOV, WebM, etc.)"); return; }
-    if (f.size > MAX_VIDEO_SIZE_MB * 1024 * 1024) { toast.error("Video must be under 1GB"); return; }
+    logFileMeta("UploadVideo", f);
+    if (!isVideoFile(f)) { toast.error("Unsupported file type. Use MP4, MOV, or WebM."); return; }
+    const v = validateVideoFile(f);
+    if (!v.ok) { toast.error(v.error!); return; }
     setFile(f);
     setPreview(URL.createObjectURL(f));
     if (submitted) setErrors((prev) => ({ ...prev, file: undefined }));
@@ -225,27 +237,36 @@ export const UploadVideoDialog = ({ open, onOpenChange }: { open: boolean; onOpe
     }
     if (!file || !user || !canUpload) return;
 
+    // Final size guard (covers files dropped in via the recorder/handoff)
+    const v = validateVideoFile(file);
+    if (!v.ok) { toast.error(v.error!); return; }
+
     setUploading(true);
+    setProgress(0);
+    setProgressLabel("Preparing…");
     try {
-      const ext = (file.name.split(".").pop() || "mp4").toLowerCase();
+      const rawExt = (file.name.split(".").pop() || "mp4").toLowerCase();
+      const ext = rawExt.length <= 5 ? rawExt : "mp4";
       const baseKey = `${user.id}/${Date.now()}`;
       const path = `${baseKey}.${ext}`;
-      const contentType = file.type && file.type.startsWith("video/") ? file.type : "video/mp4";
+      const contentType = normalizedMime(file);
 
-      // Kick off thumbnail extraction in parallel with the video upload so
-      // posting is never delayed by frame decoding.
+      // Kick off thumbnail extraction in parallel — never blocks the post
       const thumbnailPromise = extractVideoThumbnail(file).catch(() => null);
 
-      const { error: storageError } = await supabase.storage
-        .from("user-videos")
-        .upload(path, file, { contentType, upsert: false });
-      if (storageError) {
-        console.error("[UploadVideo] storage error", storageError);
-        throw storageError;
-      }
+      setProgressLabel("Uploading video…");
+      await uploadWithProgress({
+        bucket: "user-videos",
+        path,
+        file,
+        contentType,
+        onProgress: (pct) => setProgress(pct),
+      });
+
       const { data: urlData } = supabase.storage.from("user-videos").getPublicUrl(path);
 
       // Upload thumbnail (best-effort — never block the post)
+      setProgressLabel("Finalizing…");
       let thumbnailUrl: string | null = null;
       try {
         const thumbFile = await thumbnailPromise;
@@ -259,7 +280,7 @@ export const UploadVideoDialog = ({ open, onOpenChange }: { open: boolean; onOpe
           }
         }
       } catch {
-        // Non-fatal — proceed without a thumbnail
+        // Non-fatal
       }
 
       const { error: dbError } = await supabase.from("videos").insert({
@@ -283,9 +304,11 @@ export const UploadVideoDialog = ({ open, onOpenChange }: { open: boolean; onOpe
       onOpenChange(false);
     } catch (err: any) {
       console.error("[UploadVideo] failed", err);
-      toast.error(err?.message || err?.error_description || "Upload failed. Please try again.");
+      toast.error(friendlyUploadError(err));
     } finally {
       setUploading(false);
+      setProgress(0);
+      setProgressLabel("");
     }
   };
 
@@ -341,7 +364,7 @@ export const UploadVideoDialog = ({ open, onOpenChange }: { open: boolean; onOpe
                   <Upload className="w-8 h-8 text-primary/60 mb-2" />
                   <p className="text-sm font-medium text-primary">Tap to select video</p>
                   <p className="text-xs text-muted-foreground mt-1">MP4, WebM, MOV • Max 1GB</p>
-                  <input type="file" accept="video/*" className="hidden" onChange={handleFileSelect} />
+                  <input type="file" accept="video/*,.mp4,.mov,.m4v,.webm,.3gp,.mkv" className="hidden" onChange={handleFileSelect} />
                 </label>
                 <FieldError message={errors.file} />
               </TabsContent>
@@ -510,6 +533,15 @@ export const UploadVideoDialog = ({ open, onOpenChange }: { open: boolean; onOpe
             </div>
             <Switch checked={allowDownloads} onCheckedChange={setAllowDownloads} />
           </div>
+
+          {uploading && (
+            <div className="space-y-1.5">
+              <Progress value={progress} className="h-2" />
+              <p className="text-xs text-muted-foreground text-center">
+                {progressLabel} {progress > 0 && progress < 100 ? `${progress}%` : ""}
+              </p>
+            </div>
+          )}
 
           <Button onClick={handleUpload} disabled={uploading} className="w-full rounded-xl">
             {uploading ? (<><Loader2 className="w-4 h-4 mr-2 animate-spin" />Uploading...</>) : (<><Upload className="w-4 h-4 mr-2" />Upload Video</>)}

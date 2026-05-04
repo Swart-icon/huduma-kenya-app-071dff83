@@ -15,6 +15,8 @@ const RecordVideo = () => {
   const chunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const recordedMimeRef = useRef<string>("video/webm");
+  const recordedExtRef = useRef<string>("webm");
 
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [facingMode, setFacingMode] = useState<"user" | "environment">("environment");
@@ -103,15 +105,24 @@ const RecordVideo = () => {
   const startRecording = () => {
     if (!streamRef.current) return;
     chunksRef.current = [];
-    const mimeType = MediaRecorder.isTypeSupported("video/webm;codecs=vp9,opus")
-      ? "video/webm;codecs=vp9,opus"
-      : MediaRecorder.isTypeSupported("video/webm;codecs=vp8,opus")
-        ? "video/webm;codecs=vp8,opus"
-        : "video/webm";
-    const recorder = new MediaRecorder(streamRef.current, { mimeType, videoBitsPerSecond: 2_500_000 });
+    // Try webm (Android/desktop), fall back to mp4 (iOS Safari has no webm support)
+    const candidates = [
+      "video/webm;codecs=vp9,opus",
+      "video/webm;codecs=vp8,opus",
+      "video/webm",
+      "video/mp4;codecs=h264,aac",
+      "video/mp4",
+    ];
+    const mimeType = candidates.find((m) => MediaRecorder.isTypeSupported(m)) || "";
+    const recorder = mimeType
+      ? new MediaRecorder(streamRef.current, { mimeType, videoBitsPerSecond: 2_500_000 })
+      : new MediaRecorder(streamRef.current, { videoBitsPerSecond: 2_500_000 });
+    const outputType = mimeType || recorder.mimeType || "video/webm";
+    recordedMimeRef.current = outputType;
+    recordedExtRef.current = outputType.includes("mp4") ? "mp4" : "webm";
     recorder.ondataavailable = (e) => { if (e.data.size > 0) chunksRef.current.push(e.data); };
     recorder.onstop = () => {
-      const blob = new Blob(chunksRef.current, { type: "video/webm" });
+      const blob = new Blob(chunksRef.current, { type: outputType });
       setRecordedBlob(blob);
       setPreviewUrl(URL.createObjectURL(blob));
       stopStream();
@@ -164,7 +175,9 @@ const RecordVideo = () => {
     setProceeding(true);
     try {
       // Stash the blob via a sessionStorage key + Blob URL handoff
-      const file = new File([recordedBlob], `recording-${Date.now()}.webm`, { type: "video/webm" });
+      const ext = recordedExtRef.current || "webm";
+      const mime = recordedMimeRef.current || "video/webm";
+      const file = new File([recordedBlob], `recording-${Date.now()}.${ext}`, { type: mime });
       // Convert to base64 for safe handoff (small clips); fallback object URL if too large
       if (file.size < 8 * 1024 * 1024) {
         const buf = await file.arrayBuffer();

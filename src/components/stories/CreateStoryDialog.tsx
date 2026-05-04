@@ -3,10 +3,15 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Progress } from "@/components/ui/progress";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Camera, X, Loader2, Zap } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { BoostStatusDialog } from "./BoostStatusDialog";
+import {
+  validateImageFile, prepareImageForUpload, uploadWithProgress,
+  friendlyUploadError, logFileMeta,
+} from "@/lib/mobileUpload";
 
 interface Props {
   open: boolean;
@@ -21,19 +26,18 @@ export const CreateStoryDialog = ({ open, onClose }: Props) => {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [progressLabel, setProgressLabel] = useState("");
   const [postedStatusId, setPostedStatusId] = useState<string | null>(null);
   const [showBoost, setShowBoost] = useState(false);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const isImage = (file.type && file.type.startsWith("image/")) || /\.(jpg|jpeg|png|webp|gif|heic|heif)$/i.test(file.name);
-    if (!isImage) {
-      toast({ title: "Please choose an image file", variant: "destructive" });
-      return;
-    }
-    if (file.size > 20 * 1024 * 1024) {
-      toast({ title: "Image too large", description: "Max 20MB", variant: "destructive" });
+    logFileMeta("CreateStory", file);
+    const v = validateImageFile(file);
+    if (!v.ok) {
+      toast({ title: v.error!, variant: "destructive" });
       return;
     }
     setImageFile(file);
@@ -53,29 +57,44 @@ export const CreateStoryDialog = ({ open, onClose }: Props) => {
     }
 
     setSubmitting(true);
+    setProgress(0);
 
     let image_url: string | null = null;
 
     if (imageFile) {
-      const rawExt = (imageFile.name.split(".").pop() || "").toLowerCase();
-      const ext = rawExt && rawExt.length <= 5 ? rawExt : "jpg";
-      const path = `${user.id}/status_${Date.now()}.${ext}`;
-      const contentType = imageFile.type && imageFile.type.startsWith("image/") ? imageFile.type : "image/jpeg";
-      const { error: uploadErr } = await supabase.storage
-        .from("provider-images")
-        .upload(path, imageFile, { upsert: true, contentType });
+      try {
+        setProgressLabel("Processing image…");
+        const prepared = await prepareImageForUpload(imageFile);
+        const rawExt = (prepared.name.split(".").pop() || "jpg").toLowerCase();
+        const ext = rawExt.length <= 5 ? rawExt : "jpg";
+        const path = `${user.id}/status_${Date.now()}.${ext}`;
 
-      if (uploadErr) {
+        setProgressLabel("Uploading…");
+        await uploadWithProgress({
+          bucket: "provider-images",
+          path,
+          file: prepared,
+          contentType: prepared.type || "image/jpeg",
+          upsert: true,
+          onProgress: setProgress,
+        });
+
+        const { data: urlData } = supabase.storage
+          .from("provider-images")
+          .getPublicUrl(path);
+        image_url = urlData.publicUrl;
+      } catch (uploadErr: any) {
         console.error("[CreateStory] upload error", uploadErr);
-        toast({ title: "Image upload failed", description: uploadErr.message, variant: "destructive" });
+        toast({
+          title: "Image upload failed",
+          description: friendlyUploadError(uploadErr),
+          variant: "destructive",
+        });
         setSubmitting(false);
+        setProgress(0);
+        setProgressLabel("");
         return;
       }
-
-      const { data: urlData } = supabase.storage
-        .from("provider-images")
-        .getPublicUrl(path);
-      image_url = urlData.publicUrl;
     }
 
     const { data: inserted, error } = await supabase
@@ -89,6 +108,8 @@ export const CreateStoryDialog = ({ open, onClose }: Props) => {
       .single();
 
     setSubmitting(false);
+    setProgress(0);
+    setProgressLabel("");
 
     if (error || !inserted) {
       toast({ title: "Failed to post story", description: error?.message, variant: "destructive" });
@@ -170,7 +191,7 @@ export const CreateStoryDialog = ({ open, onClose }: Props) => {
               <input
                 ref={fileRef}
                 type="file"
-                accept="image/*"
+                accept="image/*,.jpg,.jpeg,.png,.webp,.gif,.heic,.heif"
                 onChange={handleFileChange}
                 className="hidden"
               />
@@ -190,6 +211,15 @@ export const CreateStoryDialog = ({ open, onClose }: Props) => {
                 </span>
                 <span className="text-xs text-muted-foreground">{text.length}/280</span>
               </div>
+
+              {submitting && (
+                <div className="space-y-1.5">
+                  <Progress value={progress} className="h-2" />
+                  <p className="text-xs text-muted-foreground text-center">
+                    {progressLabel} {progress > 0 && progress < 100 ? `${progress}%` : ""}
+                  </p>
+                </div>
+              )}
 
               <Button
                 onClick={handleSubmit}
