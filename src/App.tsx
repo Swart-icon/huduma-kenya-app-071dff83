@@ -73,6 +73,7 @@ import { RateUsDialog } from "@/components/RateUsDialog";
 import { useRatePrompt } from "@/hooks/useRatePrompt";
 import { useAndroidBackButton } from "@/hooks/useAndroidBackButton";
 import { useBroadcastNotifications } from "@/hooks/useBroadcastNotifications";
+import { MobileMediaRecovery } from "@/hooks/useMobileMediaLifecycle";
 
 // Keep React Query's online status in sync with browser events
 onlineManager.setEventListener((setOnline) => {
@@ -126,6 +127,7 @@ const AppInner = () => {
 
   return (
     <>
+      <MobileMediaRecovery />
       <OfflineBanner />
       <ProfileGuard>
         <Suspense fallback={<RouteFallback />}>
