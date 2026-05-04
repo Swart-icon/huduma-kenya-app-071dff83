@@ -75,6 +75,16 @@ Deno.serve(async (req) => {
         .maybeSingle();
       tx = data;
     }
+    if (!tx && externalRef) {
+      const { data } = await admin
+        .from("mpesa_transactions")
+        .select("*")
+        .eq("external_reference", externalRef)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      tx = data;
+    }
     if (!tx && externalRef?.startsWith("sub_")) {
       const subId = externalRef.slice(4);
       const { data } = await admin
