@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { lazy, Suspense, useEffect } from "react";
 import { QueryClient, QueryClientProvider, onlineManager } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -9,59 +9,64 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { LocationProvider } from "@/contexts/LocationContext";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { showErrorToast } from "@/lib/errorHandler";
+
+// Critical / above-the-fold routes — keep eager
 import Index from "./pages/Index";
-import Onboarding from "./pages/Onboarding";
-import Welcome from "./pages/Welcome";
-import Register from "./pages/Register";
-import Login from "./pages/Login";
-import Dashboard from "./pages/Dashboard";
-import Profile from "./pages/Profile";
-import ProviderProfileEdit from "./pages/ProviderProfileEdit";
-import ProviderProfilePreview from "./pages/ProviderProfilePreview";
-import Categories from "./pages/Categories";
-import CategoryServices from "./pages/CategoryServices";
-import ServiceDetailPage from "./pages/ServiceDetail";
-import MyServices from "./pages/MyServices";
-import CreateService from "./pages/CreateService";
-import PostJob from "./pages/PostJob";
-import MyJobs from "./pages/MyJobs";
-import JobDetail from "./pages/JobDetail";
-import JobBoard from "./pages/JobBoard";
-import BookService from "./pages/BookService";
-import MyBookings from "./pages/MyBookings";
-import Conversations from "./pages/Conversations";
-import Chat from "./pages/Chat";
-import Notifications from "./pages/Notifications";
-import NotFound from "./pages/NotFound";
-import PaymentScreen from "./pages/PaymentScreen";
-import ReviewForm from "./pages/ReviewForm";
-import ProviderReviews from "./pages/ProviderReviews";
-import ForgotPassword from "./pages/ForgotPassword";
-import ResetPassword from "./pages/ResetPassword";
-import ReportUser from "./pages/ReportUser";
-import SessionManagement from "./pages/SessionManagement";
-import SearchServices from "./pages/SearchServices";
-import AdminPanel from "./pages/AdminPanel";
-import ServiceMap from "./pages/ServiceMap";
-import NearbyServices from "./pages/NearbyServices";
-import PrivacyPolicy from "./pages/PrivacyPolicy";
-import TermsOfService from "./pages/TermsOfService";
-import JobSeekerDashboard from "./pages/JobSeekerDashboard";
-import JobSeekerProfile from "./pages/JobSeekerProfile";
-import MyApplications from "./pages/MyApplications";
-import ClientApplications from "./pages/ClientApplications";
-import SavedJobs from "./pages/SavedJobs";
-import ProviderPublicProfile from "./pages/ProviderPublicProfile";
 import VideoFeed from "./pages/VideoFeed";
-import UserVideos from "./pages/UserVideos";
-import RecordVideo from "./pages/RecordVideo";
-import HelpCenter from "./pages/HelpCenter";
-import Upgrade from "./pages/Upgrade";
-import GoLive from "./pages/GoLive";
-import LiveViewer from "./pages/LiveViewer";
-import Inbox from "./pages/Inbox";
-import NotificationSettings from "./pages/NotificationSettings";
-import PaymentHistory from "./pages/PaymentHistory";
+import Welcome from "./pages/Welcome";
+import Login from "./pages/Login";
+import NotFound from "./pages/NotFound";
+
+// Lazy-load everything else to shrink initial bundle
+const Onboarding = lazy(() => import("./pages/Onboarding"));
+const Register = lazy(() => import("./pages/Register"));
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const Profile = lazy(() => import("./pages/Profile"));
+const ProviderProfileEdit = lazy(() => import("./pages/ProviderProfileEdit"));
+const ProviderProfilePreview = lazy(() => import("./pages/ProviderProfilePreview"));
+const Categories = lazy(() => import("./pages/Categories"));
+const CategoryServices = lazy(() => import("./pages/CategoryServices"));
+const ServiceDetailPage = lazy(() => import("./pages/ServiceDetail"));
+const MyServices = lazy(() => import("./pages/MyServices"));
+const CreateService = lazy(() => import("./pages/CreateService"));
+const PostJob = lazy(() => import("./pages/PostJob"));
+const MyJobs = lazy(() => import("./pages/MyJobs"));
+const JobDetail = lazy(() => import("./pages/JobDetail"));
+const JobBoard = lazy(() => import("./pages/JobBoard"));
+const BookService = lazy(() => import("./pages/BookService"));
+const MyBookings = lazy(() => import("./pages/MyBookings"));
+const Conversations = lazy(() => import("./pages/Conversations"));
+const Chat = lazy(() => import("./pages/Chat"));
+const Notifications = lazy(() => import("./pages/Notifications"));
+const PaymentScreen = lazy(() => import("./pages/PaymentScreen"));
+const ReviewForm = lazy(() => import("./pages/ReviewForm"));
+const ProviderReviews = lazy(() => import("./pages/ProviderReviews"));
+const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+const ReportUser = lazy(() => import("./pages/ReportUser"));
+const SessionManagement = lazy(() => import("./pages/SessionManagement"));
+const SearchServices = lazy(() => import("./pages/SearchServices"));
+const AdminPanel = lazy(() => import("./pages/AdminPanel"));
+const ServiceMap = lazy(() => import("./pages/ServiceMap"));
+const NearbyServices = lazy(() => import("./pages/NearbyServices"));
+const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
+const TermsOfService = lazy(() => import("./pages/TermsOfService"));
+const JobSeekerDashboard = lazy(() => import("./pages/JobSeekerDashboard"));
+const JobSeekerProfile = lazy(() => import("./pages/JobSeekerProfile"));
+const MyApplications = lazy(() => import("./pages/MyApplications"));
+const ClientApplications = lazy(() => import("./pages/ClientApplications"));
+const SavedJobs = lazy(() => import("./pages/SavedJobs"));
+const ProviderPublicProfile = lazy(() => import("./pages/ProviderPublicProfile"));
+const UserVideos = lazy(() => import("./pages/UserVideos"));
+const RecordVideo = lazy(() => import("./pages/RecordVideo"));
+const HelpCenter = lazy(() => import("./pages/HelpCenter"));
+const Upgrade = lazy(() => import("./pages/Upgrade"));
+const GoLive = lazy(() => import("./pages/GoLive"));
+const LiveViewer = lazy(() => import("./pages/LiveViewer"));
+const Inbox = lazy(() => import("./pages/Inbox"));
+const NotificationSettings = lazy(() => import("./pages/NotificationSettings"));
+const PaymentHistory = lazy(() => import("./pages/PaymentHistory"));
+
 import { OfflineBanner } from "@/components/OfflineBanner";
 import ProfileGuard from "@/components/ProfileGuard";
 import { RateUsDialog } from "@/components/RateUsDialog";
@@ -102,6 +107,12 @@ const queryClient = new QueryClient({
   },
 });
 
+const RouteFallback = () => (
+  <div className="min-h-screen flex items-center justify-center bg-background">
+    <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+  </div>
+);
+
 const AppInner = () => {
   const ratePrompt = useRatePrompt();
   useAndroidBackButton();
@@ -117,62 +128,64 @@ const AppInner = () => {
     <>
       <OfflineBanner />
       <ProfileGuard>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/onboarding" element={<Onboarding />} />
-          <Route path="/welcome" element={<Welcome />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/provider-profile/edit" element={<ProviderProfileEdit />} />
-          <Route path="/provider-profile/preview" element={<ProviderProfilePreview />} />
-          <Route path="/search" element={<SearchServices />} />
-          <Route path="/map" element={<ServiceMap />} />
-          <Route path="/nearby" element={<NearbyServices />} />
-          <Route path="/categories" element={<Categories />} />
-          <Route path="/categories/:slug" element={<CategoryServices />} />
-          <Route path="/services/:id" element={<ServiceDetailPage />} />
-          <Route path="/my-services" element={<MyServices />} />
-          <Route path="/services/new" element={<CreateService />} />
-          <Route path="/jobs/new" element={<PostJob />} />
-          <Route path="/my-jobs" element={<MyJobs />} />
-          <Route path="/jobs/:id" element={<JobDetail />} />
-          <Route path="/job-seeker" element={<JobSeekerDashboard />} />
-          <Route path="/job-seeker-profile" element={<JobSeekerProfile />} />
-          <Route path="/my-applications" element={<MyApplications />} />
-          <Route path="/client-applications" element={<ClientApplications />} />
-          <Route path="/saved-jobs" element={<SavedJobs />} />
-          <Route path="/job-board" element={<JobBoard />} />
-          <Route path="/jobs" element={<JobBoard />} />
-          <Route path="/book/:serviceId" element={<BookService />} />
-          <Route path="/my-bookings" element={<MyBookings />} />
-          <Route path="/conversations" element={<Conversations />} />
-          <Route path="/chat/:conversationId" element={<Chat />} />
-          <Route path="/notifications" element={<Notifications />} />
-          <Route path="/payment/:bookingId" element={<PaymentScreen />} />
-          <Route path="/review/:bookingId" element={<ReviewForm />} />
-          <Route path="/provider/:providerId/reviews" element={<ProviderReviews />} />
-          <Route path="/provider/:providerId" element={<ProviderPublicProfile />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/reset-password" element={<ResetPassword />} />
-          <Route path="/report/:userId" element={<ReportUser />} />
-          <Route path="/admin" element={<AdminPanel />} />
-          <Route path="/security" element={<SessionManagement />} />
-          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-          <Route path="/terms-of-service" element={<TermsOfService />} />
-          <Route path="/videos" element={<VideoFeed />} />
-          <Route path="/videos/record" element={<RecordVideo />} />
-          <Route path="/user/:userId/videos" element={<UserVideos />} />
-          <Route path="/help" element={<HelpCenter />} />
-          <Route path="/upgrade" element={<Upgrade />} />
-          <Route path="/go-live" element={<GoLive />} />
-          <Route path="/live/:streamId" element={<LiveViewer />} />
-          <Route path="/inbox" element={<Inbox />} />
-          <Route path="/notification-settings" element={<NotificationSettings />} />
-          <Route path="/payment-history" element={<PaymentHistory />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+        <Suspense fallback={<RouteFallback />}>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/onboarding" element={<Onboarding />} />
+            <Route path="/welcome" element={<Welcome />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/provider-profile/edit" element={<ProviderProfileEdit />} />
+            <Route path="/provider-profile/preview" element={<ProviderProfilePreview />} />
+            <Route path="/search" element={<SearchServices />} />
+            <Route path="/map" element={<ServiceMap />} />
+            <Route path="/nearby" element={<NearbyServices />} />
+            <Route path="/categories" element={<Categories />} />
+            <Route path="/categories/:slug" element={<CategoryServices />} />
+            <Route path="/services/:id" element={<ServiceDetailPage />} />
+            <Route path="/my-services" element={<MyServices />} />
+            <Route path="/services/new" element={<CreateService />} />
+            <Route path="/jobs/new" element={<PostJob />} />
+            <Route path="/my-jobs" element={<MyJobs />} />
+            <Route path="/jobs/:id" element={<JobDetail />} />
+            <Route path="/job-seeker" element={<JobSeekerDashboard />} />
+            <Route path="/job-seeker-profile" element={<JobSeekerProfile />} />
+            <Route path="/my-applications" element={<MyApplications />} />
+            <Route path="/client-applications" element={<ClientApplications />} />
+            <Route path="/saved-jobs" element={<SavedJobs />} />
+            <Route path="/job-board" element={<JobBoard />} />
+            <Route path="/jobs" element={<JobBoard />} />
+            <Route path="/book/:serviceId" element={<BookService />} />
+            <Route path="/my-bookings" element={<MyBookings />} />
+            <Route path="/conversations" element={<Conversations />} />
+            <Route path="/chat/:conversationId" element={<Chat />} />
+            <Route path="/notifications" element={<Notifications />} />
+            <Route path="/payment/:bookingId" element={<PaymentScreen />} />
+            <Route path="/review/:bookingId" element={<ReviewForm />} />
+            <Route path="/provider/:providerId/reviews" element={<ProviderReviews />} />
+            <Route path="/provider/:providerId" element={<ProviderPublicProfile />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/report/:userId" element={<ReportUser />} />
+            <Route path="/admin" element={<AdminPanel />} />
+            <Route path="/security" element={<SessionManagement />} />
+            <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+            <Route path="/terms-of-service" element={<TermsOfService />} />
+            <Route path="/videos" element={<VideoFeed />} />
+            <Route path="/videos/record" element={<RecordVideo />} />
+            <Route path="/user/:userId/videos" element={<UserVideos />} />
+            <Route path="/help" element={<HelpCenter />} />
+            <Route path="/upgrade" element={<Upgrade />} />
+            <Route path="/go-live" element={<GoLive />} />
+            <Route path="/live/:streamId" element={<LiveViewer />} />
+            <Route path="/inbox" element={<Inbox />} />
+            <Route path="/notification-settings" element={<NotificationSettings />} />
+            <Route path="/payment-history" element={<PaymentHistory />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </Suspense>
       </ProfileGuard>
       <RateUsDialog
         open={ratePrompt.open}
