@@ -32,8 +32,21 @@ declare global {
 const STORAGE_PREFIX = "servio_upload_session";
 const ACTIVE_FLOW_KEY = "servio_active_media_flow";
 const FLOW_TTL_MS = 10 * 60 * 1000;
+const SELECTION_CLOSE_GUARD_MS = 2500;
 
 const storageKey = (sessionKey: string, suffix: string) => `${STORAGE_PREFIX}:${sessionKey}:${suffix}`;
+
+const setSelectionCloseGuard = (sessionKey: string) => {
+  const until = Date.now() + SELECTION_CLOSE_GUARD_MS;
+  sessionStorage.setItem(storageKey(sessionKey, "closeGuardUntil"), String(until));
+  return until;
+};
+
+const getSelectionCloseGuard = (sessionKey: string) =>
+  Number(sessionStorage.getItem(storageKey(sessionKey, "closeGuardUntil")) || 0);
+
+export const mediaSessionHasRecentSelection = (sessionKey: string) =>
+  Date.now() < getSelectionCloseGuard(sessionKey);
 
 const inferKind = (file: File): MobileMediaKind => {
   if (isVideoFile(file)) return "video";
@@ -80,8 +93,11 @@ export const storeUploadSessionFile = (
     source,
     kind,
     savedAt: Date.now(),
+    routeAtSelection: window.location.pathname,
   }));
-  logMobileMediaEvent("file-stored", { sessionKey, source, kind, name: file.name, size: file.size, type: file.type });
+  setSelectionCloseGuard(sessionKey);
+  logMobileMediaEvent("file-stored-preview-ready", { sessionKey, source, kind, name: file.name, size: file.size, type: file.type });
+  window.dispatchEvent(new CustomEvent("servio-media-selected", { detail: { sessionKey, source, kind } }));
   return window.__servioUploadSessions[sessionKey];
 };
 
@@ -100,6 +116,7 @@ export const clearUploadSessionFile = (sessionKey: string) => {
   if (existing?.objectUrl) URL.revokeObjectURL(existing.objectUrl);
   if (window.__servioUploadSessions) delete window.__servioUploadSessions[sessionKey];
   sessionStorage.removeItem(storageKey(sessionKey, "fileMeta"));
+  sessionStorage.removeItem(storageKey(sessionKey, "closeGuardUntil"));
 };
 
 export const setActiveMediaFlow = (flow: ActiveFlow) => {
@@ -134,6 +151,7 @@ export const MobileMediaRecovery = () => {
       // unmount the open upload dialog and discard the user's selection.
       const hasPendingFile = Boolean(window.__servioUploadSessions?.[flow.sessionKey]);
       if (hasPendingFile && flow.route && window.location.pathname !== flow.route) {
+        logMobileMediaEvent("recover-navigate-to-upload-host", { sessionKey: flow.sessionKey, from: window.location.pathname, to: flow.route });
         navigate(flow.route, { replace: true, state: { restoreUploadSession: flow.sessionKey } });
       }
     };
