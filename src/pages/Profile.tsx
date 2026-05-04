@@ -33,7 +33,7 @@ const Profile = () => {
   useEffect(() => {
     if (user) {
       supabase.from("profiles").select("*").eq("user_id", user.id).maybeSingle().then(({ data }) => {
-        if (data) setProfile({ full_name: data.full_name || "", phone: data.phone || "", location: data.location || "" });
+        if (data) setProfile({ full_name: data.full_name || "", phone: data.phone || "", location: data.location || "", avatar_url: data.avatar_url || "" });
       });
     }
   }, [user]);
