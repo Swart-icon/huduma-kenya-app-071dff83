@@ -27,6 +27,15 @@ export const CreateStoryDialog = ({ open, onClose }: Props) => {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    const isImage = (file.type && file.type.startsWith("image/")) || /\.(jpg|jpeg|png|webp|gif|heic|heif)$/i.test(file.name);
+    if (!isImage) {
+      toast({ title: "Please choose an image file", variant: "destructive" });
+      return;
+    }
+    if (file.size > 20 * 1024 * 1024) {
+      toast({ title: "Image too large", description: "Max 20MB", variant: "destructive" });
+      return;
+    }
     setImageFile(file);
     setPreview(URL.createObjectURL(file));
   };
