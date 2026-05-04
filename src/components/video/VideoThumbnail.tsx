@@ -146,20 +146,12 @@ export const VideoThumbnail = ({
     return <img src={src} alt={alt} className={className} loading="lazy" decoding="async" />;
   }
 
-  if (errored) {
-    // Last-resort: show the video element with its native poster (still real frame, no play icon overlay from us)
-    return (
-      <video
-        src={videoUrl}
-        className={className}
-        preload="metadata"
-        muted
-        playsInline
-        // Append #t=1.5 so most browsers grab a frame near 1.5s for the poster
-      />
-    );
-  }
-
-  // Loading shimmer — never a permanent placeholder
-  return <div className={`${className ?? ""} bg-muted animate-pulse`} aria-label="Loading thumbnail" />;
+  // No thumbnail yet (loading or errored). Show ONLY a neutral shimmer —
+  // never an icon, never a static placeholder, never a <video> poster.
+  return (
+    <div
+      className={`${className ?? ""} bg-muted animate-pulse`}
+      aria-label={errored ? "Thumbnail unavailable" : "Loading thumbnail"}
+    />
+  );
 };
