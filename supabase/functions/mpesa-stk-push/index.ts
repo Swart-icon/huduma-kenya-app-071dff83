@@ -122,6 +122,36 @@ Deno.serve(async (req) => {
 
     const callbackUrl = `${SUPABASE_URL}/functions/v1/mpesa-callback`;
 
+    // CRITICAL: Insert the transaction record BEFORE calling PayHero.
+    // If PayHero callback arrives before we record the transaction, the
+    // callback handler will reject the payment as "No matching transaction
+    // found" and the user's payment becomes orphaned even though it succeeded.
+    const { data: txRow, error: txInsertErr } = await admin
+      .from("mpesa_transactions")
+      .insert({
+        user_id: user.id,
+        subscription_id: externalRef.startsWith("sub_") ? externalRef.slice(4) : null,
+        boost_id: externalRef.startsWith("boost_") ? externalRef.slice(6) : null,
+        external_reference: externalRef,
+        purpose: purpose === "boost" ? "status_boost" : `${body.roleType}_subscription`,
+        amount_kes: amount,
+        phone_number: msisdn,
+        status: "pending",
+      })
+      .select("id")
+      .single();
+
+    if (txInsertErr || !txRow) {
+      console.error("mpesa_transactions insert error:", txInsertErr);
+      // Roll back the subscription/boost we just created so the user isn't blocked.
+      if (externalRef.startsWith("sub_")) {
+        await admin.from("premium_subscriptions").update({ status: "failed" }).eq("id", externalRef.slice(4));
+      } else if (externalRef.startsWith("boost_")) {
+        await admin.from("status_boosts").update({ payment_status: "failed" }).eq("id", externalRef.slice(6));
+      }
+      return json({ error: "Could not record transaction" }, 500);
+    }
+
     const phResp = await fetch("https://backend.payhero.co.ke/api/v2/payments", {
       method: "POST",
       headers: {
@@ -143,6 +173,14 @@ Deno.serve(async (req) => {
     console.log("PayHero response:", phResp.status, JSON.stringify(phData));
 
     if (!phResp.ok || phData?.success === false) {
+      // Mark transaction + subscription/boost as failed
+      await admin
+        .from("mpesa_transactions")
+        .update({
+          status: "failed",
+          result_desc: phData?.error_message || phData?.message || `PayHero HTTP ${phResp.status}`,
+        })
+        .eq("id", txRow.id);
       if (externalRef.startsWith("sub_")) {
         await admin.from("premium_subscriptions").update({ status: "failed" }).eq("id", externalRef.slice(4));
       } else if (externalRef.startsWith("boost_")) {
@@ -157,18 +195,15 @@ Deno.serve(async (req) => {
     const checkoutRequestId =
       phData?.CheckoutRequestID ?? phData?.reference ?? phData?.transaction_reference ?? externalRef;
 
-    await admin.from("mpesa_transactions").insert({
-      user_id: user.id,
-      subscription_id: externalRef.startsWith("sub_") ? externalRef.slice(4) : null,
-      boost_id: externalRef.startsWith("boost_") ? externalRef.slice(6) : null,
-      external_reference: externalRef,
-      purpose: purpose === "boost" ? "status_boost" : `${body.roleType}_subscription`,
-      amount_kes: amount,
-      phone_number: msisdn,
-      checkout_request_id: checkoutRequestId,
-      merchant_request_id: phData?.MerchantRequestID ?? null,
-      status: "pending",
-    });
+    // Update the existing tx row with the IDs returned by PayHero so the
+    // callback handler can locate it by checkout_request_id.
+    await admin
+      .from("mpesa_transactions")
+      .update({
+        checkout_request_id: checkoutRequestId,
+        merchant_request_id: phData?.MerchantRequestID ?? null,
+      })
+      .eq("id", txRow.id);
 
     return json({ checkoutRequestId, externalRef, success: true });
   } catch (e) {
