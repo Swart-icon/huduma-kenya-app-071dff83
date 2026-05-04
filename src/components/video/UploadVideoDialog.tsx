@@ -156,16 +156,26 @@ export const UploadVideoDialog = ({ open, onOpenChange }: { open: boolean; onOpe
   const startRecording = () => {
     if (!stream) return;
     chunksRef.current = [];
-    const mimeType = MediaRecorder.isTypeSupported("video/webm;codecs=vp9,opus")
-      ? "video/webm;codecs=vp9,opus"
-      : "video/webm";
-    const recorder = new MediaRecorder(stream, { mimeType });
+    // iOS Safari can't record webm. Try webm first (Android/desktop), fall back to mp4 (iOS).
+    const candidates = [
+      "video/webm;codecs=vp9,opus",
+      "video/webm;codecs=vp8,opus",
+      "video/webm",
+      "video/mp4;codecs=h264,aac",
+      "video/mp4",
+    ];
+    const mimeType = candidates.find((m) => MediaRecorder.isTypeSupported(m)) || "";
+    const recorder = mimeType
+      ? new MediaRecorder(stream, { mimeType })
+      : new MediaRecorder(stream);
+    const outputType = mimeType || recorder.mimeType || "video/webm";
+    const ext = outputType.includes("mp4") ? "mp4" : "webm";
     recorder.ondataavailable = (e) => {
       if (e.data.size > 0) chunksRef.current.push(e.data);
     };
     recorder.onstop = () => {
-      const blob = new Blob(chunksRef.current, { type: "video/webm" });
-      const recordedFile = new File([blob], `recording-${Date.now()}.webm`, { type: "video/webm" });
+      const blob = new Blob(chunksRef.current, { type: outputType });
+      const recordedFile = new File([blob], `recording-${Date.now()}.${ext}`, { type: outputType });
       setFile(recordedFile);
       setPreview(URL.createObjectURL(blob));
       stopCamera();
