@@ -176,18 +176,14 @@ const Profile = () => {
                 </button>
               </div>
             </div>
-                <p className="font-semibold text-foreground">{profile.full_name || "No name set"}</p>
-                <p className="text-sm text-muted-foreground">{user?.email}</p>
-                <div className="flex flex-wrap gap-1 mt-1">
-                  {nonAdminRoles.map((r) => (
-                    <span key={r} className={`inline-block text-xs font-semibold px-2 py-0.5 rounded-full ${
-                      r === role ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
-                    }`}>
-                      {roleOptions.find((o) => o.value === r)?.label}
-                    </span>
-                  ))}
-                </div>
-              </div>
+            <div className="flex flex-wrap gap-1">
+              {nonAdminRoles.map((r) => (
+                <span key={r} className={`inline-block text-xs font-semibold px-2 py-0.5 rounded-full ${
+                  r === role ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
+                }`}>
+                  {roleOptions.find((o) => o.value === r)?.label}
+                </span>
+              ))}
             </div>
           </CardContent>
         </Card>
