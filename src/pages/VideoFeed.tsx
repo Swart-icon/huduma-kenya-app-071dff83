@@ -20,6 +20,7 @@ import { CommentsSheet } from "@/components/video/CommentsSheet";
 import { VideoSlide } from "@/components/video/VideoSlide";
 import type { VideoItem, FeedTab } from "@/components/video/types";
 import { VideoSearchSuggestions, saveSearchTerm } from "@/components/video/VideoSearchSuggestions";
+import { hasUploadSessionState, logMobileMediaEvent } from "@/hooks/useMobileMediaLifecycle";
 import { toast } from "sonner";
 
 const PAGE_SIZE = 10;
@@ -101,8 +102,28 @@ const VideoFeed = () => {
   useEffect(() => {
     if (sessionStorage.getItem("open_upload_dialog") === "1") {
       sessionStorage.removeItem("open_upload_dialog");
+      logMobileMediaEvent("video-dialog-auto-open-recording", { sessionKey: "video-upload" });
       setUploadOpen(true);
     }
+  }, []);
+
+  // If Android/iOS briefly closes the dialog while returning from the native
+  // picker, immediately reopen the same isolated upload session instead of
+  // leaving the user on the feed with the file cached for later.
+  useEffect(() => {
+    const reopenIfPending = (reason: string) => {
+      if (hasUploadSessionState("video-upload")) {
+        logMobileMediaEvent("video-dialog-auto-reopen", { sessionKey: "video-upload", reason });
+        setUploadOpen(true);
+      }
+    };
+    reopenIfPending("mount");
+    const onSelected = (event: Event) => {
+      const detail = (event as CustomEvent).detail;
+      if (detail?.sessionKey === "video-upload") reopenIfPending("media-selected");
+    };
+    window.addEventListener("servio-media-selected", onSelected);
+    return () => window.removeEventListener("servio-media-selected", onSelected);
   }, []);
   const [commentVideoId, setCommentVideoId] = useState<string | null>(null);
   const [commentsOpen, setCommentsOpen] = useState(false);
