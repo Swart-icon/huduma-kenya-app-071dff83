@@ -266,11 +266,11 @@ const ClientApplications = () => {
                         <div key={app.id} className="bg-background rounded-xl p-3 shadow-sm">
                           <div className="flex items-start justify-between gap-2 mb-2">
                             <div className="flex items-center gap-2 min-w-0 flex-1">
-                              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                              <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
                                 <UserIcon className="w-4 h-4 text-primary" />
                               </div>
                               <div className="min-w-0 flex-1">
-                                <p className="text-sm font-semibold text-foreground truncate">{app.applicant_name}</p>
+                                <p className="text-sm font-semibold text-foreground truncate">{app.applicant_display_name}</p>
                                 <p className="text-[10px] text-muted-foreground">
                                   Applied {new Date(app.created_at).toLocaleDateString()}
                                 </p>
@@ -285,10 +285,68 @@ const ClientApplications = () => {
                             </Badge>
                           </div>
 
+                          {/* Contact + details grid */}
+                          <div className="pl-11 space-y-1.5 mb-2">
+                            {app.applicant_email && (
+                              <a
+                                href={`mailto:${app.applicant_email}`}
+                                className="flex items-center gap-2 text-xs text-foreground hover:text-primary"
+                              >
+                                <Mail className="w-3 h-3 text-muted-foreground" />
+                                <span className="truncate">{app.applicant_email}</span>
+                              </a>
+                            )}
+                            {app.applicant_phone && (
+                              <a
+                                href={`tel:${app.applicant_phone}`}
+                                className="flex items-center gap-2 text-xs text-foreground hover:text-primary"
+                              >
+                                <Phone className="w-3 h-3 text-muted-foreground" />
+                                <span>{app.applicant_phone}</span>
+                              </a>
+                            )}
+                            {app.years_experience !== null && app.years_experience !== undefined && (
+                              <div className="flex items-center gap-2 text-xs text-foreground">
+                                <Award className="w-3 h-3 text-muted-foreground" />
+                                <span>{app.years_experience} {app.years_experience === 1 ? "year" : "years"} experience</span>
+                              </div>
+                            )}
+                            {app.expected_salary && (
+                              <div className="flex items-center gap-2 text-xs text-foreground">
+                                <DollarSign className="w-3 h-3 text-muted-foreground" />
+                                <span>Expects KSh {Number(app.expected_salary).toLocaleString()}</span>
+                              </div>
+                            )}
+                            {app.availability && (
+                              <div className="flex items-center gap-2 text-xs text-foreground">
+                                <Calendar className="w-3 h-3 text-muted-foreground" />
+                                <span className="truncate">{app.availability}</span>
+                              </div>
+                            )}
+                            {app.skills && (
+                              <div className="flex items-start gap-2 text-xs text-foreground">
+                                <Sparkles className="w-3 h-3 text-muted-foreground mt-0.5 shrink-0" />
+                                <span className="line-clamp-2">{app.skills}</span>
+                              </div>
+                            )}
+                            {app.cv_url && (
+                              <a
+                                href={app.cv_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-2 mt-1 px-2.5 py-1.5 rounded-lg bg-primary/10 text-primary text-xs font-medium hover:bg-primary/20"
+                              >
+                                <FileText className="w-3.5 h-3.5" />
+                                {app.cv_filename || "Download CV"}
+                              </a>
+                            )}
+                          </div>
+
                           {app.cover_message && (
-                            <p className="text-xs text-muted-foreground line-clamp-2 mb-2 pl-10">
-                              {app.cover_message}
-                            </p>
+                            <div className="pl-11 mb-2">
+                              <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold mb-0.5">Cover message</p>
+                              <p className="text-xs text-foreground whitespace-pre-wrap">{app.cover_message}</p>
+                            </div>
                           )}
 
                           <div className="flex flex-wrap gap-1.5 pl-10">
