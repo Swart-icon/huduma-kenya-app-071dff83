@@ -197,7 +197,7 @@ export const UploadVideoDialog = ({ open, onOpenChange }: { open: boolean; onOpe
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
     if (!f) return;
-    if (!ALLOWED_FORMATS.includes(f.type)) { toast.error("Use MP4, WebM, or MOV format."); return; }
+    if (!isAcceptableVideo(f)) { toast.error("Please choose a video file (MP4, MOV, WebM, etc.)"); return; }
     if (f.size > MAX_VIDEO_SIZE_MB * 1024 * 1024) { toast.error("Video must be under 1GB"); return; }
     setFile(f);
     setPreview(URL.createObjectURL(f));
