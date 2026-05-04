@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -9,9 +9,10 @@ import { Camera, X, Loader2, Zap } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { BoostStatusDialog } from "./BoostStatusDialog";
 import {
-  validateImageFile, prepareImageForUpload, uploadWithProgress,
-  friendlyUploadError, logFileMeta,
+  isImageFile, isVideoFile, normalizedMime, validateImageFile, validateVideoFile,
+  prepareImageForUpload, uploadWithProgress, friendlyUploadError, logFileMeta,
 } from "@/lib/mobileUpload";
+import { useMobileMediaLifecycle } from "@/hooks/useMobileMediaLifecycle";
 
 interface Props {
   open: boolean;
@@ -23,36 +24,58 @@ export const CreateStoryDialog = ({ open, onClose }: Props) => {
   const { toast } = useToast();
   const fileRef = useRef<HTMLInputElement>(null);
   const [text, setText] = useState("");
-  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [mediaFile, setMediaFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [progress, setProgress] = useState(0);
   const [progressLabel, setProgressLabel] = useState("");
   const [postedStatusId, setPostedStatusId] = useState<string | null>(null);
   const [showBoost, setShowBoost] = useState(false);
+  const mediaLifecycle = useMobileMediaLifecycle<{ text: string }>("story-upload", open);
+
+  useEffect(() => {
+    if (!open) return;
+    const draft = mediaLifecycle.loadDraft();
+    if (typeof draft?.text === "string") setText(draft.text);
+    const restored = mediaLifecycle.restoreFile();
+    if (restored?.file) {
+      setMediaFile(restored.file);
+      setPreview(restored.objectUrl);
+    } else if (mediaLifecycle.hasInterruptedFile()) {
+      toast({ title: "Unable to load selected media", description: "Please try again.", variant: "destructive" });
+    }
+  }, [open]);
+
+  useEffect(() => {
+    if (open) mediaLifecycle.saveDraft({ text });
+  }, [open, text, mediaLifecycle]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (!file) { mediaLifecycle.endPicker("no-file-selected"); return; }
     logFileMeta("CreateStory", file);
-    const v = validateImageFile(file);
+    const v = isVideoFile(file) ? validateVideoFile(file) : validateImageFile(file);
     if (!v.ok) {
+      mediaLifecycle.endPicker("validation-failed");
       toast({ title: v.error!, variant: "destructive" });
       return;
     }
-    setImageFile(file);
-    setPreview(URL.createObjectURL(file));
+    const stored = mediaLifecycle.rememberFile(file, isVideoFile(file) ? "gallery" : "file-picker", isVideoFile(file) ? "video" : "image");
+    setMediaFile(stored.file);
+    setPreview(stored.objectUrl);
+    e.currentTarget.value = "";
   };
 
   const removeImage = () => {
-    setImageFile(null);
+    setMediaFile(null);
     setPreview(null);
+    mediaLifecycle.clearAll();
   };
 
   const handleSubmit = async () => {
     if (!user) return;
-    if (!text.trim() && !imageFile) {
-      toast({ title: "Add text or an image", variant: "destructive" });
+    if (!text.trim() && !mediaFile) {
+      toast({ title: "Add text or media", variant: "destructive" });
       return;
     }
 
@@ -61,12 +84,12 @@ export const CreateStoryDialog = ({ open, onClose }: Props) => {
 
     let image_url: string | null = null;
 
-    if (imageFile) {
+    if (mediaFile) {
       try {
-        setProgressLabel("Processing image…");
-        const prepared = await prepareImageForUpload(imageFile);
-        const rawExt = (prepared.name.split(".").pop() || "jpg").toLowerCase();
-        const ext = rawExt.length <= 5 ? rawExt : "jpg";
+        setProgressLabel(isImageFile(mediaFile) ? "Processing image…" : "Preparing video…");
+        const prepared = isImageFile(mediaFile) ? await prepareImageForUpload(mediaFile) : mediaFile;
+        const rawExt = (prepared.name.split(".").pop() || (isVideoFile(prepared) ? "mp4" : "jpg")).toLowerCase();
+        const ext = rawExt.length <= 5 ? rawExt : (isVideoFile(prepared) ? "mp4" : "jpg");
         const path = `${user.id}/status_${Date.now()}.${ext}`;
 
         setProgressLabel("Uploading…");
@@ -74,7 +97,7 @@ export const CreateStoryDialog = ({ open, onClose }: Props) => {
           bucket: "provider-images",
           path,
           file: prepared,
-          contentType: prepared.type || "image/jpeg",
+          contentType: normalizedMime(prepared),
           upsert: true,
           onProgress: setProgress,
         });
@@ -86,7 +109,7 @@ export const CreateStoryDialog = ({ open, onClose }: Props) => {
       } catch (uploadErr: any) {
         console.error("[CreateStory] upload error", uploadErr);
         toast({
-          title: "Image upload failed",
+          title: "Media upload failed",
           description: friendlyUploadError(uploadErr),
           variant: "destructive",
         });
@@ -115,14 +138,16 @@ export const CreateStoryDialog = ({ open, onClose }: Props) => {
       toast({ title: "Failed to post story", description: error?.message, variant: "destructive" });
     } else {
       toast({ title: "Story posted!" });
+      mediaLifecycle.clearAll();
       setPostedStatusId(inserted.id);
     }
   };
 
   const resetAll = () => {
     setText("");
-    setImageFile(null);
+    setMediaFile(null);
     setPreview(null);
+    mediaLifecycle.clearAll();
     setPostedStatusId(null);
     setShowBoost(false);
     onClose();
@@ -130,7 +155,7 @@ export const CreateStoryDialog = ({ open, onClose }: Props) => {
 
   return (
     <>
-      <Dialog open={open && !showBoost} onOpenChange={(v) => !v && resetAll()}>
+      <Dialog open={open && !showBoost} onOpenChange={(v) => !v && !mediaLifecycle.shouldBlockClose() && resetAll()}>
         <DialogContent className="max-w-sm rounded-2xl">
           <DialogHeader>
             <DialogTitle className="font-display">
@@ -170,7 +195,11 @@ export const CreateStoryDialog = ({ open, onClose }: Props) => {
               {/* Image preview */}
               {preview ? (
                 <div className="relative rounded-xl overflow-hidden">
-                  <img src={preview} alt="Preview" className="w-full h-48 object-cover" />
+                  {mediaFile && isVideoFile(mediaFile) ? (
+                    <video src={preview} className="w-full h-48 object-contain bg-black" controls playsInline />
+                  ) : (
+                    <img src={preview} alt="Preview" className="w-full h-48 object-cover" />
+                  )}
                   <button
                     onClick={removeImage}
                     className="absolute top-2 right-2 w-7 h-7 rounded-full bg-black/50 flex items-center justify-center"
@@ -184,14 +213,15 @@ export const CreateStoryDialog = ({ open, onClose }: Props) => {
                   className="w-full h-32 rounded-xl border-2 border-dashed border-border flex flex-col items-center justify-center gap-2 text-muted-foreground hover:border-primary/50 hover:text-primary transition-colors"
                 >
                   <Camera className="w-8 h-8" />
-                  <span className="text-sm font-semibold">Add Photo</span>
+                  <span className="text-sm font-semibold">Add Media</span>
                 </button>
               )}
 
               <input
                 ref={fileRef}
                 type="file"
-                accept="image/*,.jpg,.jpeg,.png,.webp,.gif,.heic,.heif"
+                accept="image/*,video/*,.jpg,.jpeg,.png,.webp,.gif,.heic,.heif,.mp4,.mov,.m4v,.webm,.3gp"
+                onClick={() => mediaLifecycle.beginPicker("gallery")}
                 onChange={handleFileChange}
                 className="hidden"
               />
@@ -223,7 +253,7 @@ export const CreateStoryDialog = ({ open, onClose }: Props) => {
 
               <Button
                 onClick={handleSubmit}
-                disabled={submitting || (!text.trim() && !imageFile)}
+                disabled={submitting || (!text.trim() && !mediaFile)}
                 className="w-full rounded-xl h-12 font-bold"
               >
                 {submitting ? (
