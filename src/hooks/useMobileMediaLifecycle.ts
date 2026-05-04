@@ -227,7 +227,8 @@ export const useMobileMediaLifecycle = <TDraft extends Record<string, unknown>>(
       clearActiveMediaFlow(sessionKey);
     },
     shouldBlockClose: () => {
-      const block = selecting || mediaSessionHasRecentSelection(sessionKey) || Boolean(safeParse<ActiveFlow>(sessionStorage.getItem(ACTIVE_FLOW_KEY))?.sessionKey === sessionKey);
+      const activeForThisSession = safeParse<ActiveFlow>(sessionStorage.getItem(ACTIVE_FLOW_KEY))?.sessionKey === sessionKey;
+      const block = selecting || mediaSessionHasRecentSelection(sessionKey) || (activeForThisSession && !getUploadSessionFile(sessionKey));
       if (block) {
         logMobileMediaEvent("close-blocked-during-media-flow", { sessionKey, selecting, recentSelection: mediaSessionHasRecentSelection(sessionKey) });
         toast.info("Returning to upload…");
