@@ -132,6 +132,14 @@ export const clearActiveMediaFlow = (sessionKey?: string) => {
   }
 };
 
+export const getActiveMediaFlow = () =>
+  safeParse<ActiveFlow>(sessionStorage.getItem(ACTIVE_FLOW_KEY));
+
+export const hasActiveMediaUploadFlow = () => {
+  const flow = getActiveMediaFlow();
+  return Boolean(flow && Date.now() - flow.startedAt <= FLOW_TTL_MS);
+};
+
 export const MobileMediaRecovery = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -205,7 +213,6 @@ export const useMobileMediaLifecycle = <TDraft extends Record<string, unknown>>(
     rememberFile: (file: File, source: MobileMediaSource, kind?: MobileMediaKind) => {
       const stored = storeUploadSessionFile(sessionKey, file, source, kind);
       setSelecting(false);
-      clearActiveMediaFlow(sessionKey);
       return stored;
     },
     restoreFile: () => getUploadSessionFile(sessionKey),
