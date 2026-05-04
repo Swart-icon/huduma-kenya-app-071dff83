@@ -246,14 +246,19 @@ export const UploadVideoDialog = ({ open, onOpenChange }: { open: boolean; onOpe
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
-    if (!f) return;
+    if (!f) {
+      mediaLifecycle.endPicker("no-file-selected");
+      return;
+    }
     logFileMeta("UploadVideo", f);
-    if (!isVideoFile(f)) { toast.error("Unsupported file type. Use MP4, MOV, or WebM."); return; }
+    if (!isVideoFile(f)) { mediaLifecycle.endPicker("unsupported-type"); toast.error("Unsupported file type. Use MP4, MOV, or WebM."); return; }
     const v = validateVideoFile(f);
-    if (!v.ok) { toast.error(v.error!); return; }
-    setFile(f);
-    setPreview(URL.createObjectURL(f));
+    if (!v.ok) { mediaLifecycle.endPicker("validation-failed"); toast.error(v.error!); return; }
+    const stored = mediaLifecycle.rememberFile(f, "gallery", "video");
+    setFile(stored.file);
+    setPreview(stored.objectUrl);
     if (submitted) setErrors((prev) => ({ ...prev, file: undefined }));
+    e.currentTarget.value = "";
   };
 
   const validate = (): ValidationErrors => {
@@ -376,7 +381,10 @@ export const UploadVideoDialog = ({ open, onOpenChange }: { open: boolean; onOpe
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={(next) => {
+      if (!next && mediaLifecycle.shouldBlockClose()) return;
+      onOpenChange(next);
+    }}>
       <DialogContent className="max-w-md mx-auto max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -404,7 +412,13 @@ export const UploadVideoDialog = ({ open, onOpenChange }: { open: boolean; onOpe
                   <Upload className="w-8 h-8 text-primary/60 mb-2" />
                   <p className="text-sm font-medium text-primary">Tap to select video</p>
                   <p className="text-xs text-muted-foreground mt-1">MP4, WebM, MOV • Max 1GB</p>
-                  <input type="file" accept="video/*,.mp4,.mov,.m4v,.webm,.3gp,.mkv" className="hidden" onChange={handleFileSelect} />
+                  <input
+                    type="file"
+                    accept="video/*,.mp4,.mov,.m4v,.webm,.3gp,.mkv"
+                    className="hidden"
+                    onClick={() => mediaLifecycle.beginPicker("gallery")}
+                    onChange={handleFileSelect}
+                  />
                 </label>
                 <FieldError message={errors.file} />
               </TabsContent>
@@ -412,7 +426,7 @@ export const UploadVideoDialog = ({ open, onOpenChange }: { open: boolean; onOpe
               <TabsContent value="record">
                 <div className="space-y-3">
                   <button
-                    onClick={() => { stopCamera(); onOpenChange(false); navigate("/videos/record"); }}
+                    onClick={() => { mediaLifecycle.saveDraft({ description, categoryId, county, city, allowDownloads }); stopCamera(); onOpenChange(false); navigate("/videos/record"); }}
                     className="flex flex-col items-center justify-center w-full h-36 border-2 border-dashed rounded-2xl border-primary/40 hover:border-primary/70 bg-gradient-to-br from-primary/10 to-primary/5 transition-colors"
                   >
                     <Maximize2 className="w-8 h-8 text-primary/70 mb-2" />
