@@ -395,6 +395,7 @@ const Dashboard = () => {
             <div>
               <SectionHeader title="Explore" icon={<Search className="w-3.5 h-3.5" />} />
               <div className="space-y-2.5">
+                <ActionCard icon={<ShoppingBag className="w-5 h-5" />} label="Buy Goods" description="Shop products from sellers across all categories" onClick={() => navigate("/categories?mode=goods")} accent="bg-accent/15 text-accent-foreground" />
                 <ActionCard icon={<NavigationIcon className="w-5 h-5" />} label="Nearby Services" description="Discover services close to you" onClick={() => navigate("/nearby")} />
                 <ActionCard icon={<Search className="w-5 h-5" />} label="Search Services" description="Find services with filters" onClick={() => navigate("/search")} accent="bg-accent/15 text-accent-foreground" />
                 <ActionCard icon={<Grid className="w-5 h-5" />} label="Browse Categories" description="Explore services by category" onClick={() => navigate("/categories")} accent="bg-secondary/10 text-secondary" />
