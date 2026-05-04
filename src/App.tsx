@@ -29,6 +29,9 @@ const CategoryServices = lazy(() => import("./pages/CategoryServices"));
 const ServiceDetailPage = lazy(() => import("./pages/ServiceDetail"));
 const MyServices = lazy(() => import("./pages/MyServices"));
 const CreateService = lazy(() => import("./pages/CreateService"));
+const MyGoods = lazy(() => import("./pages/MyGoods"));
+const CreateGood = lazy(() => import("./pages/CreateGood"));
+const GoodDetail = lazy(() => import("./pages/GoodDetail"));
 const PostJob = lazy(() => import("./pages/PostJob"));
 const MyJobs = lazy(() => import("./pages/MyJobs"));
 const JobDetail = lazy(() => import("./pages/JobDetail"));
@@ -149,6 +152,9 @@ const AppInner = () => {
             <Route path="/services/:id" element={<ServiceDetailPage />} />
             <Route path="/my-services" element={<MyServices />} />
             <Route path="/services/new" element={<CreateService />} />
+            <Route path="/my-goods" element={<MyGoods />} />
+            <Route path="/goods/new" element={<CreateGood />} />
+            <Route path="/goods/:id" element={<GoodDetail />} />
             <Route path="/jobs/new" element={<PostJob />} />
             <Route path="/my-jobs" element={<MyJobs />} />
             <Route path="/jobs/:id" element={<JobDetail />} />

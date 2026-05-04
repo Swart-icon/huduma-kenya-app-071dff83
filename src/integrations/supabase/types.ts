@@ -197,6 +197,77 @@ export type Database = {
           },
         ]
       }
+      goods: {
+        Row: {
+          category_id: string
+          city: string | null
+          condition: string
+          county: string | null
+          created_at: string
+          description: string | null
+          id: string
+          images: string[]
+          is_active: boolean
+          latitude: number | null
+          longitude: number | null
+          price: number | null
+          price_type: string
+          seller_id: string
+          stock_quantity: number | null
+          title: string
+          updated_at: string
+          view_count: number
+        }
+        Insert: {
+          category_id: string
+          city?: string | null
+          condition?: string
+          county?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          images?: string[]
+          is_active?: boolean
+          latitude?: number | null
+          longitude?: number | null
+          price?: number | null
+          price_type?: string
+          seller_id: string
+          stock_quantity?: number | null
+          title: string
+          updated_at?: string
+          view_count?: number
+        }
+        Update: {
+          category_id?: string
+          city?: string | null
+          condition?: string
+          county?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          images?: string[]
+          is_active?: boolean
+          latitude?: number | null
+          longitude?: number | null
+          price?: number | null
+          price_type?: string
+          seller_id?: string
+          stock_quantity?: number | null
+          title?: string
+          updated_at?: string
+          view_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "goods_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "service_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       job_applications: {
         Row: {
           applicant_email: string | null

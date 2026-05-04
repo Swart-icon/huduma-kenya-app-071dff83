@@ -313,10 +313,10 @@ const Dashboard = () => {
                   gradient="from-primary to-primary/70"
                 />
                 <HeroAction
-                  icon={<Video className="w-5 h-5" />}
-                  label="Add Story"
-                  sub="Get noticed"
-                  onClick={() => navigate("/videos")}
+                  icon={<Plus className="w-5 h-5" />}
+                  label="Sell Goods"
+                  sub="List a product"
+                  onClick={() => navigate("/goods/new")}
                   gradient="from-accent to-accent/70"
                 />
                 <HeroAction
@@ -552,6 +552,13 @@ const Dashboard = () => {
               description="Manage your service listings & pricing"
               onClick={() => { setQuickActionsOpen(false); navigate("/my-services"); }}
               accent="bg-accent/15 text-accent-foreground"
+            />
+            <ActionCard
+              icon={<Grid className="w-5 h-5" />}
+              label="My Products"
+              description="Goods you're selling to clients"
+              onClick={() => { setQuickActionsOpen(false); navigate("/my-goods"); }}
+              accent="bg-primary/10 text-primary"
             />
             <ActionCard
               icon={<Calendar className="w-5 h-5" />}
