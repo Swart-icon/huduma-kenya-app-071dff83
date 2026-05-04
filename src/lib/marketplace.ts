@@ -137,10 +137,6 @@ export const getMarketplaceCategories = (
   const query = search.trim().toLowerCase();
 
   return categories
-    .filter((category) => {
-      const meta = CATEGORY_MODE_META[category.slug];
-      return meta ? meta.modes.includes(mode) : mode === "services";
-    })
     .map((category) => {
       const copy = getMarketplaceCategoryCopy(category.slug, mode, category.name);
       return {
