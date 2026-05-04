@@ -416,18 +416,145 @@ const JobDetail = () => {
               ) : (
                 <form onSubmit={handleApply} className="space-y-4">
                   <h3 className="font-semibold text-foreground">Apply for this Job</h3>
+                  <p className="text-xs text-muted-foreground -mt-2">
+                    Provide your full details and CV — the employer will review your application.
+                  </p>
+
+                  <div className="grid grid-cols-1 gap-3">
+                    <div>
+                      <Label className="text-sm">Full Name <span className="text-destructive">*</span></Label>
+                      <Input
+                        value={applicantName}
+                        onChange={(e) => setApplicantName(e.target.value)}
+                        placeholder="Jane Wanjiku"
+                        className="h-11 rounded-xl mt-1.5"
+                        required
+                        maxLength={120}
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-sm">Email <span className="text-destructive">*</span></Label>
+                      <Input
+                        type="email"
+                        value={applicantEmail}
+                        onChange={(e) => setApplicantEmail(e.target.value)}
+                        placeholder="you@example.com"
+                        className="h-11 rounded-xl mt-1.5"
+                        required
+                        maxLength={255}
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-sm">Phone <span className="text-destructive">*</span></Label>
+                      <Input
+                        type="tel"
+                        value={applicantPhone}
+                        onChange={(e) => setApplicantPhone(e.target.value)}
+                        placeholder="07XX XXX XXX"
+                        className="h-11 rounded-xl mt-1.5"
+                        required
+                        maxLength={30}
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <Label className="text-sm">Years of Experience</Label>
+                        <Input
+                          type="number"
+                          min="0"
+                          max="60"
+                          value={yearsExperience}
+                          onChange={(e) => setYearsExperience(e.target.value)}
+                          placeholder="3"
+                          className="h-11 rounded-xl mt-1.5"
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-sm">Expected Salary (KSh)</Label>
+                        <Input
+                          type="number"
+                          min="0"
+                          value={expectedSalary}
+                          onChange={(e) => setExpectedSalary(e.target.value)}
+                          placeholder="50000"
+                          className="h-11 rounded-xl mt-1.5"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <Label className="text-sm">Skills</Label>
+                      <Input
+                        value={skills}
+                        onChange={(e) => setSkills(e.target.value)}
+                        placeholder="e.g. React, Node.js, customer service"
+                        className="h-11 rounded-xl mt-1.5"
+                        maxLength={300}
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-sm">Availability</Label>
+                      <Input
+                        value={availability}
+                        onChange={(e) => setAvailability(e.target.value)}
+                        placeholder="Immediately / 2 weeks notice / Weekends only"
+                        className="h-11 rounded-xl mt-1.5"
+                        maxLength={120}
+                      />
+                    </div>
+                  </div>
+
                   <div>
                     <Label className="text-sm">Cover Message</Label>
                     <Textarea
                       value={coverMessage}
                       onChange={(e) => setCoverMessage(e.target.value)}
-                      placeholder="Why are you interested in this job? Describe your relevant skills..."
+                      placeholder="Why are you a great fit for this role?"
                       className="rounded-xl mt-1.5"
                       maxLength={1000}
+                      rows={4}
                     />
                   </div>
-                  <Button type="submit" disabled={applySubmitting} className="w-full rounded-xl">
-                    <Send className="w-4 h-4 mr-2" />{applySubmitting ? "Applying..." : "Submit Application"}
+
+                  <div>
+                    <Label className="text-sm">CV / Resume <span className="text-destructive">*</span></Label>
+                    <p className="text-[11px] text-muted-foreground mb-1.5">PDF or Word document, max 10 MB</p>
+                    {cvFile ? (
+                      <div className="flex items-center gap-2 p-3 rounded-xl border border-border bg-muted/40">
+                        <FileText className="w-4 h-4 text-primary shrink-0" />
+                        <span className="text-sm text-foreground truncate flex-1">{cvFile.name}</span>
+                        <button
+                          type="button"
+                          onClick={() => setCvFile(null)}
+                          className="text-muted-foreground hover:text-destructive"
+                          aria-label="Remove file"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ) : (
+                      <label className="flex items-center justify-center gap-2 p-4 rounded-xl border-2 border-dashed border-border hover:border-primary cursor-pointer transition-colors">
+                        <Upload className="w-4 h-4 text-muted-foreground" />
+                        <span className="text-sm text-muted-foreground">Tap to upload CV</span>
+                        <input
+                          type="file"
+                          accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                          className="hidden"
+                          onChange={(e) => {
+                            const f = e.target.files?.[0];
+                            if (!f) return;
+                            if (f.size > 10 * 1024 * 1024) {
+                              toast({ title: "File too large", description: "Max 10 MB", variant: "destructive" });
+                              return;
+                            }
+                            setCvFile(f);
+                          }}
+                        />
+                      </label>
+                    )}
+                  </div>
+
+                  <Button type="submit" disabled={applySubmitting} className="w-full rounded-xl h-12">
+                    <Send className="w-4 h-4 mr-2" />{applySubmitting ? "Submitting..." : "Submit Application"}
                   </Button>
                 </form>
               )}
