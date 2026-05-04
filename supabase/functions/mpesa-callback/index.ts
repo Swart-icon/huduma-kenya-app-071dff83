@@ -185,9 +185,8 @@ Deno.serve(async (req) => {
     }
 
     // ---- 5. Activate / fail boost (only if verified) ----
-    if (externalRef?.startsWith("boost_")) {
-      const boostId = externalRef.slice(6);
-
+    const boostId = tx?.boost_id ?? (externalRef?.startsWith("boost_") ? externalRef.slice(6) : null);
+    if (boostId) {
       const { data: existingBoost } = await admin
         .from("status_boosts")
         .select("payment_status")
@@ -213,7 +212,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    if (!tx && !externalRef?.startsWith("boost_")) {
+    if (!tx && !boostId) {
       console.warn("No transaction/boost found for", checkoutRequestId, externalRef);
     }
 
