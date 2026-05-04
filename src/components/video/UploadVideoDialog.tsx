@@ -16,16 +16,14 @@ import {
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Video, Upload, Loader2, X, AlertCircle, Camera, Square, CircleDot, SwitchCamera, Download, Maximize2 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
+import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import { KENYAN_COUNTIES, getCitiesByCounty } from "@/lib/kenyanLocations";
 import { extractVideoThumbnail } from "@/lib/videoThumbnail";
-
-const MAX_VIDEO_SIZE_MB = 1024;
-// Accept anything the browser/OS labels as video, plus common phone-camera extensions
-// that sometimes arrive with an empty or non-standard MIME type.
-const VIDEO_EXT_RE = /\.(mp4|m4v|mov|webm|mkv|avi|3gp|3gpp|qt)$/i;
-const isAcceptableVideo = (f: File) =>
-  (f.type && f.type.startsWith("video/")) || VIDEO_EXT_RE.test(f.name);
+import {
+  isVideoFile, validateVideoFile, normalizedMime,
+  uploadWithProgress, friendlyUploadError, logFileMeta, MAX_VIDEO_MB,
+} from "@/lib/mobileUpload";
 
 type ValidationErrors = {
   file?: string;
