@@ -20,9 +20,11 @@ const Profile = () => {
   const { user, role, roles, loading, signOut, addRole, removeRole } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [profile, setProfile] = useState({ full_name: "", phone: "", location: "" });
+  const [profile, setProfile] = useState({ full_name: "", phone: "", location: "", avatar_url: "" });
   const [saving, setSaving] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [roleLoading, setRoleLoading] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!loading && !user) navigate("/welcome");
