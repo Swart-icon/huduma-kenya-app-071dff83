@@ -57,7 +57,7 @@ const Categories = () => {
               <button
                 key={option}
                 type="button"
-                onClick={() => setMode(option)}
+                onClick={() => handleModeChange(option)}
                 aria-pressed={active}
                 className={`group relative overflow-hidden rounded-2xl p-4 text-left transition-all duration-300 ease-out ${
                   active
