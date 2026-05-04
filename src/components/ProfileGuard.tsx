@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { hasActiveMediaUploadFlow, logMobileMediaEvent } from "@/hooks/useMobileMediaLifecycle";
 
 /**
  * Pages that are ALWAYS accessible (no profile guard).
@@ -58,6 +59,13 @@ const ProfileGuard = ({ children }: { children: React.ReactNode }) => {
 
   const checkProfile = async () => {
     if (!user || !role) return;
+    if (hasActiveMediaUploadFlow()) {
+      logMobileMediaEvent("profile-redirect-suppressed-active-upload", { attemptedRoute: location.pathname });
+      setComplete(true);
+      setChecking(false);
+      setHasCheckedOnce(true);
+      return;
+    }
     // Only show the blocking spinner on the very first check.
     // Subsequent re-checks (e.g. after the WebView resumes from a gallery/camera
     // picker) must NOT unmount the current page — that would close any open
@@ -107,7 +115,11 @@ const ProfileGuard = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  if (loading || (checking && !hasCheckedOnce)) {
+  // Do not blank/remount the current route after the first successful auth/profile
+  // check. Mobile gallery/camera handoffs can trigger auth refresh events on app
+  // resume; showing the full-screen loader here unmounts upload dialogs and drops
+  // the user back to the feed while the selected file is only recoverable later.
+  if ((loading && !hasCheckedOnce) || (checking && !hasCheckedOnce)) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />

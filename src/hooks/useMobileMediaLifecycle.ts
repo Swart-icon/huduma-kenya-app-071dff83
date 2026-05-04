@@ -32,8 +32,21 @@ declare global {
 const STORAGE_PREFIX = "servio_upload_session";
 const ACTIVE_FLOW_KEY = "servio_active_media_flow";
 const FLOW_TTL_MS = 10 * 60 * 1000;
+const SELECTION_CLOSE_GUARD_MS = 2500;
 
 const storageKey = (sessionKey: string, suffix: string) => `${STORAGE_PREFIX}:${sessionKey}:${suffix}`;
+
+const setSelectionCloseGuard = (sessionKey: string) => {
+  const until = Date.now() + SELECTION_CLOSE_GUARD_MS;
+  sessionStorage.setItem(storageKey(sessionKey, "closeGuardUntil"), String(until));
+  return until;
+};
+
+const getSelectionCloseGuard = (sessionKey: string) =>
+  Number(sessionStorage.getItem(storageKey(sessionKey, "closeGuardUntil")) || 0);
+
+export const mediaSessionHasRecentSelection = (sessionKey: string) =>
+  Date.now() < getSelectionCloseGuard(sessionKey);
 
 const inferKind = (file: File): MobileMediaKind => {
   if (isVideoFile(file)) return "video";
@@ -80,8 +93,11 @@ export const storeUploadSessionFile = (
     source,
     kind,
     savedAt: Date.now(),
+    routeAtSelection: window.location.pathname,
   }));
-  logMobileMediaEvent("file-stored", { sessionKey, source, kind, name: file.name, size: file.size, type: file.type });
+  setSelectionCloseGuard(sessionKey);
+  logMobileMediaEvent("file-stored-preview-ready", { sessionKey, source, kind, name: file.name, size: file.size, type: file.type });
+  window.dispatchEvent(new CustomEvent("servio-media-selected", { detail: { sessionKey, source, kind } }));
   return window.__servioUploadSessions[sessionKey];
 };
 
@@ -100,6 +116,7 @@ export const clearUploadSessionFile = (sessionKey: string) => {
   if (existing?.objectUrl) URL.revokeObjectURL(existing.objectUrl);
   if (window.__servioUploadSessions) delete window.__servioUploadSessions[sessionKey];
   sessionStorage.removeItem(storageKey(sessionKey, "fileMeta"));
+  sessionStorage.removeItem(storageKey(sessionKey, "closeGuardUntil"));
 };
 
 export const setActiveMediaFlow = (flow: ActiveFlow) => {
@@ -113,6 +130,14 @@ export const clearActiveMediaFlow = (sessionKey?: string) => {
     sessionStorage.removeItem(ACTIVE_FLOW_KEY);
     logMobileMediaEvent("flow-clear", { sessionKey });
   }
+};
+
+export const getActiveMediaFlow = () =>
+  safeParse<ActiveFlow>(sessionStorage.getItem(ACTIVE_FLOW_KEY));
+
+export const hasActiveMediaUploadFlow = () => {
+  const flow = getActiveMediaFlow();
+  return Boolean(flow && Date.now() - flow.startedAt <= FLOW_TTL_MS);
 };
 
 export const MobileMediaRecovery = () => {
@@ -134,6 +159,7 @@ export const MobileMediaRecovery = () => {
       // unmount the open upload dialog and discard the user's selection.
       const hasPendingFile = Boolean(window.__servioUploadSessions?.[flow.sessionKey]);
       if (hasPendingFile && flow.route && window.location.pathname !== flow.route) {
+        logMobileMediaEvent("recover-navigate-to-upload-host", { sessionKey: flow.sessionKey, from: window.location.pathname, to: flow.route });
         navigate(flow.route, { replace: true, state: { restoreUploadSession: flow.sessionKey } });
       }
     };
@@ -176,17 +202,17 @@ export const useMobileMediaLifecycle = <TDraft extends Record<string, unknown>>(
   const api = useMemo(() => ({
     beginPicker: (source: MobileMediaSource) => {
       setSelecting(true);
+      logMobileMediaEvent("picker-open", { sessionKey, source, routeBeforePicker: location.pathname });
       setActiveMediaFlow({ sessionKey, route: location.pathname, source, startedAt: Date.now() });
     },
     endPicker: (reason: string) => {
       setSelecting(false);
       clearActiveMediaFlow(sessionKey);
-      logMobileMediaEvent("picker-end", { sessionKey, reason });
+      logMobileMediaEvent("picker-end", { sessionKey, reason, routeAfterPicker: window.location.pathname });
     },
     rememberFile: (file: File, source: MobileMediaSource, kind?: MobileMediaKind) => {
       const stored = storeUploadSessionFile(sessionKey, file, source, kind);
       setSelecting(false);
-      clearActiveMediaFlow(sessionKey);
       return stored;
     },
     restoreFile: () => getUploadSessionFile(sessionKey),
@@ -201,9 +227,10 @@ export const useMobileMediaLifecycle = <TDraft extends Record<string, unknown>>(
       clearActiveMediaFlow(sessionKey);
     },
     shouldBlockClose: () => {
-      const block = selecting || Boolean(safeParse<ActiveFlow>(sessionStorage.getItem(ACTIVE_FLOW_KEY))?.sessionKey === sessionKey);
+      const activeForThisSession = safeParse<ActiveFlow>(sessionStorage.getItem(ACTIVE_FLOW_KEY))?.sessionKey === sessionKey;
+      const block = selecting || mediaSessionHasRecentSelection(sessionKey) || (activeForThisSession && !getUploadSessionFile(sessionKey));
       if (block) {
-        logMobileMediaEvent("close-blocked-during-picker", { sessionKey });
+        logMobileMediaEvent("close-blocked-during-media-flow", { sessionKey, selecting, recentSelection: mediaSessionHasRecentSelection(sessionKey) });
         toast.info("Returning to upload…");
       }
       return block;

@@ -24,7 +24,7 @@ import {
   isVideoFile, validateVideoFile, normalizedMime,
   uploadWithProgress, friendlyUploadError, logFileMeta, MAX_VIDEO_MB,
 } from "@/lib/mobileUpload";
-import { useMobileMediaLifecycle } from "@/hooks/useMobileMediaLifecycle";
+import { logMobileMediaEvent, useMobileMediaLifecycle } from "@/hooks/useMobileMediaLifecycle";
 
 type ValidationErrors = {
   file?: string;
@@ -257,6 +257,7 @@ export const UploadVideoDialog = ({ open, onOpenChange }: { open: boolean; onOpe
     const stored = mediaLifecycle.rememberFile(f, "gallery", "video");
     setFile(stored.file);
     setPreview(stored.objectUrl);
+    logMobileMediaEvent("video-preview-opened", { sessionKey: VIDEO_UPLOAD_SESSION, routeAfterPicker: window.location.pathname });
     if (submitted) setErrors((prev) => ({ ...prev, file: undefined }));
     e.currentTarget.value = "";
   };
@@ -383,6 +384,8 @@ export const UploadVideoDialog = ({ open, onOpenChange }: { open: boolean; onOpe
   return (
     <Dialog open={open} onOpenChange={(next) => {
       if (!next && mediaLifecycle.shouldBlockClose()) return;
+      logMobileMediaEvent("video-dialog-open-change", { sessionKey: VIDEO_UPLOAD_SESSION, next, route: window.location.pathname });
+      if (!next) resetForm();
       onOpenChange(next);
     }}>
       <DialogContent className="max-w-md mx-auto max-h-[90vh] overflow-y-auto">
@@ -490,7 +493,7 @@ export const UploadVideoDialog = ({ open, onOpenChange }: { open: boolean; onOpe
           ) : (
             <div className="relative rounded-2xl overflow-hidden bg-black">
               <video src={preview!} className="w-full max-h-40 object-contain" controls />
-              <button onClick={() => { setFile(null); setPreview(null); }} className="absolute top-2 right-2 w-7 h-7 rounded-full bg-black/60 flex items-center justify-center">
+              <button onClick={() => { setFile(null); setPreview(null); mediaLifecycle.clearAll(); }} className="absolute top-2 right-2 w-7 h-7 rounded-full bg-black/60 flex items-center justify-center">
                 <X className="w-4 h-4 text-white" />
               </button>
             </div>

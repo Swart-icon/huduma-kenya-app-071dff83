@@ -12,7 +12,7 @@ import {
   isImageFile, isVideoFile, normalizedMime, validateImageFile, validateVideoFile,
   prepareImageForUpload, uploadWithProgress, friendlyUploadError, logFileMeta,
 } from "@/lib/mobileUpload";
-import { useMobileMediaLifecycle } from "@/hooks/useMobileMediaLifecycle";
+import { logMobileMediaEvent, useMobileMediaLifecycle } from "@/hooks/useMobileMediaLifecycle";
 
 interface Props {
   open: boolean;
@@ -63,6 +63,7 @@ export const CreateStoryDialog = ({ open, onClose }: Props) => {
     const stored = mediaLifecycle.rememberFile(file, isVideoFile(file) ? "gallery" : "file-picker", isVideoFile(file) ? "video" : "image");
     setMediaFile(stored.file);
     setPreview(stored.objectUrl);
+    logMobileMediaEvent("story-preview-opened", { sessionKey: "story-upload", routeAfterPicker: window.location.pathname });
     e.currentTarget.value = "";
   };
 
@@ -155,7 +156,10 @@ export const CreateStoryDialog = ({ open, onClose }: Props) => {
 
   return (
     <>
-      <Dialog open={open && !showBoost} onOpenChange={(v) => !v && !mediaLifecycle.shouldBlockClose() && resetAll()}>
+      <Dialog open={open && !showBoost} onOpenChange={(v) => {
+        logMobileMediaEvent("story-dialog-open-change", { sessionKey: "story-upload", next: v, route: window.location.pathname });
+        if (!v && !mediaLifecycle.shouldBlockClose()) resetAll();
+      }}>
         <DialogContent className="max-w-sm rounded-2xl">
           <DialogHeader>
             <DialogTitle className="font-display">
