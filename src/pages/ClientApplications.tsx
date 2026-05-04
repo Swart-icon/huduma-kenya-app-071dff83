@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import {
   ArrowLeft, ChevronDown, ChevronUp, ClipboardList, MapPin,
   Clock, User as UserIcon, Briefcase, MessageCircle, CheckCircle, XCircle, Star, Eye,
+  Mail, Phone, FileText, Award, Calendar, DollarSign, Sparkles,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -28,7 +29,16 @@ type Application = {
   status: string;
   created_at: string;
   cover_message: string | null;
-  applicant_name?: string;
+  applicant_name: string | null;
+  applicant_email: string | null;
+  applicant_phone: string | null;
+  years_experience: number | null;
+  skills: string | null;
+  availability: string | null;
+  expected_salary: number | null;
+  cv_url: string | null;
+  cv_filename: string | null;
+  applicant_display_name?: string;
 };
 
 const statusColors: Record<string, string> = {
