@@ -134,9 +134,7 @@ const UserVideos = () => {
                   ownerId={v.user_id}
                   className="w-full h-full object-cover"
                 />
-                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
-                  <Play className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
-                </div>
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
                 <div className="absolute bottom-1 left-1 flex items-center gap-0.5 text-white text-[10px] bg-black/50 rounded px-1">
                   <Eye className="w-3 h-3" />
                   {v.view_count}
