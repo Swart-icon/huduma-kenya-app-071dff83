@@ -554,6 +554,13 @@ const Dashboard = () => {
               accent="bg-accent/15 text-accent-foreground"
             />
             <ActionCard
+              icon={<Grid className="w-5 h-5" />}
+              label="My Products"
+              description="Goods you're selling to clients"
+              onClick={() => { setQuickActionsOpen(false); navigate("/my-goods"); }}
+              accent="bg-primary/10 text-primary"
+            />
+            <ActionCard
               icon={<Calendar className="w-5 h-5" />}
               label="My Bookings"
               description="View, accept & manage all your bookings"
