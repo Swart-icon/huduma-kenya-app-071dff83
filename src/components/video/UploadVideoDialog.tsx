@@ -21,7 +21,11 @@ import { KENYAN_COUNTIES, getCitiesByCounty } from "@/lib/kenyanLocations";
 import { extractVideoThumbnail } from "@/lib/videoThumbnail";
 
 const MAX_VIDEO_SIZE_MB = 1024;
-const ALLOWED_FORMATS = ["video/mp4", "video/webm", "video/quicktime", "video/x-m4v"];
+// Accept anything the browser/OS labels as video, plus common phone-camera extensions
+// that sometimes arrive with an empty or non-standard MIME type.
+const VIDEO_EXT_RE = /\.(mp4|m4v|mov|webm|mkv|avi|3gp|3gpp|qt)$/i;
+const isAcceptableVideo = (f: File) =>
+  (f.type && f.type.startsWith("video/")) || VIDEO_EXT_RE.test(f.name);
 
 type ValidationErrors = {
   file?: string;
@@ -193,7 +197,7 @@ export const UploadVideoDialog = ({ open, onOpenChange }: { open: boolean; onOpe
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
     if (!f) return;
-    if (!ALLOWED_FORMATS.includes(f.type)) { toast.error("Use MP4, WebM, or MOV format."); return; }
+    if (!isAcceptableVideo(f)) { toast.error("Please choose a video file (MP4, MOV, WebM, etc.)"); return; }
     if (f.size > MAX_VIDEO_SIZE_MB * 1024 * 1024) { toast.error("Video must be under 1GB"); return; }
     setFile(f);
     setPreview(URL.createObjectURL(f));
@@ -223,9 +227,10 @@ export const UploadVideoDialog = ({ open, onOpenChange }: { open: boolean; onOpe
 
     setUploading(true);
     try {
-      const ext = file.name.split(".").pop() || "webm";
+      const ext = (file.name.split(".").pop() || "mp4").toLowerCase();
       const baseKey = `${user.id}/${Date.now()}`;
       const path = `${baseKey}.${ext}`;
+      const contentType = file.type && file.type.startsWith("video/") ? file.type : "video/mp4";
 
       // Kick off thumbnail extraction in parallel with the video upload so
       // posting is never delayed by frame decoding.
@@ -233,8 +238,11 @@ export const UploadVideoDialog = ({ open, onOpenChange }: { open: boolean; onOpe
 
       const { error: storageError } = await supabase.storage
         .from("user-videos")
-        .upload(path, file, { contentType: file.type });
-      if (storageError) throw storageError;
+        .upload(path, file, { contentType, upsert: false });
+      if (storageError) {
+        console.error("[UploadVideo] storage error", storageError);
+        throw storageError;
+      }
       const { data: urlData } = supabase.storage.from("user-videos").getPublicUrl(path);
 
       // Upload thumbnail (best-effort — never block the post)
@@ -265,13 +273,17 @@ export const UploadVideoDialog = ({ open, onOpenChange }: { open: boolean; onOpe
         allow_downloads: allowDownloads,
         status: "active",
       } as any);
-      if (dbError) throw dbError;
+      if (dbError) {
+        console.error("[UploadVideo] db error", dbError);
+        throw dbError;
+      }
       toast.success("Video uploaded! 🎬");
       queryClient.invalidateQueries({ queryKey: ["videos-feed"] });
       resetForm();
       onOpenChange(false);
     } catch (err: any) {
-      toast.error(err.message || "Upload failed");
+      console.error("[UploadVideo] failed", err);
+      toast.error(err?.message || err?.error_description || "Upload failed. Please try again.");
     } finally {
       setUploading(false);
     }
@@ -329,7 +341,7 @@ export const UploadVideoDialog = ({ open, onOpenChange }: { open: boolean; onOpe
                   <Upload className="w-8 h-8 text-primary/60 mb-2" />
                   <p className="text-sm font-medium text-primary">Tap to select video</p>
                   <p className="text-xs text-muted-foreground mt-1">MP4, WebM, MOV • Max 1GB</p>
-                  <input type="file" accept="video/mp4,video/webm,video/quicktime,video/x-m4v" className="hidden" onChange={handleFileSelect} />
+                  <input type="file" accept="video/*" className="hidden" onChange={handleFileSelect} />
                 </label>
                 <FieldError message={errors.file} />
               </TabsContent>
