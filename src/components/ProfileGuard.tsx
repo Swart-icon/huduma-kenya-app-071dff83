@@ -59,37 +59,34 @@ const ProfileGuard = ({ children }: { children: React.ReactNode }) => {
 
     try {
       if (role === "provider") {
-        const { data } = await supabase
-          .from("provider_profiles")
-          .select("business_name, description, city, county, contact_phone")
-          .eq("user_id", user.id)
-          .maybeSingle();
+        const [{ data: pub }, { data: priv }] = await Promise.all([
+          supabase.from("provider_profiles").select("business_name, description, city, county").eq("user_id", user.id).maybeSingle(),
+          supabase.from("provider_profiles_private").select("contact_phone").eq("user_id", user.id).maybeSingle(),
+        ]);
 
-        if (!data || !data.business_name || !data.contact_phone || !data.city) {
+        if (!pub || !pub.business_name || !priv?.contact_phone || !pub.city) {
           setComplete(false);
           navigate("/provider-profile/edit", { replace: true });
           return;
         }
       } else if (role === "job_seeker") {
-        const { data: mp } = await supabase
-          .from("profiles")
-          .select("full_name, phone, location")
-          .eq("user_id", user.id)
-          .maybeSingle();
+        const [{ data: mp }, { data: priv }] = await Promise.all([
+          supabase.from("profiles").select("full_name").eq("user_id", user.id).maybeSingle(),
+          supabase.from("profiles_private").select("phone, location").eq("user_id", user.id).maybeSingle(),
+        ]);
 
-        if (!mp || !mp.full_name || !mp.phone || !mp.location) {
+        if (!mp || !mp.full_name || !priv?.phone || !priv?.location) {
           setComplete(false);
           navigate("/job-seeker-profile", { replace: true });
           return;
         }
       } else if (role === "client") {
-        const { data } = await supabase
-          .from("profiles")
-          .select("full_name, phone, location")
-          .eq("user_id", user.id)
-          .maybeSingle();
+        const [{ data: mp }, { data: priv }] = await Promise.all([
+          supabase.from("profiles").select("full_name").eq("user_id", user.id).maybeSingle(),
+          supabase.from("profiles_private").select("phone").eq("user_id", user.id).maybeSingle(),
+        ]);
 
-        if (!data || !data.full_name || !data.phone) {
+        if (!mp || !mp.full_name || !priv?.phone) {
           setComplete(false);
           navigate("/profile", { replace: true });
           return;
