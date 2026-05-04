@@ -160,6 +160,9 @@ Deno.serve(async (req) => {
     await admin.from("mpesa_transactions").insert({
       user_id: user.id,
       subscription_id: externalRef.startsWith("sub_") ? externalRef.slice(4) : null,
+      boost_id: externalRef.startsWith("boost_") ? externalRef.slice(6) : null,
+      external_reference: externalRef,
+      purpose: purpose === "boost" ? "status_boost" : `${body.roleType}_subscription`,
       amount_kes: amount,
       phone_number: msisdn,
       checkout_request_id: checkoutRequestId,
