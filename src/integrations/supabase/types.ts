@@ -125,25 +125,31 @@ export type Database = {
         Row: {
           broadcast_id: string
           created_at: string
+          delivered_at: string | null
           id: string
           read: boolean
           read_at: string | null
+          reminder_sent_at: string | null
           user_id: string
         }
         Insert: {
           broadcast_id: string
           created_at?: string
+          delivered_at?: string | null
           id?: string
           read?: boolean
           read_at?: string | null
+          reminder_sent_at?: string | null
           user_id: string
         }
         Update: {
           broadcast_id?: string
           created_at?: string
+          delivered_at?: string | null
           id?: string
           read?: boolean
           read_at?: string | null
+          reminder_sent_at?: string | null
           user_id?: string
         }
         Relationships: [
@@ -711,6 +717,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      notification_preferences: {
+        Row: {
+          broadcasts_enabled: boolean
+          created_at: string
+          id: string
+          reminders_enabled: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          broadcasts_enabled?: boolean
+          created_at?: string
+          id?: string
+          reminders_enabled?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          broadcasts_enabled?: boolean
+          created_at?: string
+          id?: string
+          reminders_enabled?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       notifications: {
         Row: {
@@ -1722,6 +1755,7 @@ export type Database = {
         Args: { _role: Database["public"]["Enums"]["app_role"] }
         Returns: undefined
       }
+      send_broadcast_reminders: { Args: never; Returns: number }
     }
     Enums: {
       app_role: "provider" | "job_seeker" | "client" | "admin"
