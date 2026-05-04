@@ -313,10 +313,10 @@ const Dashboard = () => {
                   gradient="from-primary to-primary/70"
                 />
                 <HeroAction
-                  icon={<Video className="w-5 h-5" />}
-                  label="Add Story"
-                  sub="Get noticed"
-                  onClick={() => navigate("/videos")}
+                  icon={<Plus className="w-5 h-5" />}
+                  label="Sell Goods"
+                  sub="List a product"
+                  onClick={() => navigate("/goods/new")}
                   gradient="from-accent to-accent/70"
                 />
                 <HeroAction
