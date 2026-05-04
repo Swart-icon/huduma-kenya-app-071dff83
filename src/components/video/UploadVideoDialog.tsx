@@ -385,6 +385,7 @@ export const UploadVideoDialog = ({ open, onOpenChange }: { open: boolean; onOpe
     <Dialog open={open} onOpenChange={(next) => {
       if (!next && mediaLifecycle.shouldBlockClose()) return;
       logMobileMediaEvent("video-dialog-open-change", { sessionKey: VIDEO_UPLOAD_SESSION, next, route: window.location.pathname });
+      if (!next) resetForm();
       onOpenChange(next);
     }}>
       <DialogContent className="max-w-md mx-auto max-h-[90vh] overflow-y-auto">
