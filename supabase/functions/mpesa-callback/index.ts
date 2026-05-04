@@ -130,6 +130,11 @@ Deno.serve(async (req) => {
 
     // ---- 3. Update the transaction record ----
     if (tx) {
+      // Replay protection at tx level
+      if (tx.status === "success") {
+        console.log("Transaction already processed, ignoring duplicate:", tx.id);
+        return new Response("OK", { status: 200 });
+      }
       await admin
         .from("mpesa_transactions")
         .update({
