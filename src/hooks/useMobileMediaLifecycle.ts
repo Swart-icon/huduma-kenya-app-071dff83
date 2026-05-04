@@ -128,7 +128,12 @@ export const MobileMediaRecovery = () => {
         return;
       }
       logMobileMediaEvent("recover-check", { reason, flowRoute: flow.route, currentRoute: window.location.pathname });
-      if (flow.route && window.location.pathname !== flow.route) {
+      // Only navigate back if the user was actually moved AWAY from the upload
+      // route AND we have a file waiting to be processed. Otherwise leave the
+      // dialog/page exactly where it is — forcing a navigate(replace) here can
+      // unmount the open upload dialog and discard the user's selection.
+      const hasPendingFile = Boolean(window.__servioUploadSessions?.[flow.sessionKey]);
+      if (hasPendingFile && flow.route && window.location.pathname !== flow.route) {
         navigate(flow.route, { replace: true, state: { restoreUploadSession: flow.sessionKey } });
       }
     };
