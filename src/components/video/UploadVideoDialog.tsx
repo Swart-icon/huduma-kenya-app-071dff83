@@ -89,6 +89,32 @@ export const UploadVideoDialog = ({ open, onOpenChange }: { open: boolean; onOpe
     }
   }, [open]);
 
+  // Persist form state while Android/iOS temporarily background the webview for camera/gallery.
+  useEffect(() => {
+    if (!open) return;
+    mediaLifecycle.saveDraft({ description, categoryId, county, city, allowDownloads });
+  }, [open, description, categoryId, county, city, allowDownloads, mediaLifecycle]);
+
+  // Restore draft + selected file if the app was paused/recreated during picker handoff.
+  useEffect(() => {
+    if (!open) return;
+    const draft = mediaLifecycle.loadDraft();
+    if (draft) {
+      if (typeof draft.description === "string") setDescription(draft.description);
+      if (typeof draft.categoryId === "string") setCategoryId(draft.categoryId);
+      if (typeof draft.county === "string") setCounty(draft.county);
+      if (typeof draft.city === "string") setCity(draft.city);
+      if (typeof draft.allowDownloads === "boolean") setAllowDownloads(draft.allowDownloads);
+    }
+    const restored = mediaLifecycle.restoreFile();
+    if (restored?.file) {
+      setFile(restored.file);
+      setPreview(restored.objectUrl);
+    } else if (mediaLifecycle.hasInterruptedFile()) {
+      toast.error("Unable to load selected media. Please try again.");
+    }
+  }, [open]);
+
   // Ingest a pending recording handed off from the full-screen recorder
   useEffect(() => {
     if (!open) return;
@@ -101,20 +127,23 @@ export const UploadVideoDialog = ({ open, onOpenChange }: { open: boolean; onOpe
         const bytes = new Uint8Array(bin.length);
         for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
         const recordedFile = new File([bytes], meta.name, { type: meta.type });
-        setFile(recordedFile);
-        setPreview(URL.createObjectURL(recordedFile));
+        const stored = mediaLifecycle.rememberFile(recordedFile, "recorder", "video");
+        setFile(stored.file);
+        setPreview(stored.objectUrl);
         sessionStorage.removeItem("pending_recorded_video");
       } else if (memRef === "memory" && (window as any).__pendingRecordedVideo) {
         const recordedFile = (window as any).__pendingRecordedVideo as File;
-        setFile(recordedFile);
-        setPreview(URL.createObjectURL(recordedFile));
+        const stored = mediaLifecycle.rememberFile(recordedFile, "recorder", "video");
+        setFile(stored.file);
+        setPreview(stored.objectUrl);
         delete (window as any).__pendingRecordedVideo;
         sessionStorage.removeItem("pending_recorded_video_ref");
       }
-    } catch {
-      // ignore malformed handoff
+    } catch (err) {
+      console.error("[UploadVideo] recorded handoff failed", err);
+      toast.error("Unable to load selected media. Please try again.");
     }
-  }, [open]);
+  }, [open, mediaLifecycle]);
 
   // Sync stream to video element after render
   useEffect(() => {
