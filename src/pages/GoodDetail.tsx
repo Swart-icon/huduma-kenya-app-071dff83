@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, MapPin, MessageCircle, Package, User } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { startConversationWith } from "@/lib/conversations";
+import { getOrCreateConversation } from "@/lib/conversations";
 
 type Good = {
   id: string;
@@ -81,7 +81,8 @@ const GoodDetail = () => {
     if (!good) return;
     setContacting(true);
     try {
-      const convId = await startConversationWith(good.seller_id);
+      const convId = await getOrCreateConversation(user.id, good.seller_id);
+      if (!convId) throw new Error("Could not start conversation");
       navigate(`/chat/${convId}`);
     } catch (err: any) {
       toast({ title: "Couldn't open chat", description: err.message, variant: "destructive" });
