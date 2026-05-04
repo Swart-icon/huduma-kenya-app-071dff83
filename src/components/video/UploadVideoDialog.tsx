@@ -524,6 +524,15 @@ export const UploadVideoDialog = ({ open, onOpenChange }: { open: boolean; onOpe
             <Switch checked={allowDownloads} onCheckedChange={setAllowDownloads} />
           </div>
 
+          {uploading && (
+            <div className="space-y-1.5">
+              <Progress value={progress} className="h-2" />
+              <p className="text-xs text-muted-foreground text-center">
+                {progressLabel} {progress > 0 && progress < 100 ? `${progress}%` : ""}
+              </p>
+            </div>
+          )}
+
           <Button onClick={handleUpload} disabled={uploading} className="w-full rounded-xl">
             {uploading ? (<><Loader2 className="w-4 h-4 mr-2 animate-spin" />Uploading...</>) : (<><Upload className="w-4 h-4 mr-2" />Upload Video</>)}
           </Button>
