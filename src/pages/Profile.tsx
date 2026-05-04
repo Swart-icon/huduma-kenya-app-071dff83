@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowLeft, LogOut, User, MapPin, Phone, Briefcase, Search, UserCheck, Plus, X, Video } from "lucide-react";
+import { ArrowLeft, LogOut, User, MapPin, Phone, Briefcase, Search, UserCheck, Plus, X, Video, Camera } from "lucide-react";
+import { useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -19,9 +20,11 @@ const Profile = () => {
   const { user, role, roles, loading, signOut, addRole, removeRole } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [profile, setProfile] = useState({ full_name: "", phone: "", location: "" });
+  const [profile, setProfile] = useState({ full_name: "", phone: "", location: "", avatar_url: "" });
   const [saving, setSaving] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [roleLoading, setRoleLoading] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!loading && !user) navigate("/welcome");
@@ -30,7 +33,7 @@ const Profile = () => {
   useEffect(() => {
     if (user) {
       supabase.from("profiles").select("*").eq("user_id", user.id).maybeSingle().then(({ data }) => {
-        if (data) setProfile({ full_name: data.full_name || "", phone: data.phone || "", location: data.location || "" });
+        if (data) setProfile({ full_name: data.full_name || "", phone: data.phone || "", location: data.location || "", avatar_url: data.avatar_url || "" });
       });
     }
   }, [user]);
@@ -77,6 +80,37 @@ const Profile = () => {
     }
   };
 
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+    if (!file.type.startsWith("image/")) {
+      toast({ title: "Please select an image file", variant: "destructive" });
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast({ title: "Image must be under 5MB", variant: "destructive" });
+      return;
+    }
+    setUploadingAvatar(true);
+    try {
+      const ext = file.name.split(".").pop() || "jpg";
+      const path = `${user.id}/avatar-${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage.from("avatars").upload(path, file, { upsert: true });
+      if (upErr) throw upErr;
+      const { data: pub } = supabase.storage.from("avatars").getPublicUrl(path);
+      const url = pub.publicUrl;
+      const { error: dbErr } = await supabase.from("profiles").update({ avatar_url: url }).eq("user_id", user.id);
+      if (dbErr) throw dbErr;
+      setProfile((p) => ({ ...p, avatar_url: url }));
+      toast({ title: "Profile picture updated ✅" });
+    } catch (err: any) {
+      toast({ title: "Upload failed", description: err.message, variant: "destructive" });
+    } finally {
+      setUploadingAvatar(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
   if (loading) return null;
 
   const nonAdminRoles = roles.filter((r) => r !== "admin");
@@ -102,22 +136,54 @@ const Profile = () => {
         <Card className="mb-6">
           <CardContent className="p-5">
             <div className="flex items-center gap-4 mb-4">
-              <div className="w-14 h-14 rounded-xl bg-primary flex items-center justify-center">
-                <User className="w-7 h-7 text-primary-foreground" />
-              </div>
-              <div>
-                <p className="font-semibold text-foreground">{profile.full_name || "No name set"}</p>
-                <p className="text-sm text-muted-foreground">{user?.email}</p>
-                <div className="flex flex-wrap gap-1 mt-1">
-                  {nonAdminRoles.map((r) => (
-                    <span key={r} className={`inline-block text-xs font-semibold px-2 py-0.5 rounded-full ${
-                      r === role ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
-                    }`}>
-                      {roleOptions.find((o) => o.value === r)?.label}
-                    </span>
-                  ))}
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploadingAvatar}
+                className="relative w-16 h-16 rounded-xl bg-primary flex items-center justify-center overflow-hidden group shrink-0"
+                aria-label="Change profile picture"
+              >
+                {profile.avatar_url ? (
+                  <img src={profile.avatar_url} alt="Profile" className="w-full h-full object-cover" />
+                ) : (
+                  <User className="w-7 h-7 text-primary-foreground" />
+                )}
+                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
+                  <Camera className="w-5 h-5 text-white" />
                 </div>
+                {uploadingAvatar && (
+                  <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  </div>
+                )}
+              </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleAvatarUpload}
+              />
+              <div className="min-w-0">
+                <p className="font-semibold text-foreground truncate">{profile.full_name || "No name set"}</p>
+                <p className="text-sm text-muted-foreground truncate">{user?.email}</p>
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="text-xs text-primary font-semibold mt-1"
+                >
+                  {profile.avatar_url ? "Change photo" : "Add photo"}
+                </button>
               </div>
+            </div>
+            <div className="flex flex-wrap gap-1">
+              {nonAdminRoles.map((r) => (
+                <span key={r} className={`inline-block text-xs font-semibold px-2 py-0.5 rounded-full ${
+                  r === role ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
+                }`}>
+                  {roleOptions.find((o) => o.value === r)?.label}
+                </span>
+              ))}
             </div>
           </CardContent>
         </Card>
