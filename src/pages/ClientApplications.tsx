@@ -98,13 +98,13 @@ const ClientApplications = () => {
     const jobIds = jobList.map((j) => j.id);
     const { data: appsData } = await supabase
       .from("job_applications")
-      .select("id, job_post_id, applicant_id, status, created_at, cover_message")
+      .select("id, job_post_id, applicant_id, status, created_at, cover_message, applicant_name, applicant_email, applicant_phone, years_experience, skills, availability, expected_salary, cv_url, cv_filename")
       .in("job_post_id", jobIds)
       .order("created_at", { ascending: false });
 
     const apps = appsData || [];
 
-    // 3. Resolve applicant names from profiles
+    // 3. Fallback: resolve applicant names from profiles for legacy rows
     const applicantIds = [...new Set(apps.map((a) => a.applicant_id))];
     const nameMap: Record<string, string> = {};
     if (applicantIds.length) {
@@ -117,7 +117,10 @@ const ClientApplications = () => {
 
     const grouped: Record<string, Application[]> = {};
     apps.forEach((a: any) => {
-      const item: Application = { ...a, applicant_name: nameMap[a.applicant_id] || "Anonymous" };
+      const item: Application = {
+        ...a,
+        applicant_display_name: a.applicant_name || nameMap[a.applicant_id] || "Anonymous",
+      };
       (grouped[a.job_post_id] ||= []).push(item);
     });
     setAppsByJob(grouped);
