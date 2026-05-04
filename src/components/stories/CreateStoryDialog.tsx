@@ -156,7 +156,10 @@ export const CreateStoryDialog = ({ open, onClose }: Props) => {
 
   return (
     <>
-      <Dialog open={open && !showBoost} onOpenChange={(v) => !v && !mediaLifecycle.shouldBlockClose() && resetAll()}>
+      <Dialog open={open && !showBoost} onOpenChange={(v) => {
+        logMobileMediaEvent("story-dialog-open-change", { sessionKey: "story-upload", next: v, route: window.location.pathname });
+        if (!v && !mediaLifecycle.shouldBlockClose()) resetAll();
+      }}>
         <DialogContent className="max-w-sm rounded-2xl">
           <DialogHeader>
             <DialogTitle className="font-display">
