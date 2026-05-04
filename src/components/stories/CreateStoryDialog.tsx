@@ -191,7 +191,7 @@ export const CreateStoryDialog = ({ open, onClose }: Props) => {
               <input
                 ref={fileRef}
                 type="file"
-                accept="image/*"
+                accept="image/*,.jpg,.jpeg,.png,.webp,.gif,.heic,.heif"
                 onChange={handleFileChange}
                 className="hidden"
               />
