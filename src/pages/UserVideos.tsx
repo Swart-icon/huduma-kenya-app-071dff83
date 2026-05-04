@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { ArrowLeft, Play, Eye, Grid3X3 } from "lucide-react";
 import { VideoSlide } from "@/components/video/VideoSlide";
+import { VideoThumbnail } from "@/components/video/VideoThumbnail";
 import type { VideoItem } from "@/components/video/types";
 
 const UserVideos = () => {
@@ -126,11 +127,13 @@ const UserVideos = () => {
                 onClick={() => setActiveVideoId(v.id)}
                 className="relative aspect-[9/16] bg-black rounded-sm overflow-hidden group"
               >
-                {v.thumbnail_url ? (
-                  <img src={v.thumbnail_url} className="w-full h-full object-cover" alt="" />
-                ) : (
-                  <video src={v.video_url} className="w-full h-full object-cover" preload="metadata" muted />
-                )}
+                <VideoThumbnail
+                  videoId={v.id}
+                  videoUrl={v.video_url}
+                  thumbnailUrl={v.thumbnail_url}
+                  ownerId={v.user_id}
+                  className="w-full h-full object-cover"
+                />
                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
                   <Play className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
                 </div>
