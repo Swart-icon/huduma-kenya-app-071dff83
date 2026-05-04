@@ -38,6 +38,15 @@ const ProviderPublicProfile = () => {
     if (providerId) fetchAll();
   }, [providerId]);
 
+  // Track profile view (deduped per viewer/day by DB unique constraint; trigger sends notification)
+  useEffect(() => {
+    if (!providerId || !user || user.id === providerId) return;
+    supabase
+      .from("profile_views")
+      .insert({ profile_user_id: providerId, viewer_id: user.id })
+      .then(() => {});
+  }, [providerId, user]);
+
   const fetchAll = async () => {
     const [profRes, revRes, portRes, availRes, svcRes, statusRes] = await Promise.all([
       supabase.from("provider_profiles").select("*").eq("user_id", providerId!).maybeSingle(),
