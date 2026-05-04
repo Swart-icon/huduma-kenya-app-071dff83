@@ -190,6 +190,27 @@ const JobSeekerDashboard = () => {
           </Card>
         )}
 
+        {/* Build / Edit Public Profile — recruiters view this */}
+        <Card
+          className="border-0 shadow-sm rounded-2xl cursor-pointer bg-gradient-to-br from-primary/10 to-primary/5 hover:shadow-md transition-all"
+          onClick={() => navigate("/job-seeker-profile")}
+        >
+          <CardContent className="p-4 flex items-center gap-3">
+            <div className="w-12 h-12 rounded-2xl bg-primary text-primary-foreground flex items-center justify-center shrink-0">
+              <User className="w-6 h-6" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h3 className="text-sm font-bold text-foreground">
+                {profileCompletion === 100 ? "Edit My Profile" : "Build My Profile"}
+              </h3>
+              <p className="text-xs text-muted-foreground truncate">
+                Add skills, experience & CV so recruiters can find you
+              </p>
+            </div>
+            <ChevronRight className="w-5 h-5 text-muted-foreground shrink-0" />
+          </CardContent>
+        </Card>
+
         {/* Quick Actions */}
         <div className="grid grid-cols-2 gap-3">
           <Button variant="outline" className="h-auto py-4 rounded-2xl flex flex-col gap-1.5 shadow-sm border-0 bg-muted/50" onClick={() => navigate("/my-applications")}>
