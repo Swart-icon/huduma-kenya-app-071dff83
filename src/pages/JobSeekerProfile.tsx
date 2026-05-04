@@ -83,16 +83,17 @@ const JobSeekerProfile = () => {
 
   const loadAll = async () => {
     if (!user) return;
-    const [profRes, jsRes] = await Promise.all([
+    const [profRes, profPrivRes, jsRes] = await Promise.all([
       supabase.from("profiles").select("*").eq("user_id", user.id).maybeSingle(),
+      supabase.from("profiles_private").select("phone, location").eq("user_id", user.id).maybeSingle(),
       supabase.from("job_seeker_profiles").select("*").eq("user_id", user.id).maybeSingle(),
     ]);
 
     setEmail(user.email || "");
     if (profRes.data) {
       setFullName(profRes.data.full_name || "");
-      setPhone(profRes.data.phone || "");
-      setLocationText(profRes.data.location || "");
+      setPhone(profPrivRes.data?.phone || "");
+      setLocationText(profPrivRes.data?.location || "");
     }
     if (jsRes.data) {
       const d: any = jsRes.data;
@@ -182,11 +183,14 @@ const JobSeekerProfile = () => {
     setSaving(true);
 
     // 1. Update main profile (mandatory personal info)
-    const { error: profErr } = await supabase.from("profiles").update({
-      full_name: fullName.trim(),
-      phone: phone.trim(),
-      location: locationText.trim(),
-    }).eq("user_id", user.id);
+    const [pubRes, privRes] = await Promise.all([
+      supabase.from("profiles").update({ full_name: fullName.trim() }).eq("user_id", user.id),
+      supabase.from("profiles_private").upsert(
+        { user_id: user.id, phone: phone.trim(), location: locationText.trim(), updated_at: new Date().toISOString() },
+        { onConflict: "user_id" }
+      ),
+    ]);
+    const profErr = pubRes.error || privRes.error;
 
     if (profErr) {
       setSaving(false);

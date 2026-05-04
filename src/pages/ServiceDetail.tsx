@@ -94,13 +94,23 @@ const ServiceDetailPage = () => {
       if (!svc) { setLoading(false); return; }
       setService(svc);
 
-      const [provRes, catRes, revRes] = await Promise.all([
-        supabase.from("provider_profiles").select("business_name, profile_image_url, contact_phone, contact_email, availability_status").eq("user_id", svc.provider_id).maybeSingle(),
+      const [provRes, catRes, revRes, contactRes] = await Promise.all([
+        supabase.from("provider_profiles").select("business_name, profile_image_url, availability_status").eq("user_id", svc.provider_id).maybeSingle(),
         supabase.from("service_categories").select("name, icon").eq("id", svc.category_id).maybeSingle(),
         supabase.from("reviews").select("rating").eq("provider_id", svc.provider_id),
+        supabase.rpc("get_user_contact", { _user_id: svc.provider_id }),
       ]);
 
-      setProvider(provRes.data);
+      if (provRes.data) {
+        const contact = Array.isArray(contactRes.data) ? contactRes.data[0] : null;
+        setProvider({
+          business_name: provRes.data.business_name,
+          profile_image_url: provRes.data.profile_image_url,
+          availability_status: provRes.data.availability_status,
+          contact_phone: contact?.contact_phone ?? null,
+          contact_email: contact?.contact_email ?? null,
+        });
+      }
       setCategory(catRes.data);
       
       const reviews = revRes.data || [];

@@ -112,28 +112,30 @@ const ProviderProfileEdit = () => {
   }, [authLoading, user, role]);
 
   const fetchAll = async () => {
-    const [profRes, portRes, availRes, verifyRes] = await Promise.all([
+    const [profRes, profPrivRes, portRes, availRes, verifyRes] = await Promise.all([
       supabase.from("provider_profiles").select("*").eq("user_id", user!.id).maybeSingle(),
+      supabase.from("provider_profiles_private").select("contact_phone, contact_email, latitude, longitude").eq("user_id", user!.id).maybeSingle(),
       supabase.from("portfolio_items").select("*").eq("user_id", user!.id).order("created_at", { ascending: false }),
       supabase.from("provider_availability").select("*").eq("user_id", user!.id),
       supabase.from("provider_verifications").select("*").eq("user_id", user!.id).order("created_at", { ascending: false }),
     ]);
 
     if (profRes.data) {
+      const priv = profPrivRes.data;
       setProfile({
         business_name: profRes.data.business_name || "",
         description: profRes.data.description || "",
         city: profRes.data.city || "",
         county: profRes.data.county || "",
-        contact_phone: profRes.data.contact_phone || "",
-        contact_email: profRes.data.contact_email || "",
+        contact_phone: priv?.contact_phone || "",
+        contact_email: priv?.contact_email || "",
         profile_image_url: profRes.data.profile_image_url || "",
         availability_status: profRes.data.availability_status || "available",
         years_experience: profRes.data.years_experience ?? 0,
         skills: profRes.data.skills ?? [],
         service_radius_km: profRes.data.service_radius_km ?? 10,
-        latitude: profRes.data.latitude ?? null,
-        longitude: profRes.data.longitude ?? null,
+        latitude: priv?.latitude ?? null,
+        longitude: priv?.longitude ?? null,
         service_type: (profRes.data as any).service_type || "providing_services",
       });
       setIsNew(false);
@@ -311,21 +313,28 @@ const ProviderProfileEdit = () => {
       description: profile.description.trim(),
       city: profile.city.trim(),
       county: profile.county,
-      contact_phone: profile.contact_phone.trim(),
-      contact_email: profile.contact_email.trim(),
       profile_image_url: profile.profile_image_url,
       availability_status: profile.availability_status,
       years_experience: profile.years_experience,
       skills: profile.skills,
       service_radius_km: profile.service_radius_km,
-      latitude: profile.latitude,
-      longitude: profile.longitude,
       service_type: profile.service_type,
     } as any;
 
-    const { error } = isNew
+    const privatePayload = {
+      user_id: user.id,
+      contact_phone: profile.contact_phone.trim(),
+      contact_email: profile.contact_email.trim(),
+      latitude: profile.latitude,
+      longitude: profile.longitude,
+      updated_at: new Date().toISOString(),
+    };
+
+    const pubRes = isNew
       ? await supabase.from("provider_profiles").insert(payload)
       : await supabase.from("provider_profiles").update(payload).eq("user_id", user.id);
+    const privRes = await supabase.from("provider_profiles_private").upsert(privatePayload, { onConflict: "user_id" });
+    const error = pubRes.error || privRes.error;
 
     // Save availability
     for (const avail of availability) {

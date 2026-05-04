@@ -212,7 +212,7 @@ const VideoFeed = () => {
       if (userIds.length > 0) {
         const [profilesRes, providersRes, rolesRes] = await Promise.all([
           supabase.from("profiles").select("user_id, full_name, avatar_url").in("user_id", userIds),
-          supabase.from("provider_profiles").select("user_id, contact_phone, city, county").in("user_id", userIds),
+          supabase.from("provider_profiles").select("user_id, city, county").in("user_id", userIds),
           supabase.from("user_roles").select("user_id, role").in("user_id", userIds),
         ]);
         profileMap = new Map((profilesRes.data || []).map((p) => [p.user_id, p]));
@@ -230,7 +230,7 @@ const VideoFeed = () => {
           ...v,
           profile: profileMap.get(v.user_id) || null,
           category: v.service_categories || null,
-          providerPhone: prov?.contact_phone || null,
+          providerPhone: null,
           providerCity: v.city || prov?.city || null,
           providerCounty: v.county || prov?.county || null,
           _roles: rolesMap.get(v.user_id) || [],
