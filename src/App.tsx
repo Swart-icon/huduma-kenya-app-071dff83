@@ -61,6 +61,7 @@ import GoLive from "./pages/GoLive";
 import LiveViewer from "./pages/LiveViewer";
 import Inbox from "./pages/Inbox";
 import NotificationSettings from "./pages/NotificationSettings";
+import PaymentHistory from "./pages/PaymentHistory";
 import { OfflineBanner } from "@/components/OfflineBanner";
 import ProfileGuard from "@/components/ProfileGuard";
 import { RateUsDialog } from "@/components/RateUsDialog";
