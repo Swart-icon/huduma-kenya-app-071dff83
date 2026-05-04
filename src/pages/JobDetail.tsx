@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, MapPin, DollarSign, Clock, Send, CheckCircle, XCircle, Bookmark, BookmarkCheck, User, MessageSquare, Phone, Crown } from "lucide-react";
+import { ArrowLeft, MapPin, DollarSign, Clock, Send, CheckCircle, XCircle, Bookmark, BookmarkCheck, User, MessageSquare, Phone, Crown, Upload, FileText, X } from "lucide-react";
 import { getOrCreateConversation } from "@/lib/conversations";
 import { useToast } from "@/hooks/use-toast";
 import { useIsPremium } from "@/hooks/useSubscription";
@@ -61,6 +61,14 @@ const JobDetail = () => {
 
   // Job seeker application
   const [coverMessage, setCoverMessage] = useState("");
+  const [applicantName, setApplicantName] = useState("");
+  const [applicantEmail, setApplicantEmail] = useState("");
+  const [applicantPhone, setApplicantPhone] = useState("");
+  const [yearsExperience, setYearsExperience] = useState("");
+  const [skills, setSkills] = useState("");
+  const [availability, setAvailability] = useState("");
+  const [expectedSalary, setExpectedSalary] = useState("");
+  const [cvFile, setCvFile] = useState<File | null>(null);
   const [applySubmitting, setApplySubmitting] = useState(false);
   const [hasApplied, setHasApplied] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
@@ -69,6 +77,25 @@ const JobDetail = () => {
   useEffect(() => {
     if (id) fetchJob();
   }, [id]);
+
+  // Pre-fill applicant info from profile when premium job seeker opens form
+  useEffect(() => {
+    const prefill = async () => {
+      if (!user || !isJobSeeker) return;
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("full_name, phone")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (profile) {
+        setApplicantName((prev) => prev || profile.full_name || "");
+        setApplicantPhone((prev) => prev || profile.phone || "");
+      }
+      setApplicantEmail((prev) => prev || user.email || "");
+    };
+    prefill();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id, role]);
 
   const fetchJob = async () => {
     const { data: jobData } = await supabase.from("job_posts").select("*").eq("id", id!).maybeSingle();
