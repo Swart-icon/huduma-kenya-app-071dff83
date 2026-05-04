@@ -63,16 +63,23 @@ const CategoryServices = () => {
       }
       setCategory(cat);
 
-      const { data: svc } = await supabase
-        .from("services")
-        .select("id, title, description, price, price_type, city, county, provider_id, provider_profiles!inner(service_type)")
-        .eq("category_id", cat.id)
-        .eq("is_active", true)
-        .in("provider_profiles.service_type", getProviderTypesForMode(mode))
-        .order("created_at", { ascending: false });
+      const [providersRes, servicesRes] = await Promise.all([
+        supabase
+          .from("provider_profiles")
+          .select("user_id, service_type")
+          .in("service_type", getProviderTypesForMode(mode)),
+        supabase
+          .from("services")
+          .select("id, title, description, price, price_type, city, county, provider_id")
+          .eq("category_id", cat.id)
+          .eq("is_active", true)
+          .order("created_at", { ascending: false }),
+      ]);
 
-      const normalized = (svc || []).map(({ provider_profiles: _providerProfiles, ...service }) => service as Service);
-      setServices(normalized);
+      const allowedProviderIds = new Set((providersRes.data || []).map((provider) => provider.user_id));
+      const filteredServices = (servicesRes.data || []).filter((service) => allowedProviderIds.has(service.provider_id));
+
+      setServices(filteredServices);
       setLoading(false);
     };
 
