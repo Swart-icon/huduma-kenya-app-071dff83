@@ -212,6 +212,15 @@ export const CreateStoryDialog = ({ open, onClose }: Props) => {
                 <span className="text-xs text-muted-foreground">{text.length}/280</span>
               </div>
 
+              {submitting && (
+                <div className="space-y-1.5">
+                  <Progress value={progress} className="h-2" />
+                  <p className="text-xs text-muted-foreground text-center">
+                    {progressLabel} {progress > 0 && progress < 100 ? `${progress}%` : ""}
+                  </p>
+                </div>
+              )}
+
               <Button
                 onClick={handleSubmit}
                 disabled={submitting || (!text.trim() && !imageFile)}
