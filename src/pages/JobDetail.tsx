@@ -173,25 +173,54 @@ const JobDetail = () => {
     if (!user || !(role === "job_seeker" || roles.includes("job_seeker"))) return;
     if (authLoading || premiumLoading) return;
     if (!isPremium) {
-      toast({
-        title: "Premium required",
-        description: "Pay KSh 200 for 30 days to apply for jobs.",
-      });
+      toast({ title: "Premium required", description: "Pay KSh 200 for 30 days to apply for jobs." });
       navigate("/upgrade?role=job_seeker");
       return;
     }
+
+    // Required field validation
+    if (!applicantName.trim() || !applicantEmail.trim() || !applicantPhone.trim()) {
+      toast({ title: "Missing details", description: "Name, email and phone are required.", variant: "destructive" });
+      return;
+    }
+    if (!cvFile) {
+      toast({ title: "CV required", description: "Please attach your CV (PDF or Word).", variant: "destructive" });
+      return;
+    }
+
     setApplySubmitting(true);
-    const { error } = await supabase.from("job_applications").insert({
-      job_post_id: id!,
-      applicant_id: user.id,
-      cover_message: coverMessage.trim() || null,
-    });
-    setApplySubmitting(false);
-    if (error) {
-      toast({ title: "Failed to apply", description: error.message, variant: "destructive" });
-    } else {
+    try {
+      // Upload CV to job-seeker-docs bucket under user's folder
+      const ext = cvFile.name.split(".").pop() || "pdf";
+      const filePath = `${user.id}/cv-${Date.now()}.${ext}`;
+      const { error: uploadError } = await supabase.storage
+        .from("job-seeker-docs")
+        .upload(filePath, cvFile, { upsert: false, contentType: cvFile.type });
+      if (uploadError) throw uploadError;
+      const { data: pub } = supabase.storage.from("job-seeker-docs").getPublicUrl(filePath);
+      const cvUrl = pub.publicUrl;
+
+      const { error } = await supabase.from("job_applications").insert({
+        job_post_id: id!,
+        applicant_id: user.id,
+        cover_message: coverMessage.trim() || null,
+        applicant_name: applicantName.trim(),
+        applicant_email: applicantEmail.trim(),
+        applicant_phone: applicantPhone.trim(),
+        years_experience: yearsExperience ? parseInt(yearsExperience, 10) : null,
+        skills: skills.trim() || null,
+        availability: availability.trim() || null,
+        expected_salary: expectedSalary ? parseFloat(expectedSalary) : null,
+        cv_url: cvUrl,
+        cv_filename: cvFile.name,
+      });
+      if (error) throw error;
       toast({ title: "Application sent! ✅" });
       setHasApplied(true);
+    } catch (err: any) {
+      toast({ title: "Failed to apply", description: err.message || "Try again", variant: "destructive" });
+    } finally {
+      setApplySubmitting(false);
     }
   };
 
