@@ -111,6 +111,8 @@ const Profile = () => {
     }
   };
 
+  if (loading) return null;
+
   const nonAdminRoles = roles.filter((r) => r !== "admin");
   const activeRoleLabel = roleOptions.find((r) => r.value === role)?.label || "User";
 
