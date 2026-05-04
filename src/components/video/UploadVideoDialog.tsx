@@ -197,8 +197,10 @@ export const UploadVideoDialog = ({ open, onOpenChange }: { open: boolean; onOpe
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
     if (!f) return;
-    if (!isAcceptableVideo(f)) { toast.error("Please choose a video file (MP4, MOV, WebM, etc.)"); return; }
-    if (f.size > MAX_VIDEO_SIZE_MB * 1024 * 1024) { toast.error("Video must be under 1GB"); return; }
+    logFileMeta("UploadVideo", f);
+    if (!isVideoFile(f)) { toast.error("Unsupported file type. Use MP4, MOV, or WebM."); return; }
+    const v = validateVideoFile(f);
+    if (!v.ok) { toast.error(v.error!); return; }
     setFile(f);
     setPreview(URL.createObjectURL(f));
     if (submitted) setErrors((prev) => ({ ...prev, file: undefined }));
@@ -225,27 +227,36 @@ export const UploadVideoDialog = ({ open, onOpenChange }: { open: boolean; onOpe
     }
     if (!file || !user || !canUpload) return;
 
+    // Final size guard (covers files dropped in via the recorder/handoff)
+    const v = validateVideoFile(file);
+    if (!v.ok) { toast.error(v.error!); return; }
+
     setUploading(true);
+    setProgress(0);
+    setProgressLabel("Preparing…");
     try {
-      const ext = (file.name.split(".").pop() || "mp4").toLowerCase();
+      const rawExt = (file.name.split(".").pop() || "mp4").toLowerCase();
+      const ext = rawExt.length <= 5 ? rawExt : "mp4";
       const baseKey = `${user.id}/${Date.now()}`;
       const path = `${baseKey}.${ext}`;
-      const contentType = file.type && file.type.startsWith("video/") ? file.type : "video/mp4";
+      const contentType = normalizedMime(file);
 
-      // Kick off thumbnail extraction in parallel with the video upload so
-      // posting is never delayed by frame decoding.
+      // Kick off thumbnail extraction in parallel — never blocks the post
       const thumbnailPromise = extractVideoThumbnail(file).catch(() => null);
 
-      const { error: storageError } = await supabase.storage
-        .from("user-videos")
-        .upload(path, file, { contentType, upsert: false });
-      if (storageError) {
-        console.error("[UploadVideo] storage error", storageError);
-        throw storageError;
-      }
+      setProgressLabel("Uploading video…");
+      await uploadWithProgress({
+        bucket: "user-videos",
+        path,
+        file,
+        contentType,
+        onProgress: (pct) => setProgress(pct),
+      });
+
       const { data: urlData } = supabase.storage.from("user-videos").getPublicUrl(path);
 
       // Upload thumbnail (best-effort — never block the post)
+      setProgressLabel("Finalizing…");
       let thumbnailUrl: string | null = null;
       try {
         const thumbFile = await thumbnailPromise;
@@ -259,7 +270,7 @@ export const UploadVideoDialog = ({ open, onOpenChange }: { open: boolean; onOpe
           }
         }
       } catch {
-        // Non-fatal — proceed without a thumbnail
+        // Non-fatal
       }
 
       const { error: dbError } = await supabase.from("videos").insert({
@@ -283,9 +294,11 @@ export const UploadVideoDialog = ({ open, onOpenChange }: { open: boolean; onOpe
       onOpenChange(false);
     } catch (err: any) {
       console.error("[UploadVideo] failed", err);
-      toast.error(err?.message || err?.error_description || "Upload failed. Please try again.");
+      toast.error(friendlyUploadError(err));
     } finally {
       setUploading(false);
+      setProgress(0);
+      setProgressLabel("");
     }
   };
 
