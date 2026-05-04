@@ -105,15 +105,24 @@ const RecordVideo = () => {
   const startRecording = () => {
     if (!streamRef.current) return;
     chunksRef.current = [];
-    const mimeType = MediaRecorder.isTypeSupported("video/webm;codecs=vp9,opus")
-      ? "video/webm;codecs=vp9,opus"
-      : MediaRecorder.isTypeSupported("video/webm;codecs=vp8,opus")
-        ? "video/webm;codecs=vp8,opus"
-        : "video/webm";
-    const recorder = new MediaRecorder(streamRef.current, { mimeType, videoBitsPerSecond: 2_500_000 });
+    // Try webm (Android/desktop), fall back to mp4 (iOS Safari has no webm support)
+    const candidates = [
+      "video/webm;codecs=vp9,opus",
+      "video/webm;codecs=vp8,opus",
+      "video/webm",
+      "video/mp4;codecs=h264,aac",
+      "video/mp4",
+    ];
+    const mimeType = candidates.find((m) => MediaRecorder.isTypeSupported(m)) || "";
+    const recorder = mimeType
+      ? new MediaRecorder(streamRef.current, { mimeType, videoBitsPerSecond: 2_500_000 })
+      : new MediaRecorder(streamRef.current, { videoBitsPerSecond: 2_500_000 });
+    const outputType = mimeType || recorder.mimeType || "video/webm";
+    recordedMimeRef.current = outputType;
+    recordedExtRef.current = outputType.includes("mp4") ? "mp4" : "webm";
     recorder.ondataavailable = (e) => { if (e.data.size > 0) chunksRef.current.push(e.data); };
     recorder.onstop = () => {
-      const blob = new Blob(chunksRef.current, { type: "video/webm" });
+      const blob = new Blob(chunksRef.current, { type: outputType });
       setRecordedBlob(blob);
       setPreviewUrl(URL.createObjectURL(blob));
       stopStream();
