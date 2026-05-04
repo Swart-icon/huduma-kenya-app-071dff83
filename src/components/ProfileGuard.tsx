@@ -107,7 +107,11 @@ const ProfileGuard = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  if (loading || (checking && !hasCheckedOnce)) {
+  // Do not blank/remount the current route after the first successful auth/profile
+  // check. Mobile gallery/camera handoffs can trigger auth refresh events on app
+  // resume; showing the full-screen loader here unmounts upload dialogs and drops
+  // the user back to the feed while the selected file is only recoverable later.
+  if ((loading && !hasCheckedOnce) || (checking && !hasCheckedOnce)) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
