@@ -13,7 +13,7 @@ import {
   ClipboardList, MessageCircle, Bell, Star, MapPin, ChevronRight,
   Settings, PlusCircle, TrendingUp, Eye, Navigation as NavigationIcon,
   Video, Lightbulb, Bookmark, Send, Plus, Inbox as InboxIcon,
-  Zap, Sparkles, Rocket, Target, Award,
+  Zap, Sparkles, Rocket, Target, Award, ShoppingBag,
 } from "lucide-react";
 import { useUnreadCount } from "@/hooks/useUnreadCount";
 import { useInboxUnread } from "@/hooks/useInboxUnread";
