@@ -84,12 +84,11 @@ const JobDetail = () => {
       if (!user || !isJobSeeker) return;
       const { data: profile } = await supabase
         .from("profiles")
-        .select("full_name, phone")
+        .select("full_name")
         .eq("user_id", user.id)
         .maybeSingle();
       if (profile) {
         setApplicantName((prev) => prev || profile.full_name || "");
-        setApplicantPhone((prev) => prev || profile.phone || "");
       }
       setApplicantEmail((prev) => prev || user.email || "");
     };
