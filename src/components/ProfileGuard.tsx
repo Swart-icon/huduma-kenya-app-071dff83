@@ -33,12 +33,14 @@ const ProfileGuard = ({ children }: { children: React.ReactNode }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [checking, setChecking] = useState(true);
+  const [hasCheckedOnce, setHasCheckedOnce] = useState(false);
   const [complete, setComplete] = useState(true);
 
   useEffect(() => {
     if (loading) return;
     if (!user || !role) {
       setChecking(false);
+      setHasCheckedOnce(true);
       setComplete(true);
       return;
     }
@@ -46,6 +48,7 @@ const ProfileGuard = ({ children }: { children: React.ReactNode }) => {
     // Don't guard exempt pages
     if (isExempt(location.pathname)) {
       setChecking(false);
+      setHasCheckedOnce(true);
       setComplete(true);
       return;
     }
@@ -55,7 +58,11 @@ const ProfileGuard = ({ children }: { children: React.ReactNode }) => {
 
   const checkProfile = async () => {
     if (!user || !role) return;
-    setChecking(true);
+    // Only show the blocking spinner on the very first check.
+    // Subsequent re-checks (e.g. after the WebView resumes from a gallery/camera
+    // picker) must NOT unmount the current page — that would close any open
+    // upload dialog and lose the selected media.
+    if (!hasCheckedOnce) setChecking(true);
 
     try {
       if (role === "provider") {
@@ -96,10 +103,11 @@ const ProfileGuard = ({ children }: { children: React.ReactNode }) => {
       setComplete(true);
     } finally {
       setChecking(false);
+      setHasCheckedOnce(true);
     }
   };
 
-  if (loading || checking) {
+  if (loading || (checking && !hasCheckedOnce)) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
