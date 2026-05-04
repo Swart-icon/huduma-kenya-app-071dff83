@@ -21,7 +21,11 @@ import { KENYAN_COUNTIES, getCitiesByCounty } from "@/lib/kenyanLocations";
 import { extractVideoThumbnail } from "@/lib/videoThumbnail";
 
 const MAX_VIDEO_SIZE_MB = 1024;
-const ALLOWED_FORMATS = ["video/mp4", "video/webm", "video/quicktime", "video/x-m4v"];
+// Accept anything the browser/OS labels as video, plus common phone-camera extensions
+// that sometimes arrive with an empty or non-standard MIME type.
+const VIDEO_EXT_RE = /\.(mp4|m4v|mov|webm|mkv|avi|3gp|3gpp|qt)$/i;
+const isAcceptableVideo = (f: File) =>
+  (f.type && f.type.startsWith("video/")) || VIDEO_EXT_RE.test(f.name);
 
 type ValidationErrors = {
   file?: string;
