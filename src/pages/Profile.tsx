@@ -136,10 +136,46 @@ const Profile = () => {
         <Card className="mb-6">
           <CardContent className="p-5">
             <div className="flex items-center gap-4 mb-4">
-              <div className="w-14 h-14 rounded-xl bg-primary flex items-center justify-center">
-                <User className="w-7 h-7 text-primary-foreground" />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploadingAvatar}
+                className="relative w-16 h-16 rounded-xl bg-primary flex items-center justify-center overflow-hidden group shrink-0"
+                aria-label="Change profile picture"
+              >
+                {profile.avatar_url ? (
+                  <img src={profile.avatar_url} alt="Profile" className="w-full h-full object-cover" />
+                ) : (
+                  <User className="w-7 h-7 text-primary-foreground" />
+                )}
+                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
+                  <Camera className="w-5 h-5 text-white" />
+                </div>
+                {uploadingAvatar && (
+                  <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  </div>
+                )}
+              </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleAvatarUpload}
+              />
+              <div className="min-w-0">
+                <p className="font-semibold text-foreground truncate">{profile.full_name || "No name set"}</p>
+                <p className="text-sm text-muted-foreground truncate">{user?.email}</p>
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="text-xs text-primary font-semibold mt-1"
+                >
+                  {profile.avatar_url ? "Change photo" : "Add photo"}
+                </button>
               </div>
-              <div>
+            </div>
                 <p className="font-semibold text-foreground">{profile.full_name || "No name set"}</p>
                 <p className="text-sm text-muted-foreground">{user?.email}</p>
                 <div className="flex flex-wrap gap-1 mt-1">
