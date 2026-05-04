@@ -24,6 +24,7 @@ import {
   isVideoFile, validateVideoFile, normalizedMime,
   uploadWithProgress, friendlyUploadError, logFileMeta, MAX_VIDEO_MB,
 } from "@/lib/mobileUpload";
+import { useMobileMediaLifecycle } from "@/hooks/useMobileMediaLifecycle";
 
 type ValidationErrors = {
   file?: string;
@@ -32,6 +33,8 @@ type ValidationErrors = {
   county?: string;
   city?: string;
 };
+
+const VIDEO_UPLOAD_SESSION = "video-upload";
 
 export const UploadVideoDialog = ({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) => {
   const navigate = useNavigate();
@@ -50,6 +53,13 @@ export const UploadVideoDialog = ({ open, onOpenChange }: { open: boolean; onOpe
   const [preview, setPreview] = useState<string | null>(null);
   const [errors, setErrors] = useState<ValidationErrors>({});
   const [submitted, setSubmitted] = useState(false);
+  const mediaLifecycle = useMobileMediaLifecycle<{
+    description: string;
+    categoryId: string;
+    county: string;
+    city: string;
+    allowDownloads: boolean;
+  }>(VIDEO_UPLOAD_SESSION, open);
 
   // Recording state
   const [recording, setRecording] = useState(false);
@@ -68,8 +78,9 @@ export const UploadVideoDialog = ({ open, onOpenChange }: { open: boolean; onOpe
     setFile(null); setDescription(""); setCategoryId("");
     setCounty(""); setCity(""); setPreview(null);
     setErrors({}); setSubmitted(false);
+    mediaLifecycle.clearAll();
     stopCamera();
-  }, []);
+  }, [mediaLifecycle]);
 
   // Cleanup on dialog close
   useEffect(() => {
