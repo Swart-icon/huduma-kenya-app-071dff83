@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ArrowLeft, Search, Wrench, ShoppingBag, Sparkles } from "lucide-react";
@@ -11,13 +11,23 @@ import {
   MARKETPLACE_MODE_COPY,
   type MarketplaceMode,
   getMarketplaceCategories,
+  getMarketplaceMode,
 } from "@/lib/marketplace";
 
 const Categories = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { data: categories = [], isLoading } = useCategories();
   const [search, setSearch] = useState("");
-  const [mode, setMode] = useState<MarketplaceMode>(DEFAULT_MARKETPLACE_MODE);
+  const initialMode = searchParams.get("mode") ? getMarketplaceMode(searchParams.get("mode")) : DEFAULT_MARKETPLACE_MODE;
+  const [mode, setMode] = useState<MarketplaceMode>(initialMode);
+
+  const handleModeChange = (next: MarketplaceMode) => {
+    setMode(next);
+    const params = new URLSearchParams(searchParams);
+    params.set("mode", next);
+    setSearchParams(params, { replace: true });
+  };
 
   const filtered = useMemo(
     () => getMarketplaceCategories(categories, mode, search),
@@ -47,7 +57,7 @@ const Categories = () => {
               <button
                 key={option}
                 type="button"
-                onClick={() => setMode(option)}
+                onClick={() => handleModeChange(option)}
                 aria-pressed={active}
                 className={`group relative overflow-hidden rounded-2xl p-4 text-left transition-all duration-300 ease-out ${
                   active
