@@ -24,7 +24,7 @@ import {
   isVideoFile, validateVideoFile, normalizedMime,
   uploadWithProgress, friendlyUploadError, logFileMeta, MAX_VIDEO_MB,
 } from "@/lib/mobileUpload";
-import { useMobileMediaLifecycle } from "@/hooks/useMobileMediaLifecycle";
+import { logMobileMediaEvent, useMobileMediaLifecycle } from "@/hooks/useMobileMediaLifecycle";
 
 type ValidationErrors = {
   file?: string;
@@ -257,6 +257,7 @@ export const UploadVideoDialog = ({ open, onOpenChange }: { open: boolean; onOpe
     const stored = mediaLifecycle.rememberFile(f, "gallery", "video");
     setFile(stored.file);
     setPreview(stored.objectUrl);
+    logMobileMediaEvent("video-preview-opened", { sessionKey: VIDEO_UPLOAD_SESSION, routeAfterPicker: window.location.pathname });
     if (submitted) setErrors((prev) => ({ ...prev, file: undefined }));
     e.currentTarget.value = "";
   };
