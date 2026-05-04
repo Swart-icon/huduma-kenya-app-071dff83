@@ -175,7 +175,9 @@ const RecordVideo = () => {
     setProceeding(true);
     try {
       // Stash the blob via a sessionStorage key + Blob URL handoff
-      const file = new File([recordedBlob], `recording-${Date.now()}.webm`, { type: "video/webm" });
+      const ext = recordedExtRef.current || "webm";
+      const mime = recordedMimeRef.current || "video/webm";
+      const file = new File([recordedBlob], `recording-${Date.now()}.${ext}`, { type: mime });
       // Convert to base64 for safe handoff (small clips); fallback object URL if too large
       if (file.size < 8 * 1024 * 1024) {
         const buf = await file.arrayBuffer();
