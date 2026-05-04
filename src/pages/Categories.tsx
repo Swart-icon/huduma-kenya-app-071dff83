@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, Search } from "lucide-react";
+import { ArrowLeft, Search, Wrench, ShoppingBag, Sparkles } from "lucide-react";
 import { getCategoryIcon } from "@/lib/categoryIcons";
 import { useCategories } from "@/hooks/useCategories";
 import { CategoryGridSkeleton } from "@/components/Skeletons";
@@ -35,29 +35,52 @@ const Categories = () => {
         <h1 className="mb-2 font-display text-2xl font-bold text-foreground">Browse Services</h1>
         <p className="mb-6 text-muted-foreground">Choose whether you want to hire providers or shop from sellers.</p>
 
-        <div className="mb-6 rounded-2xl border border-border bg-card p-1 shadow-sm">
-          <div className="grid grid-cols-2 gap-1 rounded-xl bg-muted p-1">
-            {(["services", "goods"] as MarketplaceMode[]).map((option) => {
-              const active = mode === option;
-              return (
-                <button
-                  key={option}
-                  type="button"
-                  onClick={() => setMode(option)}
-                  className={`rounded-xl px-3 py-3 text-left transition-all duration-200 ${
-                    active
-                      ? "bg-background text-foreground shadow-sm"
-                      : "text-muted-foreground hover:bg-background/60 hover:text-foreground"
+        <div className="mb-6 grid grid-cols-2 gap-3">
+          {(["services", "goods"] as MarketplaceMode[]).map((option) => {
+            const active = mode === option;
+            const Icon = option === "services" ? Wrench : ShoppingBag;
+            const gradient =
+              option === "services"
+                ? "from-primary via-primary to-primary/80"
+                : "from-accent via-accent to-accent/80";
+            return (
+              <button
+                key={option}
+                type="button"
+                onClick={() => setMode(option)}
+                aria-pressed={active}
+                className={`group relative overflow-hidden rounded-2xl p-4 text-left transition-all duration-300 ease-out ${
+                  active
+                    ? `bg-gradient-to-br ${gradient} text-primary-foreground shadow-lg shadow-primary/30 -translate-y-0.5 scale-[1.02] ring-2 ring-primary/40`
+                    : "border border-border bg-card text-foreground hover:-translate-y-0.5 hover:shadow-md active:scale-[0.98]"
+                }`}
+              >
+                {active && (
+                  <span className="pointer-events-none absolute -right-6 -top-6 h-20 w-20 rounded-full bg-white/20 blur-2xl" />
+                )}
+                <div className="relative flex items-center gap-2">
+                  <span
+                    className={`flex h-9 w-9 items-center justify-center rounded-xl transition-transform duration-300 group-hover:scale-110 ${
+                      active ? "bg-white/20 backdrop-blur-sm" : "bg-primary/10"
+                    }`}
+                  >
+                    <Icon className={`h-4 w-4 ${active ? "text-primary-foreground" : "text-primary"}`} />
+                  </span>
+                  {active && <Sparkles className="ml-auto h-4 w-4 animate-pulse text-primary-foreground/90" />}
+                </div>
+                <div className="relative mt-3 text-sm font-bold leading-tight">
+                  {MARKETPLACE_MODE_COPY[option].title}
+                </div>
+                <div
+                  className={`relative mt-1 text-[11px] leading-relaxed ${
+                    active ? "text-primary-foreground/85" : "text-muted-foreground"
                   }`}
                 >
-                  <div className="text-sm font-semibold">{MARKETPLACE_MODE_COPY[option].title}</div>
-                  <div className="mt-1 text-xs leading-relaxed text-muted-foreground">
-                    {MARKETPLACE_MODE_COPY[option].subtitle}
-                  </div>
-                </button>
-              );
-            })}
-          </div>
+                  {MARKETPLACE_MODE_COPY[option].subtitle}
+                </div>
+              </button>
+            );
+          })}
         </div>
 
         <div className="relative mb-3">
