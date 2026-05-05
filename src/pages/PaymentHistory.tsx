@@ -110,19 +110,29 @@ const PaymentHistory = () => {
                         </div>
                         <div className="min-w-0">
                           <p className="font-semibold text-foreground truncate">{label}</p>
-                          <p className="text-xs text-muted-foreground">
+                          <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
+                            <Badge variant="outline" className="text-[10px] py-0 h-4">
+                              {providerLabel(tx.provider)}
+                            </Badge>
+                            {tx.payment_channel && (
+                              <Badge variant="outline" className="text-[10px] py-0 h-4 capitalize">
+                                {tx.payment_channel}
+                              </Badge>
+                            )}
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-0.5">
                             {new Date(tx.created_at).toLocaleString()}
                           </p>
                           {tx.mpesa_receipt && (
                             <p className="text-xs text-muted-foreground mt-0.5">
-                              Receipt: <span className="font-mono">{tx.mpesa_receipt}</span>
+                              Ref: <span className="font-mono">{tx.mpesa_receipt}</span>
                             </p>
                           )}
                           {tx.status === "failed" && tx.result_desc && (
                             <p className="text-xs text-destructive mt-0.5 line-clamp-2">{tx.result_desc}</p>
                           )}
                           {tx.status === "pending" && (
-                            <p className="text-xs text-muted-foreground mt-0.5">Awaiting M-Pesa confirmation…</p>
+                            <p className="text-xs text-muted-foreground mt-0.5">Awaiting payment confirmation…</p>
                           )}
                         </div>
                       </div>
