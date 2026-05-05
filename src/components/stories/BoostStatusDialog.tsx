@@ -191,35 +191,106 @@ export const BoostStatusDialog = ({ open, onClose, statusId, onBoosted }: Props)
 
         {step === "payment" && (
           <div className="space-y-4">
-            <div className="text-center py-2">
-              <Badge className="bg-primary/10 text-primary mb-2">{tier.label}</Badge>
-              <p className="text-2xl font-bold text-foreground">KES {tier.price}</p>
-              <p className="text-xs text-muted-foreground">{tier.duration} boost</p>
+            {/* Order summary */}
+            <Card className="overflow-hidden border-2 border-primary/15">
+              <div className="bg-gradient-to-br from-primary/15 via-primary/5 to-transparent p-4">
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shrink-0 shadow-md shadow-primary/20">
+                    {tier.icon}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Order summary</p>
+                    <h3 className="font-display text-sm font-bold text-foreground leading-tight">{tier.label}</h3>
+                    <p className="text-[11px] text-muted-foreground">{tier.duration} boost</p>
+                  </div>
+                </div>
+                <div className="mt-3">
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Total due</p>
+                  <p className="font-display text-2xl font-bold text-foreground leading-none">KSh {tier.price}</p>
+                </div>
+              </div>
+            </Card>
+
+            <div>
+              <p className="text-xs font-bold text-foreground mb-2 uppercase tracking-wider">Payment method</p>
+              <PaymentMethodSelector value={provider} onChange={setProvider} disabled={processing} />
             </div>
 
-            <PaymentMethodSelector value={provider} onChange={setProvider} disabled={processing} />
-
-            {provider === "mpesa" ? (
-              <div>
-                <Label className="text-sm font-semibold">M-Pesa phone number</Label>
-                <Input
-                  value={phone} onChange={(e) => setPhone(e.target.value)}
-                  placeholder="0712345678" className="rounded-xl h-12 mt-1.5" maxLength={13}
-                />
-              </div>
+            {provider === "paystack" ? (
+              <Card className="border-2 border-[#00C3F7]/20 overflow-hidden">
+                <div className="bg-gradient-to-r from-[#00C3F7]/10 to-transparent px-4 py-3 flex items-center gap-2 border-b border-border">
+                  <div className="w-8 h-8 rounded-lg bg-[#00C3F7]/15 flex items-center justify-center">
+                    <Lock className="w-4 h-4 text-[#0098C8]" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold text-foreground">Secure Checkout</p>
+                    <p className="text-[10px] text-muted-foreground">Powered by Paystack</p>
+                  </div>
+                  <ShieldCheck className="w-4 h-4 text-[#0098C8]" />
+                </div>
+                <CardContent className="p-4 space-y-3">
+                  <div>
+                    <Label className="text-xs font-semibold text-muted-foreground">Email for receipt</Label>
+                    <Input
+                      type="email" value={email} onChange={(e) => setEmail(e.target.value)}
+                      placeholder="you@example.com" className="rounded-xl h-11 mt-1 bg-background"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs font-semibold text-muted-foreground">Phone <span className="font-normal">(optional)</span></Label>
+                    <Input
+                      type="tel" value={phone} onChange={(e) => setPhone(e.target.value)}
+                      placeholder="07XXXXXXXX" className="rounded-xl h-11 mt-1 bg-background"
+                    />
+                  </div>
+                  <div className="pt-1">
+                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold mb-1.5">Supported methods</p>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      {[
+                        { icon: <CreditCard className="w-3 h-3" />, label: "Card" },
+                        { icon: <Building2 className="w-3 h-3" />, label: "Bank" },
+                        { icon: <Smartphone className="w-3 h-3" />, label: "Mobile money" },
+                      ].map((m) => (
+                        <span key={m.label} className="inline-flex items-center gap-1 text-[11px] bg-muted text-foreground px-2 py-1 rounded-md">
+                          {m.icon} {m.label}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             ) : (
-              <div className="space-y-2">
-                <Label className="text-sm font-semibold">Email for receipt</Label>
-                <Input
-                  type="email" value={email} onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@example.com" className="rounded-xl h-12"
-                />
-              </div>
+              <Card className="border-2 border-[#4CAF50]/20 overflow-hidden">
+                <div className="bg-gradient-to-r from-[#4CAF50]/10 to-transparent px-4 py-3 flex items-center gap-2 border-b border-border">
+                  <div className="w-8 h-8 rounded-lg bg-[#4CAF50]/15 flex items-center justify-center">
+                    <Smartphone className="w-4 h-4 text-[#2E7D32]" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold text-foreground">M-Pesa STK Push</p>
+                    <p className="text-[10px] text-muted-foreground">Approve prompt on your phone</p>
+                  </div>
+                  <ShieldCheck className="w-4 h-4 text-[#2E7D32]" />
+                </div>
+                <CardContent className="p-4">
+                  <Label className="text-xs font-semibold text-muted-foreground">M-Pesa phone number</Label>
+                  <Input
+                    value={phone} onChange={(e) => setPhone(e.target.value)}
+                    placeholder="07XXXXXXXX" className="rounded-xl h-11 mt-1 bg-background" maxLength={13}
+                  />
+                </CardContent>
+              </Card>
             )}
 
+            <div className="flex items-center justify-center gap-1.5 text-[11px] text-muted-foreground">
+              <Lock className="w-3 h-3" />
+              <span>{provider === "paystack" ? "Securely processed by Paystack" : "Encrypted, server-verified payment"}</span>
+            </div>
+
             <div className="flex gap-3">
-              <Button variant="outline" onClick={() => setStep("select")} className="flex-1 rounded-xl">Back</Button>
-              <Button onClick={handlePay} className="flex-1 rounded-xl font-bold">Pay KES {tier.price}</Button>
+              <Button variant="outline" onClick={() => setStep("select")} disabled={processing} className="flex-1 rounded-xl">Back</Button>
+              <Button onClick={handlePay} disabled={processing} className="flex-1 rounded-xl font-bold">
+                {provider === "paystack" ? <><Lock className="w-4 h-4 mr-1.5" /> Checkout</> : <>Pay KSh {tier.price}</>}
+              </Button>
             </div>
           </div>
         )}
