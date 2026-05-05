@@ -242,6 +242,7 @@ Deno.serve(async (req) => {
           purpose: purposeLabel,
           subscription_id: subscriptionId,
           boost_id: boostId,
+          video_boost_id: videoBoostId,
           tx_id: txRow.id,
         },
       }),
