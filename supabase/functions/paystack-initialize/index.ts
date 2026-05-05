@@ -147,7 +147,7 @@ Deno.serve(async (req) => {
         currency: "KES",
         email,
         phone_number: phone ? String(phone) : null,
-        status: "pending",
+        status: "initiated",
       })
       .select("id")
       .single();
