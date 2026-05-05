@@ -196,6 +196,7 @@ Deno.serve(async (req) => {
         provider: "paystack",
         subscription_id: subscriptionId,
         boost_id: boostId,
+        video_boost_id: videoBoostId,
         external_reference: externalRef,
         paystack_reference: externalRef,
         purpose: purposeLabel,
@@ -215,6 +216,9 @@ Deno.serve(async (req) => {
       }
       if (boostId) {
         await admin.from("status_boosts").update({ payment_status: "failed" }).eq("id", boostId);
+      }
+      if (videoBoostId) {
+        await admin.from("video_boosts").update({ payment_status: "failed", campaign_status: "cancelled" }).eq("id", videoBoostId);
       }
       return json({ error: "Could not record transaction" }, 500);
     }
