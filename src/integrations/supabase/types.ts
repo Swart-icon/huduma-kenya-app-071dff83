@@ -781,6 +781,7 @@ export type Database = {
           subscription_id: string | null
           updated_at: string
           user_id: string
+          video_boost_id: string | null
         }
         Insert: {
           amount_kes: number
@@ -805,6 +806,7 @@ export type Database = {
           subscription_id?: string | null
           updated_at?: string
           user_id: string
+          video_boost_id?: string | null
         }
         Update: {
           amount_kes?: number
@@ -829,6 +831,7 @@ export type Database = {
           subscription_id?: string | null
           updated_at?: string
           user_id?: string
+          video_boost_id?: string | null
         }
         Relationships: [
           {
@@ -1666,6 +1669,92 @@ export type Database = {
         }
         Relationships: []
       }
+      video_boost_impressions: {
+        Row: {
+          boost_id: string
+          created_at: string
+          id: string
+          viewer_id: string
+        }
+        Insert: {
+          boost_id: string
+          created_at?: string
+          id?: string
+          viewer_id: string
+        }
+        Update: {
+          boost_id?: string
+          created_at?: string
+          id?: string
+          viewer_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "video_boost_impressions_boost_id_fkey"
+            columns: ["boost_id"]
+            isOneToOne: false
+            referencedRelation: "video_boosts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      video_boosts: {
+        Row: {
+          activated_at: string | null
+          amount_kes: number
+          campaign_status: string
+          completed_at: string | null
+          created_at: string
+          delivered_impressions: number
+          expires_at: string | null
+          id: string
+          package_type: string
+          payment_provider: string
+          payment_reference: string | null
+          payment_status: string
+          remaining_impressions: number
+          target_impressions: number
+          user_id: string
+          video_id: string
+        }
+        Insert: {
+          activated_at?: string | null
+          amount_kes: number
+          campaign_status?: string
+          completed_at?: string | null
+          created_at?: string
+          delivered_impressions?: number
+          expires_at?: string | null
+          id?: string
+          package_type: string
+          payment_provider: string
+          payment_reference?: string | null
+          payment_status?: string
+          remaining_impressions: number
+          target_impressions: number
+          user_id: string
+          video_id: string
+        }
+        Update: {
+          activated_at?: string | null
+          amount_kes?: number
+          campaign_status?: string
+          completed_at?: string | null
+          created_at?: string
+          delivered_impressions?: number
+          expires_at?: string | null
+          id?: string
+          package_type?: string
+          payment_provider?: string
+          payment_reference?: string | null
+          payment_status?: string
+          remaining_impressions?: number
+          target_impressions?: number
+          user_id?: string
+          video_id?: string
+        }
+        Relationships: []
+      }
       video_comments: {
         Row: {
           content: string
@@ -1800,6 +1889,20 @@ export type Database = {
       assign_self_role: {
         Args: { _role: Database["public"]["Enums"]["app_role"] }
         Returns: undefined
+      }
+      boosted_videos_for_feed: {
+        Args: {
+          _limit_count?: number
+          _user_city?: string
+          _user_county?: string
+        }
+        Returns: {
+          boost_id: string
+          location_rank: number
+          remaining_impressions: number
+          user_id: string
+          video_id: string
+        }[]
       }
       expire_stale_mpesa_transactions: { Args: never; Returns: number }
       get_user_contact: {
@@ -1949,6 +2052,7 @@ export type Database = {
           view_count: number
         }[]
       }
+      record_boost_impression: { Args: { _boost_id: string }; Returns: boolean }
       remove_self_role: {
         Args: { _role: Database["public"]["Enums"]["app_role"] }
         Returns: undefined

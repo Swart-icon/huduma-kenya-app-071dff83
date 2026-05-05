@@ -6,8 +6,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import {
   Play, Heart, MessageCircle, User, Phone, MapPin, Briefcase, Wrench, Flag,
-  MoreVertical, Download, Share2, Trash2,
+  MoreVertical, Download, Share2, Trash2, TrendingUp,
 } from "lucide-react";
+import { BoostVideoDialog } from "./BoostVideoDialog";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -37,6 +38,8 @@ export const VideoSlide = memo(({
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleted, setDeleted] = useState(false);
   const [downloading, setDownloading] = useState(false);
+  const [boostOpen, setBoostOpen] = useState(false);
+  const impressionCountedRef = useRef(false);
 
   // Tap detection
   const lastTapRef = useRef<number>(0);
@@ -65,12 +68,23 @@ export const VideoSlide = memo(({
       setPaused(false);
       el.currentTime = 0;
       el.play().catch(() => {});
-      // Track as meaningful action for rate prompt
       try { (window as any).__servio_trackAction?.(); } catch {}
+      // Boost impression tracking — fire after 2.5s of active playback
+      impressionCountedRef.current = false;
+      if (video.activeBoostId && user && user.id !== video.user_id) {
+        const boostId = video.activeBoostId;
+        const t = window.setTimeout(() => {
+          if (!impressionCountedRef.current && videoRef.current && !videoRef.current.paused) {
+            impressionCountedRef.current = true;
+            supabase.rpc("record_boost_impression", { _boost_id: boostId }).then(() => {});
+          }
+        }, 2500);
+        return () => window.clearTimeout(t);
+      }
     } else {
       el.pause();
     }
-  }, [isActive]);
+  }, [isActive, video.activeBoostId, video.user_id, user]);
 
   useEffect(() => {
     if (videoRef.current) videoRef.current.muted = isMuted;
@@ -384,14 +398,35 @@ export const VideoSlide = memo(({
           </div>
         )}
         {video.category && (
-          <div className="mt-1.5 flex items-center gap-1.5">
+          <div className="mt-1.5 flex items-center gap-1.5 flex-wrap">
             <Badge className="bg-white/20 text-white border-0 text-[10px] backdrop-blur-sm">
               {video.category.icon && <span className="mr-1">{video.category.icon}</span>}
               {video.category.name}
             </Badge>
+            {video.activeBoostId && (
+              <Badge className="bg-amber-500/30 text-amber-100 border-0 text-[10px] backdrop-blur-sm">
+                <TrendingUp className="w-2.5 h-2.5 mr-0.5" /> Promoted
+              </Badge>
+            )}
           </div>
         )}
+        {isOwner && (
+          <button
+            onClick={() => setBoostOpen(true)}
+            className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs font-bold shadow-lg shadow-orange-500/30"
+          >
+            <TrendingUp className="w-3.5 h-3.5" /> {video.activeBoostId ? "Boost Active" : "Boost Reach"}
+          </button>
+        )}
       </div>
+
+      <BoostVideoDialog
+        open={boostOpen}
+        onClose={() => setBoostOpen(false)}
+        videoId={video.id}
+        videoTitle={video.title}
+        videoThumbnail={video.thumbnail_url}
+      />
 
       {/* Long-press / more options sheet */}
       <Sheet open={menuOpen} onOpenChange={setMenuOpen}>

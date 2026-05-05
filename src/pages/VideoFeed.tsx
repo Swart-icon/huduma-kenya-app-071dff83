@@ -245,6 +245,19 @@ const VideoFeed = () => {
         });
       }
 
+      // Fetch active boosts for these videos
+      const videoIds = items.map((v: any) => v.id);
+      let boostMap = new Map<string, string>();
+      if (videoIds.length > 0) {
+        const { data: boosts } = await supabase
+          .from("video_boosts")
+          .select("id, video_id")
+          .in("video_id", videoIds)
+          .eq("campaign_status", "active")
+          .gt("remaining_impressions", 0);
+        boostMap = new Map((boosts || []).map((b: any) => [b.video_id, b.id]));
+      }
+
       let mapped = items.map((v: any) => {
         const prov = providerMap.get(v.user_id);
         return {
@@ -254,6 +267,7 @@ const VideoFeed = () => {
           providerPhone: null,
           providerCity: v.city || prov?.city || null,
           providerCounty: v.county || prov?.county || null,
+          activeBoostId: boostMap.get(v.id) || null,
           _roles: rolesMap.get(v.user_id) || [],
         } as VideoItem & { _roles: string[] };
       });
