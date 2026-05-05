@@ -6,8 +6,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import {
   Play, Heart, MessageCircle, User, Phone, MapPin, Briefcase, Wrench, Flag,
-  MoreVertical, Download, Share2, Trash2,
+  MoreVertical, Download, Share2, Trash2, TrendingUp,
 } from "lucide-react";
+import { BoostVideoDialog } from "./BoostVideoDialog";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
