@@ -212,7 +212,39 @@ Deno.serve(async (req) => {
       }
     }
 
-    if (!tx && !boostId) {
+    // ---- 6. Activate / fail video_boost (only if verified) ----
+    const videoBoostId = tx?.video_boost_id ?? (externalRef?.startsWith("vboost_") ? externalRef.slice(7) : null);
+    if (videoBoostId) {
+      const { data: existingVb } = await admin
+        .from("video_boosts")
+        .select("payment_status, user_id")
+        .eq("id", videoBoostId)
+        .maybeSingle();
+      if (existingVb?.payment_status === "completed") {
+        console.log("Video boost already completed:", videoBoostId);
+      } else if (verified) {
+        await admin.from("video_boosts").update({
+          payment_status: "completed",
+          campaign_status: "active",
+          activated_at: new Date().toISOString(),
+          payment_reference: checkoutRequestId ?? externalRef ?? null,
+        }).eq("id", videoBoostId);
+        if (existingVb?.user_id) {
+          await admin.from("notifications").insert({
+            user_id: existingVb.user_id, type: "video_boost",
+            title: "Boost activated 🚀",
+            body: "Your video boost is now live and being delivered.",
+            reference_id: videoBoostId,
+          });
+        }
+      } else {
+        await admin.from("video_boosts").update({
+          payment_status: "failed", campaign_status: "cancelled",
+        }).eq("id", videoBoostId);
+      }
+    }
+
+    if (!tx && !boostId && !videoBoostId) {
       console.warn("No transaction/boost found for", checkoutRequestId, externalRef);
     }
 
