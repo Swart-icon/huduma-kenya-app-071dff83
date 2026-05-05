@@ -70,8 +70,9 @@ const Upgrade = () => {
   // Auto-fill from authenticated profile
   useEffect(() => { if (user?.email && !email) setEmail(user.email); }, [user?.email]);
   useEffect(() => {
-    if (profile?.phone && !phone) setPhone(profile.phone);
-  }, [profile?.phone]);
+    const p = (profile as any)?.phone;
+    if (p && !phone) setPhone(p);
+  }, [profile]);
 
   useEffect(() => {
     if (!authLoading && !user) navigate("/welcome");
