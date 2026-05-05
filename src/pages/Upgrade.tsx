@@ -1,12 +1,16 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useProfile } from "@/hooks/useProfile";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, Check, Crown, Loader2, CheckCircle2, ShieldCheck, RefreshCw } from "lucide-react";
+import {
+  ArrowLeft, Check, Crown, Loader2, CheckCircle2, ShieldCheck, RefreshCw,
+  Lock, CreditCard, Building2, Smartphone, Sparkles,
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useIsPremium, SUBSCRIPTION_PRICES, type RoleType } from "@/hooks/useSubscription";
 import { useQueryClient } from "@tanstack/react-query";
@@ -39,17 +43,17 @@ const BENEFITS: Record<RoleType, { title: string; tagline: string; bullets: stri
 
 const Upgrade = () => {
   const { user, role, loading: authLoading } = useAuth();
+  const { data: profile } = useProfile();
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const { toast } = useToast();
   const qc = useQueryClient();
 
   const requestedRole = (params.get("role") as RoleType) || (role as RoleType);
-  const roleType: RoleType = useMemo(() => {
-    return requestedRole === "provider" || requestedRole === "job_seeker"
-      ? requestedRole
-      : "provider";
-  }, [requestedRole]);
+  const roleType: RoleType = useMemo(
+    () => (requestedRole === "provider" || requestedRole === "job_seeker" ? requestedRole : "provider"),
+    [requestedRole]
+  );
 
   const { isPremium, expiresAt, loading: subLoading } = useIsPremium(roleType);
   const benefits = BENEFITS[roleType];
@@ -60,14 +64,20 @@ const Upgrade = () => {
   const [email, setEmail] = useState(user?.email || "");
   const [submitting, setSubmitting] = useState(false);
   const [polling, setPolling] = useState(false);
+  const [paid, setPaid] = useState(false);
   const pollKey = useRef<{ kind: "checkout" | "reference"; value: string } | null>(null);
 
-  useEffect(() => { if (user?.email) setEmail(user.email); }, [user?.email]);
+  // Auto-fill from authenticated profile
+  useEffect(() => { if (user?.email && !email) setEmail(user.email); }, [user?.email]);
+  useEffect(() => {
+    if (profile?.phone && !phone) setPhone(profile.phone);
+  }, [profile?.phone]);
+
   useEffect(() => {
     if (!authLoading && !user) navigate("/welcome");
   }, [authLoading, user, navigate]);
 
-  // Poll for activation (M-Pesa via checkout_request_id, Paystack via paystack_reference)
+  // Poll for activation
   useEffect(() => {
     if (!polling || !pollKey.current) return;
     const key = pollKey.current;
@@ -84,24 +94,18 @@ const Upgrade = () => {
       if (data?.status === "success") {
         clearInterval(interval);
         setPolling(false);
+        setPaid(true);
         await qc.invalidateQueries({ queryKey: ["subscription"] });
         await qc.refetchQueries({ queryKey: ["subscription"] });
         toast({ title: "Payment successful! 🎉", description: "Premium unlocked." });
       } else if (data?.status === "failed") {
         clearInterval(interval);
         setPolling(false);
-        toast({
-          title: "Payment failed",
-          description: data.result_desc || "Please try again.",
-          variant: "destructive",
-        });
+        toast({ title: "Payment failed", description: data.result_desc || "Please try again.", variant: "destructive" });
       } else if (count > 40) {
         clearInterval(interval);
         setPolling(false);
-        toast({
-          title: "Payment processing…",
-          description: "Tap Refresh Status once you've completed payment.",
-        });
+        toast({ title: "Payment processing…", description: "Tap Refresh Status once you've completed payment." });
       }
     }, 3000);
     return () => clearInterval(interval);
@@ -113,9 +117,7 @@ const Upgrade = () => {
       return;
     }
     setSubmitting(true);
-    const { data, error } = await supabase.functions.invoke("mpesa-stk-push", {
-      body: { roleType, phone },
-    });
+    const { data, error } = await supabase.functions.invoke("mpesa-stk-push", { body: { roleType, phone } });
     setSubmitting(false);
     if (error || (data && data.error)) {
       toast({ title: "Could not start payment", description: (data && data.error) || error?.message || "Failed", variant: "destructive" });
@@ -128,7 +130,7 @@ const Upgrade = () => {
 
   const handlePayPaystack = async () => {
     if (!email || !/^\S+@\S+\.\S+$/.test(email)) {
-      toast({ title: "Email required", description: "Enter the email for your Paystack receipt.", variant: "destructive" });
+      toast({ title: "Email required", description: "Enter the email for your receipt.", variant: "destructive" });
       return;
     }
     setSubmitting(true);
@@ -142,9 +144,8 @@ const Upgrade = () => {
     }
     pollKey.current = { kind: "reference", value: data.reference };
     setPolling(true);
-    // Open the Paystack checkout in a new tab/window
     window.open(data.authorization_url, "_blank");
-    toast({ title: "Complete payment in the new tab", description: "We'll detect it automatically." });
+    toast({ title: "Secure checkout opened", description: "Complete payment in the new tab — we'll detect it automatically." });
   };
 
   const handlePay = () => (provider === "mpesa" ? handlePayMpesa() : handlePayPaystack());
@@ -157,23 +158,43 @@ const Upgrade = () => {
     );
   }
 
-  if (isPremium) {
+  if (isPremium || paid) {
     return (
-      <div className="min-h-screen bg-background px-6 py-6 pb-24">
-        <div className="max-w-sm mx-auto">
-          <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-muted-foreground mb-6">
-            <ArrowLeft className="w-5 h-5" /> <span>Back</span>
-          </button>
-          <div className="text-center mt-12">
-            <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-6">
-              <CheckCircle2 className="w-10 h-10 text-primary" />
+      <div className="min-h-screen bg-background px-6 py-6 pb-24 flex items-center justify-center">
+        <div className="max-w-sm w-full">
+          <div className="text-center animate-in zoom-in-95 fade-in duration-500">
+            <div className="relative w-24 h-24 mx-auto mb-6">
+              <div className="absolute inset-0 rounded-full bg-primary/10 animate-ping" />
+              <div className="relative w-24 h-24 rounded-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center mx-auto shadow-lg shadow-primary/30">
+                <CheckCircle2 className="w-12 h-12 text-primary-foreground" />
+              </div>
             </div>
-            <h1 className="font-display text-2xl font-bold text-foreground mb-2">Premium Active</h1>
-            <p className="text-muted-foreground mb-6">
-              Your {roleType === "provider" ? "provider" : "job seeker"} premium is active until{" "}
-              <strong>{expiresAt ? new Date(expiresAt).toLocaleDateString() : "—"}</strong>.
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold mb-3">
+              <Sparkles className="w-3 h-3" /> Subscription activated
+            </div>
+            <h1 className="font-display text-2xl font-bold text-foreground mb-2">You're all set! 🎉</h1>
+            <p className="text-muted-foreground mb-2">
+              Your {roleType === "provider" ? "Provider" : "Job Seeker"} Premium is active.
             </p>
-            <Button onClick={() => navigate("/dashboard")} className="w-full h-12 rounded-xl">Go to Dashboard</Button>
+            {expiresAt && (
+              <p className="text-xs text-muted-foreground mb-6">
+                Renews on <strong>{new Date(expiresAt).toLocaleDateString()}</strong>
+              </p>
+            )}
+            <Card className="text-left mb-6 border-primary/20 bg-primary/5">
+              <CardContent className="p-4 space-y-2">
+                <p className="text-xs font-semibold text-foreground mb-2">What's unlocked:</p>
+                {benefits.bullets.slice(0, 3).map((b) => (
+                  <div key={b} className="flex items-start gap-2">
+                    <Check className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                    <p className="text-xs text-foreground">{b}</p>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+            <Button onClick={() => navigate("/dashboard")} className="w-full h-12 rounded-xl font-bold">
+              Go to Dashboard
+            </Button>
           </div>
         </div>
       </div>
@@ -181,117 +202,188 @@ const Upgrade = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background px-6 py-6 pb-24">
-      <div className="max-w-sm mx-auto">
-        <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-muted-foreground mb-6">
-          <ArrowLeft className="w-5 h-5" /> <span>Back</span>
-        </button>
-
-        <div className="text-center mb-8">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center mx-auto mb-4">
-            <Crown className="w-8 h-8 text-primary-foreground" />
+    <div className="min-h-screen bg-background pb-24">
+      {/* Header */}
+      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur border-b border-border">
+        <div className="max-w-sm mx-auto px-5 py-3 flex items-center gap-3">
+          <button onClick={() => navigate(-1)} className="p-1.5 -ml-1.5 rounded-lg hover:bg-muted">
+            <ArrowLeft className="w-5 h-5" />
+          </button>
+          <h1 className="font-display text-base font-semibold flex-1">Checkout</h1>
+          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+            <Lock className="w-3 h-3" /> Secure
           </div>
-          <h1 className="font-display text-2xl font-bold text-foreground mb-1">{benefits.title}</h1>
-          <p className="text-muted-foreground">{benefits.tagline}</p>
         </div>
+      </div>
 
-        <Card className="mb-6 border-2 border-primary/20 bg-primary/5">
-          <CardContent className="p-5 text-center">
-            <p className="text-xs uppercase tracking-wider text-muted-foreground mb-1">Monthly subscription</p>
-            <p className="font-display text-4xl font-bold text-foreground">
-              KSh {price.toLocaleString()}
-              <span className="text-base font-normal text-muted-foreground">/month</span>
-            </p>
-            <p className="text-xs text-muted-foreground mt-1">Renews every 30 days</p>
+      <div className="max-w-sm mx-auto px-5 pt-5 space-y-5">
+        {/* STEP 1 — Purchase summary */}
+        <Card className="overflow-hidden border-2 border-primary/15">
+          <div className="bg-gradient-to-br from-primary/15 via-primary/5 to-transparent p-5">
+            <div className="flex items-start gap-3">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shrink-0 shadow-md shadow-primary/20">
+                <Crown className="w-6 h-6 text-primary-foreground" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Order summary</p>
+                <h2 className="font-display text-base font-bold text-foreground leading-tight">{benefits.title}</h2>
+                <p className="text-xs text-muted-foreground">{benefits.tagline}</p>
+              </div>
+            </div>
+            <div className="mt-4 flex items-end justify-between">
+              <div>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Total due</p>
+                <p className="font-display text-3xl font-bold text-foreground leading-none">
+                  KSh {price.toLocaleString()}
+                </p>
+                <p className="text-[11px] text-muted-foreground mt-1">Monthly subscription · Cancel anytime</p>
+              </div>
+            </div>
+          </div>
+          <CardContent className="p-4 bg-card space-y-2">
+            <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-bold">Includes</p>
+            {benefits.bullets.slice(0, 3).map((b) => (
+              <div key={b} className="flex items-start gap-2">
+                <div className="w-4 h-4 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
+                  <Check className="w-3 h-3 text-primary" />
+                </div>
+                <p className="text-xs text-foreground">{b}</p>
+              </div>
+            ))}
           </CardContent>
         </Card>
 
-        <div className="space-y-3 mb-6">
-          {benefits.bullets.map((b) => (
-            <div key={b} className="flex items-start gap-3">
-              <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
-                <Check className="w-4 h-4 text-primary" />
-              </div>
-              <p className="text-sm text-foreground">{b}</p>
-            </div>
-          ))}
+        {/* STEP 2 — Payment method */}
+        <div>
+          <p className="text-xs font-bold text-foreground mb-2.5 uppercase tracking-wider">
+            Payment method
+          </p>
+          <PaymentMethodSelector value={provider} onChange={setProvider} disabled={submitting || polling} />
         </div>
 
-        <Card className="mb-4">
-          <CardContent className="p-4 space-y-4">
-            <div>
-              <p className="font-semibold text-foreground mb-2 text-sm">Choose payment method</p>
-              <PaymentMethodSelector value={provider} onChange={setProvider} disabled={submitting || polling} />
+        {/* STEP 3 — Compact checkout card */}
+        {provider === "paystack" ? (
+          <Card className="border-2 border-[#00C3F7]/20 overflow-hidden">
+            <div className="bg-gradient-to-r from-[#00C3F7]/10 to-transparent px-4 py-3 flex items-center gap-2 border-b border-border">
+              <div className="w-8 h-8 rounded-lg bg-[#00C3F7]/15 flex items-center justify-center">
+                <Lock className="w-4 h-4 text-[#0098C8]" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-semibold text-foreground">Secure Checkout</p>
+                <p className="text-[10px] text-muted-foreground">Powered by Paystack</p>
+              </div>
+              <ShieldCheck className="w-4 h-4 text-[#0098C8]" />
             </div>
-
-            {provider === "mpesa" ? (
+            <CardContent className="p-4 space-y-3">
               <div>
-                <Label htmlFor="phone" className="text-sm font-semibold">M-Pesa phone number</Label>
+                <Label htmlFor="email" className="text-xs font-semibold text-muted-foreground">
+                  Email for receipt
+                </Label>
                 <Input
-                  id="phone" type="tel" placeholder="07XXXXXXXX" value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
+                  id="email" type="email" placeholder="you@example.com" value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   disabled={submitting || polling}
-                  className="h-12 rounded-xl mt-1.5"
+                  className="h-11 rounded-xl mt-1 bg-background"
                 />
               </div>
-            ) : (
-              <div className="space-y-3">
-                <div>
-                  <Label htmlFor="email" className="text-sm font-semibold">Email for receipt</Label>
-                  <Input
-                    id="email" type="email" placeholder="you@example.com" value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    disabled={submitting || polling}
-                    className="h-12 rounded-xl mt-1.5"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="phone-ps" className="text-sm font-semibold">Phone (optional)</Label>
-                  <Input
-                    id="phone-ps" type="tel" placeholder="07XXXXXXXX" value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    disabled={submitting || polling}
-                    className="h-12 rounded-xl mt-1.5"
-                  />
+              <div>
+                <Label htmlFor="phone-ps" className="text-xs font-semibold text-muted-foreground">
+                  Phone <span className="font-normal">(optional)</span>
+                </Label>
+                <Input
+                  id="phone-ps" type="tel" placeholder="07XXXXXXXX" value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  disabled={submitting || polling}
+                  className="h-11 rounded-xl mt-1 bg-background"
+                />
+              </div>
+              <div className="pt-1">
+                <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold mb-1.5">
+                  Supported methods
+                </p>
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  {[
+                    { icon: <CreditCard className="w-3 h-3" />, label: "Card" },
+                    { icon: <Building2 className="w-3 h-3" />, label: "Bank" },
+                    { icon: <Smartphone className="w-3 h-3" />, label: "Mobile money" },
+                  ].map((m) => (
+                    <span key={m.label} className="inline-flex items-center gap-1 text-[11px] bg-muted text-foreground px-2 py-1 rounded-md">
+                      {m.icon} {m.label}
+                    </span>
+                  ))}
                 </div>
               </div>
-            )}
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        ) : (
+          <Card className="border-2 border-[#4CAF50]/20 overflow-hidden">
+            <div className="bg-gradient-to-r from-[#4CAF50]/10 to-transparent px-4 py-3 flex items-center gap-2 border-b border-border">
+              <div className="w-8 h-8 rounded-lg bg-[#4CAF50]/15 flex items-center justify-center">
+                <Smartphone className="w-4 h-4 text-[#2E7D32]" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-semibold text-foreground">M-Pesa STK Push</p>
+                <p className="text-[10px] text-muted-foreground">Approve prompt on your phone</p>
+              </div>
+              <ShieldCheck className="w-4 h-4 text-[#2E7D32]" />
+            </div>
+            <CardContent className="p-4">
+              <Label htmlFor="phone" className="text-xs font-semibold text-muted-foreground">
+                M-Pesa phone number
+              </Label>
+              <Input
+                id="phone" type="tel" placeholder="07XXXXXXXX" value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                disabled={submitting || polling}
+                className="h-11 rounded-xl mt-1 bg-background"
+              />
+            </CardContent>
+          </Card>
+        )}
 
-        <div className="flex items-center gap-2 text-xs text-muted-foreground mb-4 justify-center">
-          <ShieldCheck className="w-4 h-4" />
-          <span>Secure server-verified payment</span>
+        {/* Trust indicators */}
+        <div className="flex items-center justify-center gap-1.5 text-[11px] text-muted-foreground">
+          <Lock className="w-3 h-3" />
+          <span>
+            {provider === "paystack"
+              ? "Your payment is securely processed by Paystack"
+              : "Encrypted, server-verified payment"}
+          </span>
         </div>
 
+        {/* CTA */}
         <Button
           onClick={handlePay}
           disabled={submitting || polling || (provider === "mpesa" ? !phone : !email)}
-          className="w-full h-14 text-lg font-bold rounded-xl"
+          className="w-full h-14 text-base font-bold rounded-2xl shadow-lg shadow-primary/20"
         >
           {submitting ? (
-            <><Loader2 className="w-5 h-5 mr-2 animate-spin" /> Sending request…</>
+            <><Loader2 className="w-5 h-5 mr-2 animate-spin" /> Starting payment…</>
           ) : polling ? (
             <><Loader2 className="w-5 h-5 mr-2 animate-spin" /> Waiting for payment…</>
+          ) : provider === "paystack" ? (
+            <><Lock className="w-4 h-4 mr-2" /> Continue to Secure Checkout</>
           ) : (
-            `Pay KSh ${price.toLocaleString()}`
+            <>Pay KSh {price.toLocaleString()}</>
           )}
         </Button>
 
-        <Button
-          variant="outline"
-          onClick={async () => {
-            await qc.invalidateQueries({ queryKey: ["subscription"] });
-            await qc.refetchQueries({ queryKey: ["subscription"] });
-            toast({ title: "Status refreshed" });
-          }}
-          className="w-full h-11 rounded-xl mt-3"
-        >
-          <RefreshCw className="w-4 h-4 mr-2" /> Refresh Status
-        </Button>
+        {polling && (
+          <Button
+            variant="outline"
+            onClick={async () => {
+              await qc.invalidateQueries({ queryKey: ["subscription"] });
+              await qc.refetchQueries({ queryKey: ["subscription"] });
+              toast({ title: "Status refreshed" });
+            }}
+            className="w-full h-11 rounded-xl"
+          >
+            <RefreshCw className="w-4 h-4 mr-2" /> Refresh Status
+          </Button>
+        )}
 
-        <p className="text-xs text-center text-muted-foreground mt-4">
-          By paying, you agree to our Terms of Service. Cancel anytime.
+        <p className="text-[10px] text-center text-muted-foreground">
+          By continuing, you agree to our Terms of Service. Cancel anytime.
         </p>
       </div>
     </div>
