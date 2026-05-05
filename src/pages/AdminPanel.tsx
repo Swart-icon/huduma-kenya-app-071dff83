@@ -374,22 +374,24 @@ const TransactionsTab = () => {
   const [txs, setTxs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"all" | "success" | "pending" | "failed">("all");
+  const [providerFilter, setProviderFilter] = useState<"all" | "mpesa" | "paystack">("all");
   const [search, setSearch] = useState("");
 
   const load = async () => {
     setLoading(true);
     let query = supabase
       .from("mpesa_transactions")
-      .select("id, amount_kes, status, purpose, external_reference, mpesa_receipt, phone_number, result_desc, created_at, user_id")
+      .select("id, amount_kes, status, purpose, external_reference, mpesa_receipt, phone_number, result_desc, created_at, user_id, provider, payment_channel, paystack_reference, email")
       .order("created_at", { ascending: false })
       .limit(300);
     if (filter !== "all") query = query.eq("status", filter);
+    if (providerFilter !== "all") query = query.eq("provider", providerFilter);
     const { data } = await query;
     setTxs(data || []);
     setLoading(false);
   };
 
-  useEffect(() => { load(); /* eslint-disable-next-line */ }, [filter]);
+  useEffect(() => { load(); /* eslint-disable-next-line */ }, [filter, providerFilter]);
 
   const filtered = search.trim()
     ? txs.filter((t) => {
@@ -397,7 +399,9 @@ const TransactionsTab = () => {
         return (
           (t.mpesa_receipt || "").toLowerCase().includes(q) ||
           (t.phone_number || "").toLowerCase().includes(q) ||
-          (t.external_reference || "").toLowerCase().includes(q)
+          (t.email || "").toLowerCase().includes(q) ||
+          (t.external_reference || "").toLowerCase().includes(q) ||
+          (t.paystack_reference || "").toLowerCase().includes(q)
         );
       })
     : txs;
@@ -420,20 +424,24 @@ const TransactionsTab = () => {
 
       <div className="flex gap-1.5 flex-wrap">
         {(["all", "success", "pending", "failed"] as const).map((f) => (
-          <Button
-            key={f}
-            size="sm"
-            variant={filter === f ? "default" : "outline"}
-            className="h-8 text-xs capitalize rounded-full"
-            onClick={() => setFilter(f)}
-          >
+          <Button key={f} size="sm" variant={filter === f ? "default" : "outline"}
+            className="h-8 text-xs capitalize rounded-full" onClick={() => setFilter(f)}>
             {f}
           </Button>
         ))}
       </div>
 
+      <div className="flex gap-1.5 flex-wrap">
+        {(["all", "mpesa", "paystack"] as const).map((p) => (
+          <Button key={p} size="sm" variant={providerFilter === p ? "default" : "outline"}
+            className="h-8 text-xs capitalize rounded-full" onClick={() => setProviderFilter(p)}>
+            {p === "mpesa" ? "M-Pesa" : p === "paystack" ? "Paystack" : "All providers"}
+          </Button>
+        ))}
+      </div>
+
       <Input
-        placeholder="Search receipt, phone or reference…"
+        placeholder="Search receipt, phone, email or reference…"
         value={search}
         onChange={(e) => setSearch(e.target.value)}
         className="h-9 text-sm"
@@ -449,14 +457,20 @@ const TransactionsTab = () => {
             <CardContent className="p-3">
               <div className="flex items-center justify-between mb-1">
                 <span className="text-sm font-bold text-foreground">KSh {Number(p.amount_kes).toLocaleString()}</span>
-                <Badge variant={p.status === "success" ? "default" : p.status === "pending" ? "secondary" : "destructive"} className="text-[10px] capitalize">
-                  {p.status}
-                </Badge>
+                <div className="flex items-center gap-1">
+                  <Badge variant="outline" className="text-[10px] capitalize">
+                    {p.provider === "paystack" ? "Paystack" : "M-Pesa"}
+                  </Badge>
+                  <Badge variant={p.status === "success" ? "default" : p.status === "pending" ? "secondary" : "destructive"} className="text-[10px] capitalize">
+                    {p.status}
+                  </Badge>
+                </div>
               </div>
               <p className="text-[10px] text-muted-foreground">
-                {(p.purpose || p.external_reference || "payment")} • {p.phone_number} • {new Date(p.created_at).toLocaleString()}
+                {(p.purpose || p.external_reference || "payment")} • {p.phone_number || p.email || "—"} • {new Date(p.created_at).toLocaleString()}
               </p>
-              {p.mpesa_receipt && <p className="text-[10px] font-mono text-muted-foreground mt-0.5">Receipt: {p.mpesa_receipt}</p>}
+              {p.mpesa_receipt && <p className="text-[10px] font-mono text-muted-foreground mt-0.5">Ref: {p.mpesa_receipt}</p>}
+              {p.payment_channel && <p className="text-[10px] text-muted-foreground mt-0.5 capitalize">Channel: {p.payment_channel}</p>}
               {p.status === "failed" && p.result_desc && (
                 <p className="text-[10px] text-destructive mt-0.5 line-clamp-2">{p.result_desc}</p>
               )}

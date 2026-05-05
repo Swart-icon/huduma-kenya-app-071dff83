@@ -763,11 +763,16 @@ export type Database = {
           boost_id: string | null
           checkout_request_id: string | null
           created_at: string
+          currency: string
+          email: string | null
           external_reference: string | null
           id: string
           merchant_request_id: string | null
           mpesa_receipt: string | null
-          phone_number: string
+          payment_channel: string | null
+          paystack_reference: string | null
+          phone_number: string | null
+          provider: string
           purpose: string | null
           raw_callback: Json | null
           result_code: number | null
@@ -782,11 +787,16 @@ export type Database = {
           boost_id?: string | null
           checkout_request_id?: string | null
           created_at?: string
+          currency?: string
+          email?: string | null
           external_reference?: string | null
           id?: string
           merchant_request_id?: string | null
           mpesa_receipt?: string | null
-          phone_number: string
+          payment_channel?: string | null
+          paystack_reference?: string | null
+          phone_number?: string | null
+          provider?: string
           purpose?: string | null
           raw_callback?: Json | null
           result_code?: number | null
@@ -801,11 +811,16 @@ export type Database = {
           boost_id?: string | null
           checkout_request_id?: string | null
           created_at?: string
+          currency?: string
+          email?: string | null
           external_reference?: string | null
           id?: string
           merchant_request_id?: string | null
           mpesa_receipt?: string | null
-          phone_number?: string
+          payment_channel?: string | null
+          paystack_reference?: string | null
+          phone_number?: string | null
+          provider?: string
           purpose?: string | null
           raw_callback?: Json | null
           result_code?: number | null
