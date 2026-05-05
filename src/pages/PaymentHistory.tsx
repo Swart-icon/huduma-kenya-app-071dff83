@@ -53,7 +53,7 @@ const PaymentHistory = () => {
     setRefreshing(true);
     const { data } = await supabase
       .from("mpesa_transactions")
-      .select("id, amount_kes, status, purpose, external_reference, mpesa_receipt, result_desc, phone_number, created_at")
+      .select("id, amount_kes, status, purpose, external_reference, mpesa_receipt, result_desc, phone_number, created_at, provider, payment_channel, paystack_reference, currency")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false })
       .limit(100);
