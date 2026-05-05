@@ -68,12 +68,23 @@ export const VideoSlide = memo(({
       setPaused(false);
       el.currentTime = 0;
       el.play().catch(() => {});
-      // Track as meaningful action for rate prompt
       try { (window as any).__servio_trackAction?.(); } catch {}
+      // Boost impression tracking — fire after 2.5s of active playback
+      impressionCountedRef.current = false;
+      if (video.activeBoostId && user && user.id !== video.user_id) {
+        const boostId = video.activeBoostId;
+        const t = window.setTimeout(() => {
+          if (!impressionCountedRef.current && videoRef.current && !videoRef.current.paused) {
+            impressionCountedRef.current = true;
+            supabase.rpc("record_boost_impression", { _boost_id: boostId }).then(() => {});
+          }
+        }, 2500);
+        return () => window.clearTimeout(t);
+      }
     } else {
       el.pause();
     }
-  }, [isActive]);
+  }, [isActive, video.activeBoostId, video.user_id, user]);
 
   useEffect(() => {
     if (videoRef.current) videoRef.current.muted = isMuted;
