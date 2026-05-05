@@ -398,14 +398,35 @@ export const VideoSlide = memo(({
           </div>
         )}
         {video.category && (
-          <div className="mt-1.5 flex items-center gap-1.5">
+          <div className="mt-1.5 flex items-center gap-1.5 flex-wrap">
             <Badge className="bg-white/20 text-white border-0 text-[10px] backdrop-blur-sm">
               {video.category.icon && <span className="mr-1">{video.category.icon}</span>}
               {video.category.name}
             </Badge>
+            {video.activeBoostId && (
+              <Badge className="bg-amber-500/30 text-amber-100 border-0 text-[10px] backdrop-blur-sm">
+                <TrendingUp className="w-2.5 h-2.5 mr-0.5" /> Promoted
+              </Badge>
+            )}
           </div>
         )}
+        {isOwner && (
+          <button
+            onClick={() => setBoostOpen(true)}
+            className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs font-bold shadow-lg shadow-orange-500/30"
+          >
+            <TrendingUp className="w-3.5 h-3.5" /> {video.activeBoostId ? "Boost Active" : "Boost Reach"}
+          </button>
+        )}
       </div>
+
+      <BoostVideoDialog
+        open={boostOpen}
+        onClose={() => setBoostOpen(false)}
+        videoId={video.id}
+        videoTitle={video.title}
+        videoThumbnail={video.thumbnail_url}
+      />
 
       {/* Long-press / more options sheet */}
       <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
