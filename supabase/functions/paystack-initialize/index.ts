@@ -265,6 +265,9 @@ Deno.serve(async (req) => {
       if (boostId) {
         await admin.from("status_boosts").update({ payment_status: "failed" }).eq("id", boostId);
       }
+      if (videoBoostId) {
+        await admin.from("video_boosts").update({ payment_status: "failed", campaign_status: "cancelled" }).eq("id", videoBoostId);
+      }
       return json({ error: psData?.message || "Paystack initialization failed" }, 502);
     }
 
