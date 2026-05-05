@@ -17,6 +17,7 @@ export type VideoItem = {
   providerPhone?: string | null;
   providerCity?: string | null;
   providerCounty?: string | null;
+  activeBoostId?: string | null;
 };
 
 export type FeedTab = "all" | "nearby" | "jobseeker" | "client" | "service";
