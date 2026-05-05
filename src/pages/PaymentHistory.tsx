@@ -15,8 +15,12 @@ type Tx = {
   external_reference: string | null;
   mpesa_receipt: string | null;
   result_desc: string | null;
-  phone_number: string;
+  phone_number: string | null;
   created_at: string;
+  provider?: string | null;
+  payment_channel?: string | null;
+  paystack_reference?: string | null;
+  currency?: string | null;
 };
 
 const statusVariant = (s: string): "default" | "secondary" | "destructive" => {
@@ -26,12 +30,16 @@ const statusVariant = (s: string): "default" | "secondary" | "destructive" => {
 };
 
 const purposeLabel = (p: string | null, ref: string | null) => {
-  const v = p ?? (ref?.startsWith("boost_") ? "status_boost" : ref?.startsWith("sub_") ? "subscription" : "payment");
+  const v = p ?? (ref?.startsWith("boost_") || ref?.startsWith("ps_boost") ? "status_boost" :
+    (ref?.startsWith("sub_") || ref?.startsWith("ps_sub")) ? "subscription" : "payment");
   if (v === "provider_subscription") return { label: "Provider Premium", icon: Crown };
   if (v === "job_seeker_subscription") return { label: "Job Seeker Premium", icon: Briefcase };
   if (v === "status_boost") return { label: "Status Boost", icon: Zap };
   return { label: "Payment", icon: Receipt };
 };
+
+const providerLabel = (p?: string | null) =>
+  p === "paystack" ? "Paystack" : "M-Pesa";
 
 const PaymentHistory = () => {
   const { user, loading: authLoading } = useAuth();
