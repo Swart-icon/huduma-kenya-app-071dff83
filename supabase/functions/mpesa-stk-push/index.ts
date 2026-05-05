@@ -136,7 +136,7 @@ Deno.serve(async (req) => {
         purpose: purpose === "boost" ? "status_boost" : `${body.roleType}_subscription`,
         amount_kes: amount,
         phone_number: msisdn,
-        status: "pending",
+        status: "initiated",
       })
       .select("id")
       .single();
