@@ -1,4 +1,4 @@
-import { Smartphone, CreditCard, Check } from "lucide-react";
+import { Smartphone, CreditCard, Check, Building2, Wallet } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export type PaymentProvider = "mpesa" | "paystack";
@@ -16,25 +16,34 @@ export const PaymentMethodSelector = ({ value, onChange, disabled }: Props) => {
     desc: string;
     icon: React.ReactNode;
     accent: string;
+    badge?: string;
+    methods: { icon: React.ReactNode; label: string }[];
   }[] = [
     {
       id: "mpesa",
       label: "M-Pesa",
-      desc: "STK push to your phone",
-      icon: <Smartphone className="w-5 h-5" />,
-      accent: "text-[#4CAF50]",
+      desc: "Pay instantly via STK push",
+      icon: <Smartphone className="w-6 h-6" />,
+      accent: "bg-[#4CAF50]/10 text-[#2E7D32]",
+      badge: "Popular",
+      methods: [{ icon: <Smartphone className="w-3 h-3" />, label: "Mobile" }],
     },
     {
       id: "paystack",
       label: "Paystack",
-      desc: "Card, bank, mobile money",
-      icon: <CreditCard className="w-5 h-5" />,
-      accent: "text-[#00C3F7]",
+      desc: "Card, Bank or Mobile Money",
+      icon: <CreditCard className="w-6 h-6" />,
+      accent: "bg-[#00C3F7]/10 text-[#0098C8]",
+      methods: [
+        { icon: <CreditCard className="w-3 h-3" />, label: "Card" },
+        { icon: <Building2 className="w-3 h-3" />, label: "Bank" },
+        { icon: <Wallet className="w-3 h-3" />, label: "Wallet" },
+      ],
     },
   ];
 
   return (
-    <div className="space-y-2">
+    <div className="grid gap-2.5">
       {options.map((opt) => {
         const selected = value === opt.id;
         return (
@@ -44,26 +53,50 @@ export const PaymentMethodSelector = ({ value, onChange, disabled }: Props) => {
             disabled={disabled}
             onClick={() => onChange(opt.id)}
             className={cn(
-              "w-full flex items-center gap-3 p-3 rounded-xl border-2 text-left transition-colors",
+              "relative w-full flex items-center gap-3 p-3.5 rounded-2xl border-2 text-left transition-all",
               selected
-                ? "border-primary bg-primary/5"
-                : "border-border hover:border-primary/40",
+                ? "border-primary bg-primary/5 shadow-sm"
+                : "border-border hover:border-primary/40 active:scale-[0.99]",
               disabled && "opacity-60 cursor-not-allowed"
             )}
           >
             <div
               className={cn(
-                "w-10 h-10 rounded-lg bg-muted flex items-center justify-center shrink-0",
+                "w-12 h-12 rounded-xl flex items-center justify-center shrink-0",
                 opt.accent
               )}
             >
               {opt.icon}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="font-semibold text-foreground text-sm">{opt.label}</p>
-              <p className="text-xs text-muted-foreground">{opt.desc}</p>
+              <div className="flex items-center gap-2">
+                <p className="font-semibold text-foreground text-sm">{opt.label}</p>
+                {opt.badge && (
+                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-primary/10 text-primary">
+                    {opt.badge}
+                  </span>
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground mb-1">{opt.desc}</p>
+              <div className="flex items-center gap-1 flex-wrap">
+                {opt.methods.map((m) => (
+                  <span
+                    key={m.label}
+                    className="inline-flex items-center gap-1 text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded"
+                  >
+                    {m.icon} {m.label}
+                  </span>
+                ))}
+              </div>
             </div>
-            {selected && <Check className="w-5 h-5 text-primary shrink-0" />}
+            <div
+              className={cn(
+                "w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0",
+                selected ? "border-primary bg-primary" : "border-muted-foreground/30"
+              )}
+            >
+              {selected && <Check className="w-3 h-3 text-primary-foreground" />}
+            </div>
           </button>
         );
       })}
