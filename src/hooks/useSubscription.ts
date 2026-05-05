@@ -5,7 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 export type RoleType = "provider" | "job_seeker";
 
 export const SUBSCRIPTION_PRICES: Record<RoleType, number> = {
-  provider: 500,
+  provider: 200,
   job_seeker: 200,
 };
 

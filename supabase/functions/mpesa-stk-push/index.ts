@@ -8,7 +8,7 @@ const corsHeaders = {
 };
 
 const SUBSCRIPTION_PRICES: Record<string, number> = {
-  provider: 500,
+  provider: 200,
   job_seeker: 200,
 };
 
