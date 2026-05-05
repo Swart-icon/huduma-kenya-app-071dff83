@@ -245,6 +245,8 @@ Deno.serve(async (req) => {
         await admin.from("premium_subscriptions").update({ status: "failed" }).eq("id", externalRef.slice(4));
       } else if (externalRef.startsWith("boost_")) {
         await admin.from("status_boosts").update({ payment_status: "failed" }).eq("id", externalRef.slice(6));
+      } else if (videoBoostId) {
+        await admin.from("video_boosts").update({ payment_status: "failed", campaign_status: "cancelled" }).eq("id", videoBoostId);
       }
       return json(
         { error: phData?.error_message || phData?.message || "PayHero request failed" },
