@@ -17,6 +17,11 @@ const BOOST_TIERS: Record<string, { price: number; durationHours: number }> = {
   high: { price: 100, durationHours: 48 },
 };
 
+const VIDEO_BOOST_PACKAGES: Record<string, { price: number; impressions: number }> = {
+  starter: { price: 50, impressions: 500 },
+  pro: { price: 100, impressions: 1000 },
+};
+
 function normalizePhone(input: string): string | null {
   const digits = input.replace(/\D/g, "");
   if (/^2547\d{8}$/.test(digits)) return digits;
