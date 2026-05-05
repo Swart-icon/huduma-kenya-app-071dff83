@@ -78,7 +78,57 @@ Deno.serve(async (req) => {
     let subscriptionId: string | null = null;
     let boostId: string | null = null;
 
-    if (purpose === "boost") {
+    let videoBoostId: string | null = null;
+
+    if (purpose === "video_boost") {
+      const { videoId, packageType } = body as { videoId?: string; packageType?: string };
+      const pkg = packageType ? VIDEO_BOOST_PACKAGES[packageType] : undefined;
+      if (!pkg) return json({ error: "Invalid video boost package" }, 400);
+      if (!videoId) return json({ error: "videoId required" }, 400);
+
+      // Verify caller owns the video
+      const { data: vid, error: vErr } = await admin
+        .from("videos").select("user_id").eq("id", videoId).maybeSingle();
+      if (vErr || !vid) return json({ error: "Video not found" }, 404);
+      if (vid.user_id !== user.id) return json({ error: "You can only boost your own videos" }, 403);
+
+      // Anti-spam: max 1 active or pending boost per video
+      const { data: existing } = await admin
+        .from("video_boosts").select("id")
+        .eq("video_id", videoId)
+        .in("campaign_status", ["inactive", "active"])
+        .limit(1);
+      if (existing && existing.length > 0) {
+        return json({ error: "This video already has an active boost" }, 409);
+      }
+
+      amount = pkg.price;
+      const expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + 7);
+
+      const { data: boost, error: bErr } = await admin
+        .from("video_boosts")
+        .insert({
+          user_id: user.id,
+          video_id: videoId,
+          package_type: packageType,
+          amount_kes: amount,
+          target_impressions: pkg.impressions,
+          remaining_impressions: pkg.impressions,
+          payment_provider: "paystack",
+          payment_status: "pending",
+          campaign_status: "inactive",
+          expires_at: expiresAt.toISOString(),
+        })
+        .select().single();
+      if (bErr || !boost) {
+        console.error("video_boost insert error:", bErr);
+        return json({ error: "Could not create boost campaign" }, 500);
+      }
+      videoBoostId = boost.id;
+      externalRef = genRef("ps_vb");
+      purposeLabel = "video_boost";
+    } else if (purpose === "boost") {
       const { statusId, tier } = body as { statusId?: string; tier?: string };
       const tierConf = tier ? BOOST_TIERS[tier] : undefined;
       if (!tierConf) return json({ error: "Invalid boost tier" }, 400);
