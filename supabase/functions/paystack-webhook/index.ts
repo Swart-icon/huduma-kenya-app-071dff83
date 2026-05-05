@@ -175,6 +175,36 @@ Deno.serve(async (req) => {
       }
     }
 
+    if (tx.video_boost_id) {
+      const { data: existingVb } = await admin
+        .from("video_boosts").select("payment_status, campaign_status")
+        .eq("id", tx.video_boost_id).maybeSingle();
+      if (existingVb?.payment_status === "completed") {
+        console.log("Video boost already completed:", tx.video_boost_id);
+      } else if (verified) {
+        await admin.from("video_boosts").update({
+          payment_status: "completed",
+          campaign_status: "active",
+          activated_at: new Date().toISOString(),
+          payment_reference: reference,
+        }).eq("id", tx.video_boost_id);
+        // Notify creator
+        const { data: vb } = await admin.from("video_boosts").select("user_id").eq("id", tx.video_boost_id).maybeSingle();
+        if (vb?.user_id) {
+          await admin.from("notifications").insert({
+            user_id: vb.user_id, type: "video_boost",
+            title: "Boost activated 🚀",
+            body: "Your video boost is now live and being delivered.",
+            reference_id: tx.video_boost_id,
+          });
+        }
+      } else {
+        await admin.from("video_boosts").update({
+          payment_status: "failed", campaign_status: "cancelled",
+        }).eq("id", tx.video_boost_id);
+      }
+    }
+
     return ok();
   } catch (e) {
     console.error("paystack-webhook error:", e);
