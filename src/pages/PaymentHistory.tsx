@@ -89,7 +89,7 @@ const PaymentHistory = () => {
         </div>
 
         <h1 className="font-display text-2xl font-bold text-foreground mb-1">Payment History</h1>
-        <p className="text-sm text-muted-foreground mb-6">All your M-Pesa transactions, verified by our backend.</p>
+        <p className="text-sm text-muted-foreground mb-6">All your transactions, verified by our backend.</p>
 
         {txs.length === 0 ? (
           <div className="text-center py-16">
