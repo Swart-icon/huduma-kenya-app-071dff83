@@ -38,6 +38,8 @@ export const VideoSlide = memo(({
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleted, setDeleted] = useState(false);
   const [downloading, setDownloading] = useState(false);
+  const [boostOpen, setBoostOpen] = useState(false);
+  const impressionCountedRef = useRef(false);
 
   // Tap detection
   const lastTapRef = useRef<number>(0);
