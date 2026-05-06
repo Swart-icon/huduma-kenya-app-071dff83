@@ -17,7 +17,7 @@ const VIDEO_BOOST_PACKAGES = [
     label: "Starter Boost",
     price: 50,
     impressions: 500,
-    description: "Reach up to 500 additional targeted users",
+    description: "Reach up to 500 additional targeted users in your area",
     icon: <Flame className="w-5 h-5" />,
   },
   {
@@ -25,7 +25,7 @@ const VIDEO_BOOST_PACKAGES = [
     label: "Pro Boost",
     price: 100,
     impressions: 1000,
-    description: "Reach up to 1,000 additional targeted users",
+    description: "Reach up to 1,000 additional targeted users in your area",
     icon: <Rocket className="w-5 h-5" />,
   },
 ];
