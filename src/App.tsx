@@ -69,6 +69,7 @@ const LiveViewer = lazy(() => import("./pages/LiveViewer"));
 const Inbox = lazy(() => import("./pages/Inbox"));
 const NotificationSettings = lazy(() => import("./pages/NotificationSettings"));
 const PaymentHistory = lazy(() => import("./pages/PaymentHistory"));
+const DeleteAccount = lazy(() => import("./pages/DeleteAccount"));
 
 import { OfflineBanner } from "@/components/OfflineBanner";
 import ProfileGuard from "@/components/ProfileGuard";
@@ -191,6 +192,7 @@ const AppInner = () => {
             <Route path="/inbox" element={<Inbox />} />
             <Route path="/notification-settings" element={<NotificationSettings />} />
             <Route path="/payment-history" element={<PaymentHistory />} />
+            <Route path="/delete-account" element={<DeleteAccount />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>
