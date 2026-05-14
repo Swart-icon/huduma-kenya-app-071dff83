@@ -69,6 +69,7 @@ const LiveViewer = lazy(() => import("./pages/LiveViewer"));
 const Inbox = lazy(() => import("./pages/Inbox"));
 const NotificationSettings = lazy(() => import("./pages/NotificationSettings"));
 const PaymentHistory = lazy(() => import("./pages/PaymentHistory"));
+const DeleteAccount = lazy(() => import("./pages/DeleteAccount"));
 
 import { OfflineBanner } from "@/components/OfflineBanner";
 import ProfileGuard from "@/components/ProfileGuard";
