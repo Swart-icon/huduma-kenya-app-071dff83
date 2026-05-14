@@ -192,6 +192,7 @@ const AppInner = () => {
             <Route path="/inbox" element={<Inbox />} />
             <Route path="/notification-settings" element={<NotificationSettings />} />
             <Route path="/payment-history" element={<PaymentHistory />} />
+            <Route path="/delete-account" element={<DeleteAccount />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>
