@@ -1,4 +1,4 @@
-package com.servio.kenya;
+package com.servio.africa;
 
 import com.getcapacitor.BridgeActivity;
 
