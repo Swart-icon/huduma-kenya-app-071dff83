@@ -1,4 +1,7 @@
 import { useState, useCallback, useEffect } from "react";
+import { Capacitor } from "@capacitor/core";
+import { Geolocation } from "@capacitor/geolocation";
+
 
 export type GeolocationStatus = "idle" | "requesting" | "granted" | "denied" | "unavailable" | "error";
 
@@ -52,15 +55,44 @@ export const useGeolocation = (autoRequest = false): UseGeolocationReturn => {
   );
   const [error, setError] = useState<string | null>(null);
 
-  const requestLocation = useCallback(() => {
+  const requestLocation = useCallback(async () => {
+    setStatus("requesting");
+    setError(null);
+
+    // Use Capacitor Geolocation on native platforms (Android/iOS)
+    if (Capacitor.isNativePlatform()) {
+      try {
+        const perm = await Geolocation.requestPermissions();
+        if (perm.location !== "granted" && perm.coarseLocation !== "granted") {
+          setStatus("denied");
+          setError("Location permission was denied");
+          return;
+        }
+        const position = await Geolocation.getCurrentPosition({
+          enableHighAccuracy: false,
+          timeout: 10000,
+          maximumAge: 300000,
+        });
+        const loc: UserLocation = {
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+          accuracy: position.coords.accuracy,
+        };
+        setLocation(loc);
+        saveLocation(loc);
+        setStatus("granted");
+      } catch (err: any) {
+        setStatus("error");
+        setError(err?.message || "Could not detect your location");
+      }
+      return;
+    }
+
     if (!navigator.geolocation) {
       setStatus("unavailable");
       setError("Geolocation is not supported by your device");
       return;
     }
-
-    setStatus("requesting");
-    setError(null);
 
     navigator.geolocation.getCurrentPosition(
       (position) => {
@@ -95,10 +127,11 @@ export const useGeolocation = (autoRequest = false): UseGeolocationReturn => {
       {
         enableHighAccuracy: false,
         timeout: 10000,
-        maximumAge: 300000, // 5 minutes cache
+        maximumAge: 300000,
       }
     );
   }, []);
+
 
   const clearLocation = useCallback(() => {
     setLocation(null);
