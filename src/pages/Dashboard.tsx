@@ -496,7 +496,7 @@ const Dashboard = () => {
         </div>
 
         <p className="text-center text-[11px] text-muted-foreground mt-6 mb-2">
-          Servio — Connecting Kenya's Services 🇰🇪
+          Servio — Connecting African Services 🌍
         </p>
       </div>
 
