@@ -60,8 +60,24 @@ export const reverseGeocode = async (
   };
 };
 
-export const detectCurrentLocation = (): Promise<DetailedLocation> =>
-  new Promise((resolve, reject) => {
+export const detectCurrentLocation = async (): Promise<DetailedLocation> => {
+  const { Capacitor } = await import("@capacitor/core");
+
+  if (Capacitor.isNativePlatform()) {
+    const { Geolocation } = await import("@capacitor/geolocation");
+    const perm = await Geolocation.requestPermissions();
+    if (perm.location !== "granted" && perm.coarseLocation !== "granted") {
+      throw new Error("Location permission denied. Please pick your location manually.");
+    }
+    const pos = await Geolocation.getCurrentPosition({
+      enableHighAccuracy: true,
+      timeout: 10000,
+      maximumAge: 60000,
+    });
+    return reverseGeocode(pos.coords.latitude, pos.coords.longitude);
+  }
+
+  return new Promise((resolve, reject) => {
     if (!("geolocation" in navigator)) {
       reject(new Error("Geolocation is not supported on this device"));
       return;
@@ -89,6 +105,8 @@ export const detectCurrentLocation = (): Promise<DetailedLocation> =>
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 },
     );
   });
+};
+
 
 /** Public-display helper: never include precise area or coordinates. */
 export const formatPublicLocation = (parts: {
