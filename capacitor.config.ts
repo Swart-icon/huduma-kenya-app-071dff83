@@ -1,7 +1,7 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.servio.kenya',
+  appId: 'com.servio.africa',
   appName: 'Servio',
   webDir: 'dist',
   android: {

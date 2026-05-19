@@ -7,10 +7,10 @@ if (keystorePropertiesFile.exists()) {
 }
 
 android {
-    namespace = "com.servio.kenya"
+    namespace = "com.servio.africa"
     compileSdk = rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "com.servio.kenya"
+        applicationId "com.servio.africa"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
