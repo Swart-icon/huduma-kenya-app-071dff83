@@ -1,4 +1,7 @@
 import { useState, useCallback, useEffect } from "react";
+import { Capacitor } from "@capacitor/core";
+import { Geolocation } from "@capacitor/geolocation";
+
 
 export type GeolocationStatus = "idle" | "requesting" | "granted" | "denied" | "unavailable" | "error";
 
