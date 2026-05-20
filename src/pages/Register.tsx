@@ -37,6 +37,7 @@ import {
   type DetailedLocation,
 } from "@/lib/locationDetection";
 import { KENYAN_COUNTIES, getCitiesByCounty } from "@/lib/kenyanLocations";
+import { COUNTRIES } from "@/lib/countries";
 
 type Step = "credentials" | "verify_email" | "role" | "locale";
 
@@ -47,14 +48,6 @@ const roleOptions: { value: SelectableRole; label: string; description: string; 
   { value: "provider", label: "Service Provider", description: "Offer your skills & services", icon: <Briefcase className="w-7 h-7" /> },
   { value: "job_seeker", label: "Job Seeker", description: "Find jobs & upload your CV", icon: <Search className="w-7 h-7" /> },
   { value: "client", label: "Client", description: "Post jobs & book services", icon: <UserCheck className="w-7 h-7" /> },
-];
-
-// East African Community focus
-const COUNTRIES = [
-  { code: "KE", name: "Kenya" },
-  { code: "UG", name: "Uganda" },
-  { code: "TZ", name: "Tanzania" },
-  { code: "RW", name: "Rwanda" },
 ];
 
 const LANGUAGES = [
