@@ -556,25 +556,13 @@ const VideoFeed = () => {
       {/* Live now bar disabled — feature coming soon */}
 
       {/* ─── Video Feed ─── */}
-      {activeTab === "nearby" && !userLocation ? (
+      {activeTab === "nearby" && !userLocation && locationStatus === "requesting" ? (
         <div className="flex-1 flex flex-col items-center justify-center text-center px-8">
           <div className="w-20 h-20 rounded-full bg-primary/20 flex items-center justify-center mb-6">
-            <MapPin className="w-10 h-10 text-primary" />
+            <MapPin className="w-10 h-10 text-primary animate-pulse" />
           </div>
-          <h2 className="text-white font-bold text-xl mb-2">Find Trusted Services Near You</h2>
-          <p className="text-white/60 text-sm mb-6 max-w-xs">
-            Enable your location to discover videos from service providers and professionals around you.
-          </p>
-          <Button className="rounded-xl px-6" onClick={requestLocation}>
-            {locationStatus === "requesting" ? (
-              <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Getting Location...</>
-            ) : (
-              <><MapPin className="w-4 h-4 mr-2" /> Enable Location</>
-            )}
-          </Button>
-          {locationStatus === "denied" && (
-            <p className="text-red-400 text-xs mt-3">Location access was denied. Please enable it in your browser settings.</p>
-          )}
+          <h2 className="text-white font-bold text-xl mb-2">Finding Services Near You</h2>
+          <Loader2 className="w-6 h-6 animate-spin text-white mt-2" />
         </div>
       ) : isLoading ? (
         <div className="flex-1 flex items-center justify-center">
